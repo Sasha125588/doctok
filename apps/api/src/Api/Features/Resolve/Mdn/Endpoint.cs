@@ -1,0 +1,21 @@
+namespace Api.Features.Resolve.Mdn;
+
+public static class ResolveMdnEndpoint
+{
+    public static IEndpointRouteBuilder MapResolveMdn(this IEndpointRouteBuilder app)
+    {
+        app.MapGet("/api/resolve/mdn/{*externalRef}", async (
+            string externalRef,
+            string lang,
+            ResolveMdnHandler handler,
+            CancellationToken ct) =>
+        {
+            var q = new ResolveMdnQuery(externalRef, lang);
+            var res = await handler.Handle(q, ct);
+
+            return Results.Ok(res);
+        });
+
+        return app;
+    }
+}

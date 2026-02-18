@@ -1,8 +1,12 @@
 using Api.Auth;
+using Api.Features.Resolve.Mdn;
 using Api.Features.Session.Me;
 using Api.Features.System.DbPing;
 using Api.Features.System.Health;
 using Infrastructure.Persistence.Db;
+using Infrastructure.Persistence.Repos.Jobs;
+using Infrastructure.Persistence.Repos.Resolve;
+using Infrastructure.Persistence.Repos.Sources;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql;
@@ -51,6 +55,12 @@ var connStr = builder.Configuration["Database:ConnectionString"]
 builder.Services.AddSingleton(_ => NpgsqlDataSource.Create(connStr));
 builder.Services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>();
 
+builder.Services.AddSingleton<SourcesRepository>();
+builder.Services.AddSingleton<ResolveRepository>();
+builder.Services.AddSingleton<JobsRepository>();
+
+builder.Services.AddSingleton<ResolveMdnHandler>();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -66,5 +76,7 @@ app.UseAuthorization();
 app.MapHealth();
 app.MapMe();
 app.MapDbPing();
+
+app.MapResolveMdn();
 
 app.Run();
