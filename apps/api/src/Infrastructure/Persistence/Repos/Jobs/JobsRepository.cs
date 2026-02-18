@@ -22,4 +22,71 @@ public sealed class JobsRepository(IDbConnectionFactory dbf)
         return await db.ExecuteScalarAsync<long>(
             new CommandDefinition(sql, new { jobType, jobKey, payload = payloadJson }, cancellationToken: ct));
     }
+
+    public async Task<JobEnvelope?> Dequeue(CancellationToken ct = default)
+    {
+        const string sql = """
+                           with j as (
+                             select id
+                             from public.jobs
+                             where status = 'pending'
+                             order by created_at
+                             for update skip locked
+                             limit 1
+                           )
+                           update public.jobs jb
+                           set status = 'running',
+                               attempts = attempts + 1,
+                               updated_at = now()
+                           from j
+                           where jb.id = j.id
+                           returning jb.id as Id,
+                                     jb.job_type as JobType,
+                                     jb.job_key as JobKey,
+                                     jb.payload::text as PayloadJson,
+                                     jb.attempts as Attempts
+                           """;
+
+        using var db = dbf.Create();
+
+        var row = await db.QuerySingleOrDefaultAsync<DequeueRow>(new CommandDefinition(sql, cancellationToken: ct));
+
+        if (row is null)
+            return null;
+
+        var json = JsonDocument.Parse(row.PayloadJson);
+        
+        return new JobEnvelope(row.Id, row.JobType, row.JobKey, json, row.Attempts);
+    }
+
+    public async Task MarkDone(long jobId, CancellationToken ct = default)
+    {
+        const string sql = """
+                           update public.jobs
+                           set status = 'done',
+                               last_error = null,
+                               updated_at = now()
+                           where id = @jobId
+                           """;
+        
+        using var db = dbf.Create();
+        await db.ExecuteAsync(new CommandDefinition(sql, new { jobId }, cancellationToken: ct));
+    }
+    
+    public async Task MarkFailed(long jobId, string error, CancellationToken ct = default)
+    {
+        const string sql = """
+                           update public.jobs
+                           set status = 'failed',
+                               last_error = @error,
+                               updated_at = now()
+                           where id = @jobId
+                           """;
+        
+        using var db = dbf.Create();
+        await db.ExecuteAsync(new CommandDefinition(sql, new { jobId, error }, cancellationToken: ct));
+    }
+    
+    private sealed record DequeueRow(long Id, string JobType, string JobKey, string PayloadJson, int Attempts);
+
 }

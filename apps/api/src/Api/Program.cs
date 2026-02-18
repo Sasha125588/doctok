@@ -61,6 +61,9 @@ builder.Services.AddSingleton<JobsRepository>();
 
 builder.Services.AddSingleton<ResolveMdnHandler>();
 
+builder.Services.AddSingleton<JobProcessor>();
+builder.Services.AddHostedService<JobRunnerBackgroundService>();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
