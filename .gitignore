@@ -1,0 +1,60 @@
+# dependencies (bun install)
+node_modules
+
+# output
+out
+dist
+*.tgz
+
+# code coverage
+coverage
+*.lcov
+
+# logs
+logs
+*.log
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# dotenv environment variable files
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
+# caches
+.eslintcache
+.cache
+*.tsbuildinfo
+
+# IntelliJ based IDEs
+.idea
+
+# Finder (MacOS) folder config
+.DS_Store
+
+.vercel
+.turbo
+
+# Cursor
+.cursor*
+.cursor
+
+# ASP.NET / .NET
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+.vs/
+*.user
+*.suo
+*.cache
+*.userosscache
+*.rsuser
+*.sln.docstates
+
+# VSCode (раскомментируй .vscode, если хочешь коммитить общие настройки)
+.vscode/
+
+# Vue / Vite
+.vite
