@@ -27,8 +27,8 @@ public sealed class FastCardGenerationService(
         var cards = gen.Generate(row.Content)
             .Select(c => new CardInsert(c.Kind, c.Title, c.Body, c.Position));
 
-        await cardsRepo.ReplaceForDocument(row.Id, row.TopicId, lang, cards, ct);
+        await cardsRepo.ReplaceForDocument(row.Id, row.Topic_Id, lang, cards, ct);
     }
 
-    private sealed record DocRow(long Id, string Content, long TopicId);
+    private sealed record DocRow(long Id, string Content, long Topic_Id);
 }

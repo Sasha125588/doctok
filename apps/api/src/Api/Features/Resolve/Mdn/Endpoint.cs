@@ -4,7 +4,7 @@ public static class ResolveMdnEndpoint
 {
     public static IEndpointRouteBuilder MapResolveMdn(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/resolve/mdn/{*externalRef}", async (
+        app.MapGet("/resolve/mdn/{*externalRef}", async (
             string externalRef,
             string lang,
             ResolveMdnHandler handler,

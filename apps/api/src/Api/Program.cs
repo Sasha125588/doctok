@@ -1,4 +1,5 @@
 using Api.Auth;
+using Api.Features.Feed;
 using Api.Features.Resolve.Mdn;
 using Api.Features.Session.Me;
 using Api.Features.System.DbPing;
@@ -8,6 +9,7 @@ using Domain.Rules;
 using Infrastructure.Cards;
 using Infrastructure.Persistence.Db;
 using Infrastructure.Persistence.Repos.Cards;
+using Infrastructure.Persistence.Repos.Feed;
 using Infrastructure.Persistence.Repos.Jobs;
 using Infrastructure.Persistence.Repos.Raw;
 using Infrastructure.Persistence.Repos.Resolve;
@@ -87,6 +89,7 @@ builder.Services.AddSingleton<SourcesRepository>();
 builder.Services.AddSingleton<ResolveRepository>();
 builder.Services.AddSingleton<JobsRepository>();
 builder.Services.AddSingleton<CardsRepository>();
+builder.Services.AddSingleton<FeedRepository>();
 
 builder.Services.AddSingleton<FastCardGenerator>();
 builder.Services.AddSingleton<FastCardGenerationService>();
@@ -114,7 +117,7 @@ app.UseAuthorization();
 app.MapHealth();
 app.MapMe();
 app.MapDbPing();
-
+app.MapFeed();
 app.MapResolveMdn();
 
 app.Run();
