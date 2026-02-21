@@ -15,14 +15,15 @@ public sealed class FastCardGenerationService(
     {
         var sourceId = await sources.GetSourceIdByCode("mdn", ct);
 
-        using var db = dbf.Create();
+        const string query = @"
+              select rd.id, rd.content, td.topic_id
+              from raw_documents rd
+              join topic_documents td on td.raw_document_id = rd.id
+              where rd.source_id=@sourceId and rd.lang=@lang and rd.external_ref=@externalRef
+              ";
 
-        var row = await db.QuerySingleAsync<DocRow>("""
-                                                    select rd.id, rd.content, td.topic_id
-                                                    from raw_documents rd
-                                                    join topic_documents td on td.raw_document_id = rd.id
-                                                    where rd.source_id=@sourceId and rd.lang=@lang and rd.external_ref=@externalRef
-                                                    """, new { sourceId, lang, externalRef });
+        using var db = dbf.Create();
+        var row = await db.QuerySingleAsync<DocRow>(query, new { sourceId, lang, externalRef });
 
         var cards = gen.Generate(row.Content)
             .Select(c => new CardInsert(c.Kind, c.Title, c.Body, c.Position));

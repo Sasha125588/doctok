@@ -1,14 +1,13 @@
 using System.Collections.Concurrent;
 using System.Text;
+using Domain.Common;
 
 namespace Infrastructure.Sources.Mdn;
 
 public sealed class MdnIndex(MdnArchiveManager mdnArchiveManager)
 {
-
-    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, string>> _map = new();
+    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, string>> _map = new ();
     private int _built;
-
 
     public async Task BuildOnceAsync(CancellationToken ct = default)
     {
@@ -25,7 +24,7 @@ public sealed class MdnIndex(MdnArchiveManager mdnArchiveManager)
 
     public string? TryGetPath(string lang, string externalRef)
     {
-        lang = NormalizeLang(lang);
+        lang = LanguageHelpers.NormalizeLang(lang);
 
         if (_map.TryGetValue(lang, out var dict) && dict.TryGetValue(externalRef, out var path))
             return path;
@@ -44,13 +43,15 @@ public sealed class MdnIndex(MdnArchiveManager mdnArchiveManager)
         return dirs[0];
     }
 
-    private static string NormalizeLang(string? lang)
-        => (lang ?? "en").Trim().ToLowerInvariant() switch
-        {
-            "en" or "en-us" => "en",
-            "ru" => "ru",
-            _ => lang!.Trim().ToLowerInvariant()
-        };
+    public IReadOnlyList<string> GetAllExternalRefs(string lang)
+    {
+      lang = LanguageHelpers.NormalizeLang(lang);
+
+      if (_map.TryGetValue(lang, out var dict))
+        return dict.Keys.ToList();
+
+      return [];
+    }
 
     private async Task BuildForContentAsync(string repoRoot, CancellationToken ct)
     {
@@ -101,7 +102,7 @@ public sealed class MdnIndex(MdnArchiveManager mdnArchiveManager)
 
     private static async Task<string?> TryReadFrontMatterSlugAsync(string file, CancellationToken ct)
     {
-        using var fs = File.OpenRead(file);
+        await using var fs = File.OpenRead(file);
         using var sr = new StreamReader(fs, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 4096);
 
         var first = await sr.ReadLineAsync(ct);
@@ -120,6 +121,7 @@ public sealed class MdnIndex(MdnArchiveManager mdnArchiveManager)
                 return string.IsNullOrWhiteSpace(slug) ? null : slug;
             }
         }
+
         return null;
     }
 }

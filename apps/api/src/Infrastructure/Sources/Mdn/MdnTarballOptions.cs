@@ -1,6 +1,4 @@
-using Infrastructure.Sources.Mdn;
-
-namespace DocTok.Infrastructure.Sources.Mdn;
+namespace Infrastructure.Sources.Mdn;
 
 public sealed class MdnTarballOptions
 {
@@ -9,5 +7,6 @@ public sealed class MdnTarballOptions
     public int RefreshHours { get; init; } = 12;
 
     public required MdnRepoOptions Content { get; init; }
+
     public required MdnRepoOptions Translated { get; init; }
 }

@@ -12,30 +12,36 @@ public sealed class CardsRepository(IDbConnectionFactory dbf)
         IEnumerable<CardInsert> cards,
         CancellationToken ct)
     {
-        using var db = dbf.Create();
+      const string query = @"
+                            delete from public.cards
+                            where raw_document_id = @rawDocumentId and lang = @lang
+                            ";
 
-        await db.ExecuteAsync("""
-                                  delete from public.cards
-                                  where raw_document_id = @rawDocumentId and lang = @lang
-                              """, new { rawDocumentId, lang });
+      using var db = dbf.Create();
 
-        const string insert = """
-                              insert into public.cards(topic_id, raw_document_id, lang, kind, title, body, position)
-                              values (@topicId, @rawDocumentId, @lang, @kind, @title, @body, @position)
-                              """;
+      await db.ExecuteAsync(new CommandDefinition(query, new { rawDocumentId, lang },  cancellationToken: ct));
 
-        foreach (var c in cards)
-        {
-            await db.ExecuteAsync(insert, new {
-                topicId,
-                rawDocumentId,
-                lang,
-                kind = c.Kind,
-                title = c.Title,
-                body = c.Body,
-                position = c.Position
-            });
-        }
+      const string insertQuery = @"
+                            insert into public.cards(topic_id, raw_document_id, lang, kind, title, body, position)
+                            values (@topicId, @rawDocumentId, @lang, @kind, @title, @body, @position)
+                            ";
+
+      foreach (var c in cards)
+      {
+          await db.ExecuteAsync(new CommandDefinition(
+            insertQuery,
+            new
+            {
+              topicId,
+              rawDocumentId,
+              lang,
+              kind = c.Kind,
+              title = c.Title,
+              body = c.Body,
+              position = c.Position
+            },
+            cancellationToken: ct));
+      }
     }
 }
 

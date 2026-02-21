@@ -8,24 +8,26 @@ public sealed class ResolveMdnHandler(SourcesRepository sources, ResolveReposito
 {
     public async Task<ResolveMdnResult> Handle(ResolveMdnQuery q, CancellationToken ct)
     {
-        var sourceId = await sources.GetSourceIdByCode("mdn", ct);
-        
-        var externalRef = q.ExternalRef.Trim().TrimStart('/');
-        var lang = (q.Lang ?? "en").Trim().ToLowerInvariant();
+    ArgumentNullException.ThrowIfNull(q);
 
-        var slug = await resolve.FindTopicSlugForDocument(sourceId, lang, externalRef, ct);
-        if (slug is null)
-        {
-            var jobKey = $"fetch_raw:mdn:{lang}:{externalRef}";
-            var jobId = await jobs.Enqueue(
-                "fetch_raw"
-                , jobKey
-                , payload: new { provider = "mdn", lang, externalRef }
-                , ct);
+    var sourceId = await sources.GetSourceIdByCode("mdn", ct);
 
-            return ResolveMdnResult.Pending(jobId);
-        }
+    var externalRef = q.ExternalRef.Trim().TrimStart('/');
+    var lang = (q.Lang ?? "en").Trim().ToLowerInvariant();
 
-        return ResolveMdnResult.Ready(slug, lang);
+    var slug = await resolve.FindTopicSlugForDocument(sourceId, lang, externalRef, ct);
+    if (slug is null)
+    {
+        var jobKey = $"fetch_raw:mdn:{lang}:{externalRef}";
+        var jobId = await jobs.Enqueue(
+            "fetch_raw",
+            jobKey,
+            payload: new { provider = "mdn", lang, externalRef },
+            ct);
+
+        return ResolveMdnResult.Pending(jobId);
+    }
+
+    return ResolveMdnResult.Ready(slug, lang);
     }
 }

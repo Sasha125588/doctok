@@ -10,7 +10,7 @@ public static class CurrentUser
         return Guid.TryParse(sub, out var id) ? id : throw new UnauthorizedAccessException("Missing or invalid 'sub' claim");
     }
 
-    public static string? GetEmail(ClaimsPrincipal user) => 
-        user.FindFirstValue(ClaimTypes.Email) 
+    public static string? GetEmail(ClaimsPrincipal user) =>
+        user.FindFirstValue(ClaimTypes.Email)
         ?? user.FindFirstValue("email");
 }

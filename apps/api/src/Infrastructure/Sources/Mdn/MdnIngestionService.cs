@@ -1,3 +1,4 @@
+using Domain.Common;
 using Domain.Rules;
 using Infrastructure.Persistence.Repos.Jobs;
 using Infrastructure.Persistence.Repos.Raw;
@@ -20,7 +21,7 @@ public sealed class MdnIngestionService(
 {
     public async Task FetchRawAsync(string lang, string externalRef, CancellationToken ct)
     {
-        lang = NormalizeLang(lang);
+        lang = LanguageHelpers.NormalizeLang(lang);
         externalRef = NormalizeExternalRef(externalRef);
 
         await index.BuildOnceAsync(ct);
@@ -58,7 +59,7 @@ public sealed class MdnIngestionService(
 
         var internalLinks = links
             .Where(x => x.Kind == "internal" && x.TargetLang is not null && x.TargetExternalRef is not null)
-            .Select(x => (targetLang: NormalizeLang(x.TargetLang!), targetExternalRef: NormalizeExternalRef(x.TargetExternalRef!), label: x.Label))
+            .Select(x => (targetLang: LanguageHelpers.NormalizeLang(x.TargetLang!), targetExternalRef: NormalizeExternalRef(x.TargetExternalRef!), label: x.Label))
             .ToList();
 
         if (internalLinks.Count > 0)
@@ -88,16 +89,8 @@ public sealed class MdnIngestionService(
             ct: ct);
     }
 
-    private static string NormalizeLang(string? lang)
-        => (lang ?? "en").Trim().ToLowerInvariant() switch
-        {
-            "en" or "en-us" => "en",
-            "ru" => "ru",
-            _ => (lang ?? "en").Trim().ToLowerInvariant()
-        };
-
-    private static string NormalizeExternalRef(string externalRef)
-        => (externalRef ?? "")
+    private static string NormalizeExternalRef(string? externalRef)
+        => (externalRef ?? string.Empty)
             .Trim()
             .TrimStart('/')
             .Replace('\\', '/');

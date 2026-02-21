@@ -12,7 +12,7 @@ public sealed record ExtractedLink(
 public sealed class MdnLinkExtractor
 {
     // markdown: [text](/en-US/docs/Web/API/AbortSignal#examples)
-    private static readonly Regex MdLink = new(@"\[(?<label>[^\]]+)\]\((?<url>[^)]+)\)",
+    private static readonly Regex MdLink = new (@"\[(?<label>[^\]]+)\]\((?<url>[^)]+)\)",
         RegexOptions.Compiled);
 
     public IReadOnlyList<ExtractedLink> Extract(string mdBody)

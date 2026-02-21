@@ -1,11 +1,11 @@
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Persistence.Repos.Jobs;
 
 public sealed class JobRunnerBackgroundService(
     JobsRepository jobs,
-    JobProcessor processor, 
+    JobProcessor processor,
     ILogger<JobRunnerBackgroundService> logger
     ) : BackgroundService
 {
@@ -25,18 +25,22 @@ public sealed class JobRunnerBackgroundService(
                     continue;
                 }
 
-                logger.LogInformation("Processing job {JobId} type={JobType} key={JobKey} attempts={Attempts}",
-                    job.Id, job.JobType, job.JobKey, job.Attempts);
+                logger.LogInformation(
+                    "Processing job {JobId} type={JobType} key={JobKey} attempts={Attempts}",
+                    job.Id,
+                    job.JobType,
+                    job.JobKey,
+                    job.Attempts);
 
                 try
                 {
-                    await processor.Process(job, stoppingToken);
-                    await jobs.MarkDone(job.Id, stoppingToken);
+                  await processor.Process(job, stoppingToken);
+                  await jobs.MarkDone(job.Id, stoppingToken);
                 }
                 catch (Exception e)
                 {
-                    logger.LogError(e, "Job {JobId} failed", job.Id);
-                    await jobs.MarkFailed(job.Id, e.Message, stoppingToken);
+                  logger.LogError(e, "Job {JobId} failed", job.Id);
+                  await jobs.MarkFailed(job.Id, e.Message, stoppingToken);
                 }
             }
             catch (Exception e)
@@ -45,7 +49,7 @@ public sealed class JobRunnerBackgroundService(
                 await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
             }
         }
-        
+
         logger.LogInformation("Job runner stopped");
     }
 }

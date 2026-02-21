@@ -1,10 +1,11 @@
 using Api.Auth;
+using Api.Features.Admin.Mdn.Preload;
 using Api.Features.Feed;
 using Api.Features.Resolve.Mdn;
 using Api.Features.Session.Me;
 using Api.Features.System.DbPing;
 using Api.Features.System.Health;
-using DocTok.Infrastructure.Sources.Mdn;
+using Api.Features.Topics;
 using Domain.Rules;
 using Infrastructure.Cards;
 using Infrastructure.Persistence.Db;
@@ -28,8 +29,8 @@ builder.Services.AddOpenApi();
 
 builder.Services.Configure<SupabaseJwtOptions>(builder.Configuration.GetSection("Supabase"));
 
-var supabaseJwtOptions = 
-    builder.Configuration.GetSection("Supabase").Get<SupabaseJwtOptions>() 
+var supabaseJwtOptions =
+    builder.Configuration.GetSection("Supabase").Get<SupabaseJwtOptions>()
     ?? throw new InvalidOperationException("Supabase config missing");
 
 var gh = builder.Configuration.GetSection("GitHub").Get<GitHubOptions>()
@@ -46,7 +47,6 @@ builder.Services
     .AddJwtBearer(options =>
     {
         options.MapInboundClaims = false;
-            
         options.RequireHttpsMetadata = true;
         options.MetadataAddress = supabaseJwtOptions.MetadataUrl;
 
@@ -54,10 +54,10 @@ builder.Services
         {
             ValidateIssuer = true,
             ValidIssuer = supabaseJwtOptions.Issuer,
-            
+
             ValidateAudience = true,
             ValidAudience = supabaseJwtOptions.JwtAudience,
-            
+
             ValidateLifetime = true,
             ClockSkew = TimeSpan.FromMinutes(2),
 
@@ -80,6 +80,7 @@ builder.Services.AddSingleton<MdnIndex>();
 builder.Services.AddSingleton<MdnRawParser>();
 builder.Services.AddSingleton<MdnLinkExtractor>();
 builder.Services.AddSingleton<MdnIngestionService>();
+builder.Services.AddSingleton<PreloadMdnHandler>();
 
 builder.Services.AddSingleton<RawDocumentsRepository>();
 builder.Services.AddSingleton<RawLinksRepository>();
@@ -90,6 +91,8 @@ builder.Services.AddSingleton<ResolveRepository>();
 builder.Services.AddSingleton<JobsRepository>();
 builder.Services.AddSingleton<CardsRepository>();
 builder.Services.AddSingleton<FeedRepository>();
+builder.Services.AddSingleton<TopicReadRepository>();
+builder.Services.AddSingleton<TopicLinksRepository>();
 
 builder.Services.AddSingleton<FastCardGenerator>();
 builder.Services.AddSingleton<FastCardGenerationService>();
@@ -105,7 +108,7 @@ builder.Services.AddHostedService<JobRunnerBackgroundService>();
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
-{  
+{
     app.MapOpenApi();
     app.MapScalarApiReference();
 }
@@ -118,6 +121,9 @@ app.MapHealth();
 app.MapMe();
 app.MapDbPing();
 app.MapFeed();
+app.MapTopics();
+app.MapTopicsLinks();
 app.MapResolveMdn();
+app.MapAdminMdnPreload();
 
 app.Run();

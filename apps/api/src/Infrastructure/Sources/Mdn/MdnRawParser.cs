@@ -22,6 +22,7 @@ public sealed class MdnRawParser
                 foreach (var rawLine in fm.Split('\n'))
                 {
                     var line = rawLine.Trim();
+
                     if (line.StartsWith("title:", StringComparison.OrdinalIgnoreCase))
                         title = line["title:".Length..].Trim().Trim('"');
                     else if (line.StartsWith("slug:", StringComparison.OrdinalIgnoreCase))

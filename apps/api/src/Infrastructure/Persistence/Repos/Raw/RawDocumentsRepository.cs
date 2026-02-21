@@ -13,7 +13,7 @@ public sealed class RawDocumentsRepository(IDbConnectionFactory dbf)
         string content,
         CancellationToken ct)
     {
-        const string sql = """
+        const string query = @"
                            insert into public.raw_documents(source_id, lang, external_ref, title, content)
                            values (@sourceId, @lang, @externalRef, @title, @content)
                            on conflict (source_id, lang, external_ref) do update
@@ -21,10 +21,10 @@ public sealed class RawDocumentsRepository(IDbConnectionFactory dbf)
                                  content = excluded.content,
                                  fetched_at = now()
                            returning id
-                           """;
+                           ";
 
         using var db = dbf.Create();
         return await db.ExecuteScalarAsync<long>(
-            new CommandDefinition(sql, new { sourceId, lang, externalRef, title, content }, cancellationToken: ct));
+            new CommandDefinition(query, new { sourceId, lang, externalRef, title, content }, cancellationToken: ct));
     }
 }

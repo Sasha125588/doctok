@@ -55,7 +55,7 @@ public sealed class JobsRepository(IDbConnectionFactory dbf)
             return null;
 
         var json = JsonDocument.Parse(row.PayloadJson);
-        
+
         return new JobEnvelope(row.Id, row.JobType, row.JobKey, json, row.Attempts);
     }
 
@@ -68,11 +68,11 @@ public sealed class JobsRepository(IDbConnectionFactory dbf)
                                updated_at = now()
                            where id = @jobId
                            """;
-        
+
         using var db = dbf.Create();
         await db.ExecuteAsync(new CommandDefinition(sql, new { jobId }, cancellationToken: ct));
     }
-    
+
     public async Task MarkFailed(long jobId, string error, CancellationToken ct = default)
     {
         const string sql = """
@@ -82,11 +82,10 @@ public sealed class JobsRepository(IDbConnectionFactory dbf)
                                updated_at = now()
                            where id = @jobId
                            """;
-        
+
         using var db = dbf.Create();
         await db.ExecuteAsync(new CommandDefinition(sql, new { jobId, error }, cancellationToken: ct));
     }
-    
-    private sealed record DequeueRow(long Id, string JobType, string JobKey, string PayloadJson, int Attempts);
 
+    private sealed record DequeueRow(long Id, string JobType, string JobKey, string PayloadJson, int Attempts);
 }

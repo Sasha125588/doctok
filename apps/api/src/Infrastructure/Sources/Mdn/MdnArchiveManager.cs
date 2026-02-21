@@ -1,14 +1,14 @@
-using DocTok.Infrastructure.Sources.Mdn;
 using Infrastructure.Sources.GitHub;
 
 namespace Infrastructure.Sources.Mdn;
 
-public sealed class MdnArchiveManager(MdnTarballOptions opts, GitHubTarballClient tarballClient)
+public sealed class MdnArchiveManager(MdnTarballOptions opts, GitHubTarballClient tarballClient) : IDisposable
 {
+    private readonly SemaphoreSlim _lock = new (1, 1);
     private bool _initialized;
-    private readonly SemaphoreSlim _lock = new(1, 1);
 
     public string ContentExtractRoot => Path.Combine(opts.DataRoot, "content", "extract");
+
     public string TranslatedExtractRoot => Path.Combine(opts.DataRoot, "translated", "extract");
 
     public async Task EnsureFreshAsync(CancellationToken ct)
@@ -28,7 +28,7 @@ public sealed class MdnArchiveManager(MdnTarballOptions opts, GitHubTarballClien
             _lock.Release();
         }
     }
-    
+
     private async Task EnsureRepoFreshAsync(MdnRepoOptions repo, string key, string extractRoot, CancellationToken ct)
     {
         var tarPath = Path.Combine(opts.DataRoot, key, "repo.tar.gz");
@@ -55,4 +55,8 @@ public sealed class MdnArchiveManager(MdnTarballOptions opts, GitHubTarballClien
         await File.WriteAllTextAsync(stampPath, DateTimeOffset.UtcNow.ToString("O"), ct);
     }
 
+    public void Dispose()
+    {
+      _lock.Dispose();
+    }
 }

@@ -20,5 +20,4 @@ public static class PathRules
 
         return Path.Combine(baseCache, "DocTok", "mdn");
     }
-
 }

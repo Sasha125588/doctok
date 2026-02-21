@@ -4,7 +4,7 @@ public static class HealthEndpoint
 {
     public static IEndpointRouteBuilder MapHealth(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/health", () => Results.Ok(new { ok = true }))       
+        app.MapGet("/health", () => Results.Ok(new { ok = true }))
             .AllowAnonymous()
             .WithTags("System")
             .WithSummary("Health check")

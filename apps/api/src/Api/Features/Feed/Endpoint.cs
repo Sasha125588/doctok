@@ -15,12 +15,11 @@ public static class FeedEndpoint
             CancellationToken ct) =>
         {
             var take = Math.Clamp(limit ?? 20, 1, 50);
-            
             var cursorId = CursorCodec.Decode(cursor);
 
             var rows = await feedRepo.GetPage(cursorId, lang, take, ct);
-            
-            var items = rows.Select(r => new {
+            var items = rows.Select(r => new
+            {
                 cardId = r.Id,
                 topicSlug = r.Topic_Slug,
                 topicTitle = r.Topic_Title,
@@ -28,13 +27,12 @@ public static class FeedEndpoint
                 body = r.Body,
                 position = r.Position
             }).ToList();
-            
+
             var nextCursor = rows.Count == take
                 ? CursorCodec.Encode(rows.Last().Id)
                 : null;
 
             return Results.Ok(new { items, nextCursor });
-
         });
 
         return app;
