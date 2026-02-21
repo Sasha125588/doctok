@@ -6,7 +6,6 @@ using Api.Features.Session.Me;
 using Api.Features.System.DbPing;
 using Api.Features.System.Health;
 using Api.Features.Topics;
-using Domain.Rules;
 using Infrastructure.Cards;
 using Infrastructure.Persistence.Db;
 using Infrastructure.Persistence.Repos.Cards;
@@ -36,8 +35,8 @@ var supabaseJwtOptions =
 var gh = builder.Configuration.GetSection("GitHub").Get<GitHubOptions>()
          ?? throw new InvalidOperationException("GitHub config missing");
 
-var mdnTar = builder.Configuration.GetSection("MdnTarball").Get<MdnTarballOptions>()
-             ?? throw new InvalidOperationException("MdnTarball config missing");
+var mdnApiOptions = builder.Configuration.GetSection("Mdn").Get<MdnApiOptions>()
+                    ?? new MdnApiOptions();
 
 var connStr = builder.Configuration["Database:ConnectionString"]
               ?? throw new InvalidOperationException("Database:ConnectionString missing");
@@ -68,17 +67,16 @@ builder.Services
 builder.Services.AddAuthorization();
 
 builder.Services.AddSingleton(gh);
+builder.Services.AddSingleton(mdnApiOptions);
 
-mdnTar.DataRoot = PathRules.GetMdnCacheRoot();
-builder.Services.AddSingleton(mdnTar);
+builder.Services.AddHttpClient<MdnApiClient>();
+builder.Services.AddSingleton<MdnApiClient>();
 
-builder.Services.AddHttpClient<GitHubTarballClient>();
-builder.Services.AddSingleton<GitHubTarballClient>();
+builder.Services.AddHttpClient<GitHubTreeClient>();
+builder.Services.AddSingleton<GitHubTreeClient>();
 
-builder.Services.AddSingleton<MdnArchiveManager>();
-builder.Services.AddSingleton<MdnIndex>();
-builder.Services.AddSingleton<MdnRawParser>();
-builder.Services.AddSingleton<MdnLinkExtractor>();
+builder.Services.AddSingleton<MdnTreeIndex>();
+builder.Services.AddSingleton<MdnContentConverter>();
 builder.Services.AddSingleton<MdnIngestionService>();
 builder.Services.AddSingleton<PreloadMdnHandler>();
 

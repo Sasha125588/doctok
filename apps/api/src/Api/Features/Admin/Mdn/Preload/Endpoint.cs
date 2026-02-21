@@ -1,6 +1,4 @@
-﻿using Api.Features.Admin.Preload;
-
-namespace Api.Features.Admin.Mdn.Preload;
+﻿namespace Api.Features.Admin.Mdn.Preload;
 
 public static class PreloadMdnEndpoint
 {

@@ -12,7 +12,8 @@ public sealed class JobsRepository(IDbConnectionFactory dbf)
                            insert into public.jobs(job_type, job_key, payload, status)
                            values (@jobType, @jobKey, cast(@payload as jsonb), 'pending')
                            on conflict (job_key) do update
-                             set updated_at = now()
+                             set status = 'pending',
+                                 updated_at = now()
                            returning id
                            """;
 

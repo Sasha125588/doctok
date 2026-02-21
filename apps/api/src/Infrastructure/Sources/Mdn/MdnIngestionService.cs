@@ -8,9 +8,8 @@ using Infrastructure.Persistence.Repos.Topics;
 namespace Infrastructure.Sources.Mdn;
 
 public sealed class MdnIngestionService(
-    MdnIndex index,
-    MdnRawParser parser,
-    MdnLinkExtractor linkExtractor,
+    MdnApiClient apiClient,
+    MdnContentConverter converter,
     SourcesRepository sources,
     RawDocumentsRepository rawDocs,
     RawLinksRepository rawLinks,
@@ -24,20 +23,19 @@ public sealed class MdnIngestionService(
         lang = LanguageHelpers.NormalizeLang(lang);
         externalRef = NormalizeExternalRef(externalRef);
 
-        await index.BuildOnceAsync(ct);
-
-        var path = index.TryGetPath(lang, externalRef);
-        if (path is null)
+        MdnApiDoc doc;
+        try
         {
-            if (lang != "en")
-                path = index.TryGetPath("en", externalRef);
-
-            if (path is null)
-                throw new FileNotFoundException($"MDN doc not found (lang={lang}, externalRef={externalRef})");
+            doc = await apiClient.FetchAsync(lang, externalRef, ct);
+        }
+        catch (HttpRequestException) when (lang != "en")
+        {
+            doc = await apiClient.FetchAsync("en", externalRef, ct);
+            lang = "en";
         }
 
-        var parsed = await parser.ParseAsync(path, ct);
-        var canonicalExternalRef = NormalizeExternalRef(parsed.ExternalRef);
+        var (text, links) = converter.Convert(doc);
+        var canonicalExternalRef = NormalizeExternalRef(doc.Slug);
 
         var sourceId = await sources.GetSourceIdByCode("mdn", ct);
 
@@ -45,17 +43,19 @@ public sealed class MdnIngestionService(
             sourceId: sourceId,
             lang: lang,
             externalRef: canonicalExternalRef,
-            title: parsed.Title,
-            content: parsed.Content,
+            title: doc.Title,
+            content: text,
+            pageType: doc.PageType,
+            popularity: doc.Popularity,
+            sourceModifiedAt: doc.SourceModifiedAt,
+            otherLocales: doc.OtherLocales.Count > 0 ? [.. doc.OtherLocales] : null,
             ct: ct);
 
         var topicSlug = TextRules.TopicSlugFromExternalRef("mdn", canonicalExternalRef);
-        var topicTitle = parsed.Title ?? canonicalExternalRef;
+        var topicTitle = doc.Title ?? canonicalExternalRef;
 
         var topicId = await topics.EnsureTopic(topicSlug, topicTitle, ct);
         await topicDocs.Link(topicId, rawId, ct);
-
-        var links = linkExtractor.Extract(parsed.Content);
 
         var internalLinks = links
             .Where(x => x.Kind == "internal" && x.TargetLang is not null && x.TargetExternalRef is not null)
@@ -66,7 +66,7 @@ public sealed class MdnIngestionService(
         {
             await rawLinks.InsertInternalLinks(
                 rawDocumentId: rawId,
-                targetSourceId: sourceId, // MDN links -> MDN
+                targetSourceId: sourceId,
                 links: internalLinks,
                 ct: ct);
         }

@@ -18,8 +18,10 @@ public sealed class CardsRepository(IDbConnectionFactory dbf)
                             ";
 
       using var db = dbf.Create();
+      db.Open();
+      using var tx = db.BeginTransaction();
 
-      await db.ExecuteAsync(new CommandDefinition(query, new { rawDocumentId, lang },  cancellationToken: ct));
+      await db.ExecuteAsync(new CommandDefinition(query, new { rawDocumentId, lang }, transaction: tx, cancellationToken: ct));
 
       const string insertQuery = @"
                             insert into public.cards(topic_id, raw_document_id, lang, kind, title, body, position)
@@ -40,8 +42,11 @@ public sealed class CardsRepository(IDbConnectionFactory dbf)
               body = c.Body,
               position = c.Position
             },
+            transaction: tx,
             cancellationToken: ct));
       }
+
+      tx.Commit();
     }
 }
 

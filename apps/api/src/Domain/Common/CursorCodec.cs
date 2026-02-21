@@ -13,13 +13,16 @@ public static class CursorCodec
 
     public static long? Decode(string? cursor)
     {
-      if (string.IsNullOrWhiteSpace(cursor))
-      {
+        if (string.IsNullOrWhiteSpace(cursor)) return null;
+        try
+        {
+            var json = Encoding.UTF8.GetString(Convert.FromBase64String(cursor));
+            var doc = JsonDocument.Parse(json);
+            return doc.RootElement.GetProperty("id").GetInt64();
+        }
+        catch
+        {
             return null;
-      }
-
-      var json = Encoding.UTF8.GetString(Convert.FromBase64String(cursor));
-      var doc = JsonDocument.Parse(json);
-      return doc.RootElement.GetProperty("id").GetInt64();
+        }
     }
 }

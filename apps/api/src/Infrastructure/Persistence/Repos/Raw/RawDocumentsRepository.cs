@@ -11,20 +11,31 @@ public sealed class RawDocumentsRepository(IDbConnectionFactory dbf)
         string externalRef,
         string? title,
         string content,
+        string? pageType,
+        double? popularity,
+        DateTimeOffset? sourceModifiedAt,
+        string[]? otherLocales,
         CancellationToken ct)
     {
         const string query = @"
-                           insert into public.raw_documents(source_id, lang, external_ref, title, content)
-                           values (@sourceId, @lang, @externalRef, @title, @content)
+                           insert into public.raw_documents(source_id, lang, external_ref, title, content, page_type, popularity, source_modified_at, other_locales)
+                           values (@sourceId, @lang, @externalRef, @title, @content, @pageType, @popularity, @sourceModifiedAt, @otherLocales)
                            on conflict (source_id, lang, external_ref) do update
                              set title = excluded.title,
                                  content = excluded.content,
+                                 page_type = excluded.page_type,
+                                 popularity = excluded.popularity,
+                                 source_modified_at = excluded.source_modified_at,
+                                 other_locales = excluded.other_locales,
                                  fetched_at = now()
                            returning id
                            ";
 
         using var db = dbf.Create();
         return await db.ExecuteScalarAsync<long>(
-            new CommandDefinition(query, new { sourceId, lang, externalRef, title, content }, cancellationToken: ct));
+            new CommandDefinition(
+                query,
+                new { sourceId, lang, externalRef, title, content, pageType, popularity, sourceModifiedAt, otherLocales },
+                cancellationToken: ct));
     }
 }
