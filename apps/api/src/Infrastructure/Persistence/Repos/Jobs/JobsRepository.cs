@@ -55,9 +55,7 @@ public sealed class JobsRepository(IDbConnectionFactory dbf)
         if (row is null)
             return null;
 
-        var json = JsonDocument.Parse(row.PayloadJson);
-
-        return new JobEnvelope(row.Id, row.JobType, row.JobKey, json, row.Attempts);
+        return new JobEnvelope(row.Id, row.JobType, row.JobKey, row.PayloadJson, row.Attempts);
     }
 
     public async Task MarkDone(long jobId, CancellationToken ct = default)
@@ -79,6 +77,20 @@ public sealed class JobsRepository(IDbConnectionFactory dbf)
         const string sql = """
                            update public.jobs
                            set status = 'failed',
+                               last_error = @error,
+                               updated_at = now()
+                           where id = @jobId
+                           """;
+
+        using var db = dbf.Create();
+        await db.ExecuteAsync(new CommandDefinition(sql, new { jobId, error }, cancellationToken: ct));
+    }
+
+    public async Task MarkPendingForRetry(long jobId, string error, CancellationToken ct = default)
+    {
+        const string sql = """
+                           update public.jobs
+                           set status = 'pending',
                                last_error = @error,
                                updated_at = now()
                            where id = @jobId

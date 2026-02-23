@@ -6,11 +6,11 @@ public static class ResolveMdnEndpoint
     {
         app.MapGet("/resolve/mdn/{*externalRef}", async (
             string externalRef,
-            string lang,
-            ResolveMdnHandler handler,
+            string? lang,
+            Handler handler,
             CancellationToken ct) =>
         {
-            var q = new ResolveMdnQuery(externalRef, lang);
+            var q = new Query(externalRef, lang ?? "en");
             var res = await handler.Handle(q, ct);
 
             return Results.Ok(res);

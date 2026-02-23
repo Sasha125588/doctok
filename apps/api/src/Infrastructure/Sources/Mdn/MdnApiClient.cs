@@ -1,28 +1,15 @@
-using System.Net.Http.Headers;
 using System.Text.Json;
 
 namespace Infrastructure.Sources.Mdn;
 
-public sealed class MdnApiClient
+public sealed class MdnApiClient(HttpClient http, MdnApiOptions options)
 {
-    private readonly HttpClient _http;
-    private readonly MdnApiOptions _options;
-
-    public MdnApiClient(HttpClient http, MdnApiOptions options)
-    {
-        _http = http;
-        _options = options;
-
-        _http.DefaultRequestHeaders.Accept.Clear();
-        _http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-    }
-
     public async Task<MdnApiDoc> FetchAsync(string lang, string slug, CancellationToken ct)
     {
         var mdnLang = ToMdnLang(lang);
-        var url = $"{_options.BaseUrl}/{mdnLang}/docs/{slug}/index.json";
+        var url = $"{options.BaseUrl}/{mdnLang}/docs/{slug}/index.json";
 
-        using var resp = await _http.GetAsync(new Uri(url), ct);
+        using var resp = await http.GetAsync(new Uri(url), ct);
         resp.EnsureSuccessStatusCode();
 
         await using var stream = await resp.Content.ReadAsStreamAsync(ct);

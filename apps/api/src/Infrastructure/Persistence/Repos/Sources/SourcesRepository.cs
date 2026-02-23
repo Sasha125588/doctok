@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Dapper;
 using Infrastructure.Persistence.Db;
 
@@ -5,18 +6,25 @@ namespace Infrastructure.Persistence.Repos.Sources;
 
 public sealed class SourcesRepository(IDbConnectionFactory dbf)
 {
+    private readonly ConcurrentDictionary<string, long> _cache = new ();
+
     public async Task<long> GetSourceIdByCode(string code, CancellationToken ct = default)
     {
-      const string query = @"
-            select id
-            from public.sources
-            where code = @code
-            ";
+        if (_cache.TryGetValue(code, out var cached))
+            return cached;
 
-      var db = dbf.Create();
-      var id = await db.ExecuteScalarAsync<long?>(
-          new CommandDefinition(query, new { code }, cancellationToken: ct));
+        const string query = """
+                             select id
+                             from public.sources
+                             where code = @code
+                             """;
 
-      return id ?? throw new InvalidOperationException($"Unknown source code: {code}");
+        using var db = dbf.Create();
+        var id = await db.ExecuteScalarAsync<long?>(
+            new CommandDefinition(query, new { code }, cancellationToken: ct));
+
+        var result = id ?? throw new InvalidOperationException($"Unknown source code: {code}");
+        _cache.TryAdd(code, result);
+        return result;
     }
 }

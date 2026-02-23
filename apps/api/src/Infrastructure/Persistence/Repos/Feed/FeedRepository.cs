@@ -21,9 +21,10 @@ public sealed class FeedRepository(IDbConnectionFactory dbf)
                            t.title as topic_title
                          from cards c
                          join topics t on t.id = c.topic_id
+                         join raw_documents rd on rd.id = c.raw_document_id
                          where (@cursorId is null or c.id < @cursorId)
                            and c.lang = @lang
-                         order by c.id desc
+                         order by rd.popularity desc, c.id desc
                          limit @limit
                          """;
 

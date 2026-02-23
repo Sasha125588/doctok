@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text;
 using Dapper;
 using Infrastructure.Persistence.Db;
 
@@ -12,41 +14,48 @@ public sealed class CardsRepository(IDbConnectionFactory dbf)
         IEnumerable<CardInsert> cards,
         CancellationToken ct)
     {
-      const string query = @"
-                            delete from public.cards
-                            where raw_document_id = @rawDocumentId and lang = @lang
-                            ";
+        var cardList = cards as IReadOnlyList<CardInsert> ?? cards.ToList();
 
-      using var db = dbf.Create();
-      db.Open();
-      using var tx = db.BeginTransaction();
+        using var db = dbf.Create();
+        db.Open();
+        using var tx = db.BeginTransaction();
 
-      await db.ExecuteAsync(new CommandDefinition(query, new { rawDocumentId, lang }, transaction: tx, cancellationToken: ct));
+        const string deleteSql = """
+                                 delete from public.cards
+                                 where raw_document_id = @rawDocumentId and lang = @lang
+                                 """;
 
-      const string insertQuery = @"
-                            insert into public.cards(topic_id, raw_document_id, lang, kind, title, body, position)
-                            values (@topicId, @rawDocumentId, @lang, @kind, @title, @body, @position)
-                            ";
+        await db.ExecuteAsync(new CommandDefinition(deleteSql, new { rawDocumentId, lang }, transaction: tx, cancellationToken: ct));
 
-      foreach (var c in cards)
-      {
-          await db.ExecuteAsync(new CommandDefinition(
-            insertQuery,
-            new
+        if (cardList.Count > 0)
+        {
+            var sb = new StringBuilder();
+            sb.Append("""
+                      insert into public.cards(topic_id, raw_document_id, lang, kind, title, body, position)
+                      values
+                      """);
+
+            var parameters = new DynamicParameters();
+            parameters.Add("topicId", topicId);
+            parameters.Add("rawDocumentId", rawDocumentId);
+            parameters.Add("lang", lang);
+
+            for (var i = 0; i < cardList.Count; i++)
             {
-              topicId,
-              rawDocumentId,
-              lang,
-              kind = c.Kind,
-              title = c.Title,
-              body = c.Body,
-              position = c.Position
-            },
-            transaction: tx,
-            cancellationToken: ct));
-      }
+                if (i > 0)
+                    sb.Append(',');
 
-      tx.Commit();
+                sb.Append(CultureInfo.InvariantCulture, $" (@topicId, @rawDocumentId, @lang, @k{i}, @t{i}, @b{i}, @p{i})");
+                parameters.Add($"k{i}", cardList[i].Kind);
+                parameters.Add($"t{i}", cardList[i].Title);
+                parameters.Add($"b{i}", cardList[i].Body);
+                parameters.Add($"p{i}", cardList[i].Position);
+            }
+
+            await db.ExecuteAsync(new CommandDefinition(sb.ToString(), parameters, transaction: tx, cancellationToken: ct));
+        }
+
+        tx.Commit();
     }
 }
 

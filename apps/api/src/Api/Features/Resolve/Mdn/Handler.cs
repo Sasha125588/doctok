@@ -1,16 +1,17 @@
+using Domain.Common;
 using Infrastructure.Persistence.Repos.Jobs;
 using Infrastructure.Persistence.Repos.Resolve;
 using Infrastructure.Persistence.Repos.Sources;
 
 namespace Api.Features.Resolve.Mdn;
 
-public sealed class ResolveMdnHandler(SourcesRepository sources, ResolveRepository resolve, JobsRepository jobs)
+public sealed class Handler(SourcesRepository sources, ResolveRepository resolve, JobsRepository jobs)
 {
-    public async Task<ResolveMdnResult> Handle(ResolveMdnQuery q, CancellationToken ct)
+    public async Task<ResolveMdnResult> Handle(Query q, CancellationToken ct)
     {
     ArgumentNullException.ThrowIfNull(q);
 
-    var sourceId = await sources.GetSourceIdByCode("mdn", ct);
+    var sourceId = await sources.GetSourceIdByCode(SourceCodes.Mdn, ct);
 
     var externalRef = q.ExternalRef.Trim().TrimStart('/');
     var lang = (q.Lang ?? "en").Trim().ToLowerInvariant();
@@ -18,11 +19,11 @@ public sealed class ResolveMdnHandler(SourcesRepository sources, ResolveReposito
     var slug = await resolve.FindTopicSlugForDocument(sourceId, lang, externalRef, ct);
     if (slug is null)
     {
-        var jobKey = $"fetch_raw:mdn:{lang}:{externalRef}";
+        var jobKey = $"{JobTypes.FetchRaw}:{SourceCodes.Mdn}:{lang}:{externalRef}";
         var jobId = await jobs.Enqueue(
-            "fetch_raw",
+            JobTypes.FetchRaw,
             jobKey,
-            payload: new { provider = "mdn", lang, externalRef },
+            payload: new { provider = SourceCodes.Mdn, lang, externalRef },
             ct);
 
         return ResolveMdnResult.Pending(jobId);

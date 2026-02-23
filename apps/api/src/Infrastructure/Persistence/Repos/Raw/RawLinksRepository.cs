@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text;
 using Dapper;
 using Infrastructure.Persistence.Db;
 
@@ -8,52 +10,73 @@ public sealed class RawLinksRepository(IDbConnectionFactory dbf)
     public async Task InsertInternalLinks(
         long rawDocumentId,
         long targetSourceId,
-        IEnumerable<(string targetLang, string targetExternalRef, string? label)> links,
+        IReadOnlyList<(string targetLang, string targetExternalRef, string? label)> links,
         CancellationToken ct)
     {
-        const string sql = @"
-                           insert into public.raw_document_links(
-                             raw_document_id, kind, target_source_id, target_lang, target_external_ref, label
-                           )
-                           values (@rawDocumentId, 'internal', @targetSourceId, @targetLang, @targetExternalRef, @label)
-                           on conflict (raw_document_id, kind, target_source_id, target_lang, target_external_ref) do nothing
-                           ";
+        if (links.Count == 0)
+            return;
+
+        var sb = new StringBuilder();
+        sb.Append("""
+                  insert into public.raw_document_links(
+                    raw_document_id, kind, target_source_id, target_lang, target_external_ref, label
+                  )
+                  values
+                  """);
+
+        var parameters = new DynamicParameters();
+        parameters.Add("rawDocumentId", rawDocumentId);
+        parameters.Add("targetSourceId", targetSourceId);
+
+        for (var i = 0; i < links.Count; i++)
+        {
+            if (i > 0)
+                sb.Append(',');
+
+            sb.Append(CultureInfo.InvariantCulture, $" (@rawDocumentId, 'internal', @targetSourceId, @tl{i}, @ter{i}, @lb{i})");
+            parameters.Add($"tl{i}", links[i].targetLang);
+            parameters.Add($"ter{i}", links[i].targetExternalRef);
+            parameters.Add($"lb{i}", links[i].label);
+        }
+
+        sb.Append(" on conflict (raw_document_id, kind, target_source_id, target_lang, target_external_ref) do nothing");
 
         using var db = dbf.Create();
-
-        foreach (var (targetLang, targetExternalRef, label) in links)
-        {
-            await db.ExecuteAsync(new CommandDefinition(
-              sql,
-              new
-              {
-                  rawDocumentId,
-                  targetSourceId,
-                  targetLang,
-                  targetExternalRef,
-                  label
-              }, cancellationToken: ct));
-        }
+        await db.ExecuteAsync(new CommandDefinition(sb.ToString(), parameters, cancellationToken: ct));
     }
 
     public async Task InsertExternalLinks(
         long rawDocumentId,
-        IEnumerable<(string url, string? label)> links,
+        IReadOnlyList<(string url, string? label)> links,
         CancellationToken ct)
     {
-        const string sql = """
-                           insert into public.raw_document_links(
-                             raw_document_id, kind, url, label
-                           )
-                           values (@rawDocumentId, 'external', @url, @label)
-                           on conflict (raw_document_id, kind, url) do nothing
-                           """;
+        if (links.Count == 0)
+            return;
+
+        var sb = new StringBuilder();
+        sb.Append("""
+                  insert into public.raw_document_links(
+                    raw_document_id, kind, url, label
+                  )
+                  values
+                  """);
+
+        var parameters = new DynamicParameters();
+        parameters.Add("rawDocumentId", rawDocumentId);
+
+        for (var i = 0; i < links.Count; i++)
+        {
+            if (i > 0)
+                sb.Append(',');
+
+            sb.Append(CultureInfo.InvariantCulture, $" (@rawDocumentId, 'external', @url{i}, @lb{i})");
+            parameters.Add($"url{i}", links[i].url);
+            parameters.Add($"lb{i}", links[i].label);
+        }
+
+        sb.Append(" on conflict (raw_document_id, kind, url) do nothing");
 
         using var db = dbf.Create();
-
-        foreach (var (url, label) in links)
-        {
-            await db.ExecuteAsync(new CommandDefinition(sql, new { rawDocumentId, url, label }, cancellationToken: ct));
-        }
+        await db.ExecuteAsync(new CommandDefinition(sb.ToString(), parameters, cancellationToken: ct));
     }
 }

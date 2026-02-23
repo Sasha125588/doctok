@@ -1,3 +1,5 @@
+using System.Text.Json;
+using Domain.Common;
 using Infrastructure.Cards;
 using Infrastructure.Sources.Mdn;
 
@@ -7,32 +9,32 @@ public sealed class JobProcessor(MdnIngestionService mdnIngestionService, FastCa
 {
     public async Task Process(JobEnvelope job, CancellationToken ct)
     {
+        using var payload = JsonDocument.Parse(job.PayloadJson);
+        var root = payload.RootElement;
+
         switch (job.JobType)
         {
-            case "fetch_raw":
+            case JobTypes.FetchRaw:
             {
-                var root = job.Payload.RootElement;
                 var provider = root.GetProperty("provider").GetString();
                 var lang = root.GetProperty("lang").GetString() ?? "en";
                 var externalRef = root.GetProperty("externalRef").GetString()
                                   ?? throw new InvalidOperationException("payload.externalRef missing");
 
-                if (provider != "mdn")
+                if (provider != SourceCodes.Mdn)
                     throw new NotSupportedException($"fetch_raw provider '{provider}' is not supported");
 
                 await mdnIngestionService.FetchRawAsync(lang, externalRef, ct);
                 return;
             }
 
-            case "generate_fast":
+            case JobTypes.GenerateFast:
             {
-                var root = job.Payload.RootElement;
-
                 var provider = root.GetProperty("provider").GetString();
                 var lang = root.GetProperty("lang").GetString()!;
                 var externalRef = root.GetProperty("externalRef").GetString()!;
 
-                if (provider != "mdn")
+                if (provider != SourceCodes.Mdn)
                     throw new NotSupportedException();
 
                 await fastCardGenerationService.GenerateAsync(lang, externalRef, ct);

@@ -6,6 +6,7 @@ using Api.Features.Session.Me;
 using Api.Features.System.DbPing;
 using Api.Features.System.Health;
 using Api.Features.Topics;
+using Api.Features.Topics._slug_.Links;
 using Infrastructure.Cards;
 using Infrastructure.Persistence.Db;
 using Infrastructure.Persistence.Repos.Cards;
@@ -21,9 +22,23 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 using Scalar.AspNetCore;
+using Handler = Api.Features.Resolve.Mdn.Handler;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
+
+builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 
 builder.Services.Configure<SupabaseJwtOptions>(builder.Configuration.GetSection("Supabase"));
@@ -64,21 +79,39 @@ builder.Services
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Admin", policy =>
+        policy.RequireClaim("user_role", "admin"));
+});
 
-builder.Services.AddSingleton(gh);
 builder.Services.AddSingleton(mdnApiOptions);
 
-builder.Services.AddHttpClient<MdnApiClient>();
-builder.Services.AddSingleton<MdnApiClient>();
+builder.Services.AddHttpClient<MdnApiClient>(client =>
+{
+    client.DefaultRequestHeaders.Accept.Clear();
+    client.DefaultRequestHeaders.Accept.Add(
+        new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+});
 
-builder.Services.AddHttpClient<GitHubTreeClient>();
-builder.Services.AddSingleton<GitHubTreeClient>();
+builder.Services.AddHttpClient<GitHubTreeClient>(client =>
+{
+    client.DefaultRequestHeaders.UserAgent.Clear();
+    client.DefaultRequestHeaders.UserAgent.Add(
+        new System.Net.Http.Headers.ProductInfoHeaderValue(gh.UserAgent, "1.0"));
+
+    client.DefaultRequestHeaders.Accept.Clear();
+    client.DefaultRequestHeaders.Accept.Add(
+        new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
+
+    client.DefaultRequestHeaders.Authorization =
+        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", gh.Token);
+});
 
 builder.Services.AddSingleton<MdnTreeIndex>();
 builder.Services.AddSingleton<MdnContentConverter>();
 builder.Services.AddSingleton<MdnIngestionService>();
-builder.Services.AddSingleton<PreloadMdnHandler>();
+builder.Services.AddSingleton<Api.Features.Admin.Mdn.Preload.Handler>();
 
 builder.Services.AddSingleton<RawDocumentsRepository>();
 builder.Services.AddSingleton<RawLinksRepository>();
@@ -98,7 +131,7 @@ builder.Services.AddSingleton<FastCardGenerationService>();
 builder.Services.AddSingleton(_ => NpgsqlDataSource.Create(connStr));
 builder.Services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>();
 
-builder.Services.AddSingleton<ResolveMdnHandler>();
+builder.Services.AddSingleton<Handler>();
 
 builder.Services.AddSingleton<JobProcessor>();
 builder.Services.AddHostedService<JobRunnerBackgroundService>();
@@ -111,7 +144,10 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
+app.UseExceptionHandler();
+app.UseStatusCodePages();
 app.UseHttpsRedirection();
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 

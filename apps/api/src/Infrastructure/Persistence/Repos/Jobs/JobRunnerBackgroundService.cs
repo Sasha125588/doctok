@@ -9,6 +9,8 @@ public sealed class JobRunnerBackgroundService(
     ILogger<JobRunnerBackgroundService> logger
     ) : BackgroundService
 {
+    private const int MaxAttempts = 3;
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         logger.LogInformation("Starting JobRunnerBackgroundService");
@@ -34,13 +36,21 @@ public sealed class JobRunnerBackgroundService(
 
                 try
                 {
-                  await processor.Process(job, stoppingToken);
-                  await jobs.MarkDone(job.Id, stoppingToken);
+                    await processor.Process(job, stoppingToken);
+                    await jobs.MarkDone(job.Id, stoppingToken);
                 }
                 catch (Exception e)
                 {
-                  logger.LogError(e, "Job {JobId} failed", job.Id);
-                  await jobs.MarkFailed(job.Id, e.Message, stoppingToken);
+                    if (job.Attempts >= MaxAttempts)
+                    {
+                        logger.LogError(e, "Job {JobId} permanently failed after {Attempts} attempts", job.Id, job.Attempts);
+                        await jobs.MarkFailed(job.Id, e.Message, stoppingToken);
+                    }
+                    else
+                    {
+                        logger.LogWarning(e, "Job {JobId} failed (attempt {Attempts}/{MaxAttempts}), will retry", job.Id, job.Attempts, MaxAttempts);
+                        await jobs.MarkPendingForRetry(job.Id, e.Message, stoppingToken);
+                    }
                 }
             }
             catch (Exception e)

@@ -10,18 +10,18 @@ public sealed class TopicReadRepository(IDbConnectionFactory dbf)
         string lang,
         CancellationToken ct)
     {
-      const string query = @"
-                            select
-                              c.id,
-                              c.kind,
-                              c.body,
-                              c.position
-                            from topics t
-                            join cards c on c.topic_id = t.id
-                            where t.slug = @slug
-                              and c.lang = @lang
-                            order by c.position
-                            ";
+      const string query = """
+                           select
+                             c.id,
+                             c.kind,
+                             c.body,
+                             c.position
+                           from topics t
+                           join cards c on c.topic_id = t.id
+                           where t.slug = @slug
+                             and c.lang = @lang
+                           order by c.position
+                           """;
 
       using var db = dbf.Create();
 

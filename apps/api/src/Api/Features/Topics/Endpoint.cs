@@ -8,39 +8,23 @@ public static class TopicsEndpoint
     {
         app.MapGet("/topics/{slug}", async (
             string slug,
-            string lang,
+            string? lang,
             TopicReadRepository topicRepo,
             CancellationToken ct) =>
         {
-            var cards = await topicRepo.GetCards(slug, lang, ct);
+            var resolvedLang = lang ?? "en";
+            var cards = await topicRepo.GetCards(slug, resolvedLang, ct);
 
             if (cards.Count == 0)
             {
                 return Results.NotFound();
             }
 
-            return Results.Ok(cards.Select(c => new
-            {
-                id = c.Id,
-                kind = c.Kind,
-                body = c.Body,
-                position = c.Position
-            }));
-        });
-
-        return app;
-    }
-
-    public static IEndpointRouteBuilder MapTopicsLinks(this IEndpointRouteBuilder app)
-    {
-        app.MapGet("/topics/{slug}/links", async (
-            string slug,
-            string lang,
-            TopicLinksRepository topicLinksRepo,
-            CancellationToken ct) =>
-        {
-            var links = await topicLinksRepo.GetLinkedTopics(slug, lang, ct);
-            return Results.Ok(links);
+            return Results.Ok(cards.Select(c => new Response(
+                c.Id,
+                c.Kind,
+                c.Body,
+                c.Position)));
         });
 
         return app;

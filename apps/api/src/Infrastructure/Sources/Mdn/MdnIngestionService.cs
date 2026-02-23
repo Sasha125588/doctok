@@ -5,6 +5,8 @@ using Infrastructure.Persistence.Repos.Raw;
 using Infrastructure.Persistence.Repos.Sources;
 using Infrastructure.Persistence.Repos.Topics;
 
+using static Domain.Common.JobTypes;
+
 namespace Infrastructure.Sources.Mdn;
 
 public sealed class MdnIngestionService(
@@ -37,7 +39,7 @@ public sealed class MdnIngestionService(
         var (text, links) = converter.Convert(doc);
         var canonicalExternalRef = NormalizeExternalRef(doc.Slug);
 
-        var sourceId = await sources.GetSourceIdByCode("mdn", ct);
+        var sourceId = await sources.GetSourceIdByCode(SourceCodes.Mdn, ct);
 
         var rawId = await rawDocs.UpsertRawDocument(
             sourceId: sourceId,
@@ -51,7 +53,7 @@ public sealed class MdnIngestionService(
             otherLocales: doc.OtherLocales.Count > 0 ? [.. doc.OtherLocales] : null,
             ct: ct);
 
-        var topicSlug = TextRules.TopicSlugFromExternalRef("mdn", canonicalExternalRef);
+        var topicSlug = TextRules.TopicSlugFromExternalRef(SourceCodes.Mdn, canonicalExternalRef);
         var topicTitle = doc.Title ?? canonicalExternalRef;
 
         var topicId = await topics.EnsureTopic(topicSlug, topicTitle, ct);
@@ -81,11 +83,11 @@ public sealed class MdnIngestionService(
             await rawLinks.InsertExternalLinks(rawId, externalLinks, ct);
         }
 
-        var jobKey = $"generate_fast:mdn:{lang}:{canonicalExternalRef}";
+        var jobKey = $"{GenerateFast}:{SourceCodes.Mdn}:{lang}:{canonicalExternalRef}";
         await jobs.Enqueue(
-            jobType: "generate_fast",
+            jobType: GenerateFast,
             jobKey: jobKey,
-            payload: new { provider = "mdn", lang, externalRef = canonicalExternalRef },
+            payload: new { provider = SourceCodes.Mdn, lang, externalRef = canonicalExternalRef },
             ct: ct);
     }
 
