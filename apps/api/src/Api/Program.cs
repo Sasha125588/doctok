@@ -24,6 +24,8 @@ using Npgsql;
 using Scalar.AspNetCore;
 using Handler = Api.Features.Resolve.Mdn.Handler;
 
+DotNetEnv.Env.TraversePath().Load();
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddCors(options =>
@@ -53,8 +55,8 @@ var gh = builder.Configuration.GetSection("GitHub").Get<GitHubOptions>()
 var mdnApiOptions = builder.Configuration.GetSection("Mdn").Get<MdnApiOptions>()
                     ?? new MdnApiOptions();
 
-var connStr = builder.Configuration["Database:ConnectionString"]
-              ?? throw new InvalidOperationException("Database:ConnectionString missing");
+var connStr = builder.Configuration.GetConnectionString("Default")
+              ?? throw new InvalidOperationException("ConnectionStrings:Default missing");
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

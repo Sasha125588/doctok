@@ -10,6 +10,8 @@ public sealed class JobRunnerBackgroundService(
     ) : BackgroundService
 {
     private const int MaxAttempts = 3;
+    private static readonly TimeSpan IdleDelay = TimeSpan.FromMilliseconds(500);
+    private static readonly TimeSpan LoopErrorDelay = TimeSpan.FromSeconds(2);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -23,7 +25,7 @@ public sealed class JobRunnerBackgroundService(
 
                 if (job is null)
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
+                    await Task.Delay(IdleDelay, stoppingToken);
                     continue;
                 }
 
@@ -50,16 +52,28 @@ public sealed class JobRunnerBackgroundService(
                     {
                         logger.LogWarning(e, "Job {JobId} failed (attempt {Attempts}/{MaxAttempts}), will retry", job.Id, job.Attempts, MaxAttempts);
                         await jobs.MarkPendingForRetry(job.Id, e.Message, stoppingToken);
+
+                        var retryDelay = CalculateRetryDelay(job.Attempts);
+                        await Task.Delay(retryDelay, stoppingToken);
                     }
                 }
             }
             catch (Exception e)
             {
                 logger.LogError(e, "Job runner loop error");
-                await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
+                await Task.Delay(LoopErrorDelay, stoppingToken);
             }
         }
 
         logger.LogInformation("Job runner stopped");
+    }
+
+    private static TimeSpan CalculateRetryDelay(int attempts)
+    {
+        var exponent = Math.Clamp(attempts - 1, 0, 4);
+        var seconds = Math.Min(30d, Math.Pow(2d, exponent));
+        var jitterMs = Random.Shared.Next(0, 300);
+
+        return TimeSpan.FromSeconds(seconds) + TimeSpan.FromMilliseconds(jitterMs);
     }
 }

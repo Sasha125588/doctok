@@ -8,7 +8,7 @@ public sealed class Handler(MdnTreeIndex index, JobsRepository jobs)
 {
   public async Task<Response> Handle(Command cmd, CancellationToken ct)
   {
-    var lang = (cmd.Lang ?? "en").ToLowerInvariant();
+    var lang = LanguageHelpers.NormalizeLang(cmd.Lang ?? "en");
     var count = Math.Clamp(cmd.Count ?? 5, 1, 200);
     var seed = cmd.Seed ?? Environment.TickCount;
 

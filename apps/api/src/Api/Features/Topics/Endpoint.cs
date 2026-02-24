@@ -1,3 +1,4 @@
+using Domain.Common;
 using Infrastructure.Persistence.Repos.Topics;
 
 namespace Api.Features.Topics;
@@ -12,7 +13,7 @@ public static class TopicsEndpoint
             TopicReadRepository topicRepo,
             CancellationToken ct) =>
         {
-            var resolvedLang = lang ?? "en";
+            var resolvedLang = LanguageHelpers.NormalizeLang(lang ?? "en");
             var cards = await topicRepo.GetCards(slug, resolvedLang, ct);
 
             if (cards.Count == 0)

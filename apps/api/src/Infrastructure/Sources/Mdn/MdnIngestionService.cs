@@ -22,7 +22,6 @@ public sealed class MdnIngestionService(
 {
     public async Task FetchRawAsync(string lang, string externalRef, CancellationToken ct)
     {
-        lang = LanguageHelpers.NormalizeLang(lang);
         externalRef = NormalizeExternalRef(externalRef);
 
         MdnApiDoc doc;
@@ -30,10 +29,10 @@ public sealed class MdnIngestionService(
         {
             doc = await apiClient.FetchAsync(lang, externalRef, ct);
         }
-        catch (HttpRequestException) when (lang != "en")
+        catch (HttpRequestException) when (lang != "en-US")
         {
-            doc = await apiClient.FetchAsync("en", externalRef, ct);
-            lang = "en";
+            doc = await apiClient.FetchAsync("en-US", externalRef, ct);
+            lang = "en-US";
         }
 
         var (text, links) = converter.Convert(doc);
@@ -61,7 +60,7 @@ public sealed class MdnIngestionService(
 
         var internalLinks = links
             .Where(x => x.Kind == "internal" && x.TargetLang is not null && x.TargetExternalRef is not null)
-            .Select(x => (targetLang: LanguageHelpers.NormalizeLang(x.TargetLang!), targetExternalRef: NormalizeExternalRef(x.TargetExternalRef!), label: x.Label))
+            .Select(x => (targetLang: LanguageHelpers.ToMdnLang(x.TargetLang!), targetExternalRef: NormalizeExternalRef(x.TargetExternalRef!), label: x.Label))
             .ToList();
 
         if (internalLinks.Count > 0)
@@ -83,9 +82,9 @@ public sealed class MdnIngestionService(
             await rawLinks.InsertExternalLinks(rawId, externalLinks, ct);
         }
 
-        var jobKey = $"{GenerateFast}:{SourceCodes.Mdn}:{lang}:{canonicalExternalRef}";
+        var jobKey = $"{JobTypes.GenerateFast}:{SourceCodes.Mdn}:{lang}:{canonicalExternalRef}";
         await jobs.Enqueue(
-            jobType: GenerateFast,
+            jobType: JobTypes.GenerateFast,
             jobKey: jobKey,
             payload: new { provider = SourceCodes.Mdn, lang, externalRef = canonicalExternalRef },
             ct: ct);
@@ -95,5 +94,6 @@ public sealed class MdnIngestionService(
         => (externalRef ?? string.Empty)
             .Trim()
             .TrimStart('/')
-            .Replace('\\', '/');
+            .Replace('\\', '/')
+            .ToLowerInvariant();
 }

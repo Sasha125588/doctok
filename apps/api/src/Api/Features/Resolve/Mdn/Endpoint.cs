@@ -10,6 +10,11 @@ public static class ResolveMdnEndpoint
             Handler handler,
             CancellationToken ct) =>
         {
+            if (string.IsNullOrWhiteSpace(externalRef))
+            {
+                return Results.BadRequest(new { error = "externalRef is required" });
+            }
+
             var q = new Query(externalRef, lang ?? "en");
             var res = await handler.Handle(q, ct);
 

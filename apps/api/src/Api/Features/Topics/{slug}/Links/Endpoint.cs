@@ -1,3 +1,4 @@
+using Domain.Common;
 using Infrastructure.Persistence.Repos.Topics;
 
 namespace Api.Features.Topics._slug_.Links;
@@ -12,7 +13,7 @@ public static class TopicsLinksEndpoint
             TopicLinksRepository topicLinksRepo,
             CancellationToken ct) =>
         {
-            var resolvedLang = lang ?? "en";
+            var resolvedLang = LanguageHelpers.NormalizeLang(lang ?? "en");
             var links = await topicLinksRepo.GetLinkedTopics(slug, resolvedLang, ct);
             return Results.Ok(links);
         });

@@ -11,6 +11,10 @@ public sealed record FeedItem(
     string Body,
     int Position);
 
+public sealed record FeedResponse(
+    IReadOnlyList<FeedItem> Items,
+    string? NextCursor);
+
 public static class FeedEndpoint
 {
     public static IEndpointRouteBuilder MapFeed(this IEndpointRouteBuilder app)
@@ -23,7 +27,7 @@ public static class FeedEndpoint
             CancellationToken ct) =>
         {
             var take = Math.Clamp(limit ?? 20, 1, 50);
-            var resolvedLang = lang ?? "en";
+            var resolvedLang = LanguageHelpers.NormalizeLang(lang ?? "en");
             var cursorId = CursorCodec.Decode(cursor);
 
             var rows = await feedRepo.GetPage(cursorId, resolvedLang, take, ct);
@@ -39,7 +43,7 @@ public static class FeedEndpoint
                 ? CursorCodec.Encode(rows.Last().Id)
                 : null;
 
-            return Results.Ok(new Response(items, nextCursor));
+            return Results.Ok(new FeedResponse(items, nextCursor));
         });
 
         return app;

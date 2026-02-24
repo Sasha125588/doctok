@@ -14,7 +14,7 @@ public sealed class Handler(SourcesRepository sources, ResolveRepository resolve
     var sourceId = await sources.GetSourceIdByCode(SourceCodes.Mdn, ct);
 
     var externalRef = q.ExternalRef.Trim().TrimStart('/');
-    var lang = (q.Lang ?? "en").Trim().ToLowerInvariant();
+    var lang = LanguageHelpers.NormalizeLang(q.Lang);
 
     var slug = await resolve.FindTopicSlugForDocument(sourceId, lang, externalRef, ct);
     if (slug is null)

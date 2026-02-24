@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Domain.Common;
 
 namespace Infrastructure.Sources.Mdn;
 
@@ -6,7 +7,7 @@ public sealed class MdnApiClient(HttpClient http, MdnApiOptions options)
 {
     public async Task<MdnApiDoc> FetchAsync(string lang, string slug, CancellationToken ct)
     {
-        var mdnLang = ToMdnLang(lang);
+        var mdnLang = LanguageHelpers.ToMdnLang(lang);
         var url = $"{options.BaseUrl}/{mdnLang}/docs/{slug}/index.json";
 
         using var resp = await http.GetAsync(new Uri(url), ct);
@@ -67,13 +68,4 @@ public sealed class MdnApiClient(HttpClient http, MdnApiOptions options)
 
         return new MdnApiDoc(title, slugValue, sections, pageType, popularity, sourceModifiedAt, otherLocales);
     }
-
-    private static string ToMdnLang(string lang) => lang switch
-    {
-        "en" => "en-US",
-        "zh-cn" => "zh-CN",
-        "zh-tw" => "zh-TW",
-        "pt-br" => "pt-BR",
-        _ => lang,
-    };
 }

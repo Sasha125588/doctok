@@ -107,11 +107,6 @@ public sealed class MdnTreeIndex(GitHubTreeClient treeClient) : IDisposable
         if (!string.Equals(parts[^1], "index.md", StringComparison.OrdinalIgnoreCase)) return null;
 
         var slugParts = parts[2..^1];
-        var capitalized = slugParts.Select(CapitalizeFirst);
-
-        return string.Join("/", capitalized);
+        return string.Join("/", slugParts);
     }
-
-    private static string CapitalizeFirst(string s) =>
-        s.Length == 0 ? s : char.ToUpperInvariant(s[0]) + s[1..];
 }
