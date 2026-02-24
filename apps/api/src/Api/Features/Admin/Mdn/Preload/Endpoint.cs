@@ -13,7 +13,7 @@ public static class Endpoint
           new Command(req.Lang, req.Count, req.Seed, req.Prefix),
           ct);
 
-        return Results.Ok(new Response(res.Enqueued, res.Sample));
+        return Results.Ok(new Response(res.Sample));
       })
       .RequireAuthorization("Admin")
       .WithTags("Admin")

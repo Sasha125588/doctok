@@ -10,9 +10,11 @@ public sealed class GitHubTreeClient(HttpClient http)
         string @ref,
         CancellationToken ct)
     {
-        var url = $"https://api.github.com/repos/{owner}/{repo}/git/trees/{@ref}?recursive=1";
+        var encodedRef = Uri.EscapeDataString(@ref);
+        var url = $"/repos/{owner}/{repo}/git/trees/{encodedRef}?recursive=1";
+        var requestUri = new Uri(url, UriKind.Relative);
 
-        using var resp = await http.GetAsync(new Uri(url), ct);
+        using var resp = await http.GetAsync(requestUri, ct);
         resp.EnsureSuccessStatusCode();
 
         await using var stream = await resp.Content.ReadAsStreamAsync(ct);

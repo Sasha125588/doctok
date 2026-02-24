@@ -34,6 +34,7 @@ public sealed class JobsRepository(IDbConnectionFactory dbf)
                              select id
                              from public.jobs
                              where status = 'pending'
+                               and next_attempt_at <= now()
                              order by created_at
                              for update skip locked
                              limit 1
@@ -89,18 +90,34 @@ public sealed class JobsRepository(IDbConnectionFactory dbf)
         await db.ExecuteAsync(new CommandDefinition(sql, new { jobId, error }, cancellationToken: ct));
     }
 
-    public async Task MarkPendingForRetry(long jobId, string error, CancellationToken ct = default)
+    public async Task MarkPendingForRetry(long jobId, string error, TimeSpan delay, CancellationToken ct = default)
     {
         const string sql = """
                            update public.jobs
                            set status = 'pending',
                                last_error = @error,
+                               next_attempt_at = now() + @delay,
                                updated_at = now()
                            where id = @jobId
                            """;
 
         using var db = dbf.Create();
-        await db.ExecuteAsync(new CommandDefinition(sql, new { jobId, error }, cancellationToken: ct));
+        await db.ExecuteAsync(new CommandDefinition(sql, new { jobId, error, delay }, cancellationToken: ct));
+    }
+
+    public async Task<int> RequeueStaleRunning(TimeSpan staleAfter, CancellationToken ct = default)
+    {
+        const string sql = """
+                           update public.jobs
+                           set status = 'pending',
+                               last_error = 'recovered stale running job',
+                               updated_at = now()
+                           where status = 'running'
+                             and updated_at < now() - @staleAfter
+                           """;
+
+        using var db = dbf.Create();
+        return await db.ExecuteAsync(new CommandDefinition(sql, new { staleAfter }, cancellationToken: ct));
     }
 
     private sealed record DequeueRow(long Id, string JobType, string JobKey, string PayloadJson, int Attempts);

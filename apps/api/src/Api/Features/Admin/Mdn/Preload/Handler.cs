@@ -24,7 +24,6 @@ public sealed class Handler(MdnTreeIndex index, JobsRepository jobs)
     var rnd = new Random(seed);
     var chosen = filtered.OrderBy(_ => rnd.Next()).Take(count).ToList();
 
-    var enqueued = 0;
     foreach (var externalRef in chosen)
     {
       var key = $"{JobTypes.FetchRaw}:{SourceCodes.Mdn}:{lang}:{externalRef}";
@@ -33,10 +32,8 @@ public sealed class Handler(MdnTreeIndex index, JobsRepository jobs)
         jobKey: key,
         payload: new { provider = SourceCodes.Mdn, lang, externalRef },
         ct: ct);
-
-      enqueued++;
     }
 
-    return new Response(enqueued, chosen);
+    return new Response(chosen);
   }
 }

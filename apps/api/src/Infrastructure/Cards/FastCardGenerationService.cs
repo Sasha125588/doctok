@@ -1,5 +1,4 @@
 using Dapper;
-using Domain.Common;
 using Infrastructure.Persistence.Db;
 using Infrastructure.Persistence.Repos.Cards;
 using Infrastructure.Persistence.Repos.Sources;
@@ -12,9 +11,9 @@ public sealed class FastCardGenerationService(
     SourcesRepository sources,
     FastCardGenerator gen)
 {
-    public async Task GenerateAsync(string lang, string externalRef, CancellationToken ct)
+    public async Task GenerateAsync(string sourceCode, string lang, string externalRef, CancellationToken ct)
     {
-        var sourceId = await sources.GetSourceIdByCode(SourceCodes.Mdn, ct);
+        var sourceId = await sources.GetSourceIdByCode(sourceCode, ct);
 
         const string query = """
                              select rd.id, rd.content, td.topic_id

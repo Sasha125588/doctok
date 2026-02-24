@@ -9,7 +9,9 @@ public sealed class JobRunnerBackgroundService(
     ILogger<JobRunnerBackgroundService> logger
     ) : BackgroundService
 {
+    private const int WorkersCount = 4;
     private const int MaxAttempts = 3;
+    private static readonly TimeSpan StaleRunningThreshold = TimeSpan.FromMinutes(10);
     private static readonly TimeSpan IdleDelay = TimeSpan.FromMilliseconds(500);
     private static readonly TimeSpan LoopErrorDelay = TimeSpan.FromSeconds(2);
 
@@ -17,55 +19,73 @@ public sealed class JobRunnerBackgroundService(
     {
         logger.LogInformation("Starting JobRunnerBackgroundService");
 
-        while (!stoppingToken.IsCancellationRequested)
+        var recovered = await jobs.RequeueStaleRunning(StaleRunningThreshold, stoppingToken);
+        if (recovered > 0)
         {
-            try
-            {
-                var job = await jobs.Dequeue(stoppingToken);
-
-                if (job is null)
-                {
-                    await Task.Delay(IdleDelay, stoppingToken);
-                    continue;
-                }
-
-                logger.LogInformation(
-                    "Processing job {JobId} type={JobType} key={JobKey} attempts={Attempts}",
-                    job.Id,
-                    job.JobType,
-                    job.JobKey,
-                    job.Attempts);
-
-                try
-                {
-                    await processor.Process(job, stoppingToken);
-                    await jobs.MarkDone(job.Id, stoppingToken);
-                }
-                catch (Exception e)
-                {
-                    if (job.Attempts >= MaxAttempts)
-                    {
-                        logger.LogError(e, "Job {JobId} permanently failed after {Attempts} attempts", job.Id, job.Attempts);
-                        await jobs.MarkFailed(job.Id, e.Message, stoppingToken);
-                    }
-                    else
-                    {
-                        logger.LogWarning(e, "Job {JobId} failed (attempt {Attempts}/{MaxAttempts}), will retry", job.Id, job.Attempts, MaxAttempts);
-                        await jobs.MarkPendingForRetry(job.Id, e.Message, stoppingToken);
-
-                        var retryDelay = CalculateRetryDelay(job.Attempts);
-                        await Task.Delay(retryDelay, stoppingToken);
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                logger.LogError(e, "Job runner loop error");
-                await Task.Delay(LoopErrorDelay, stoppingToken);
-            }
+            logger.LogWarning("Recovered {RecoveredJobs} stale running jobs", recovered);
         }
 
+        var tasks = Enumerable.Range(0, WorkersCount)
+          .Select(i => RunWorker(i, stoppingToken));
+
+        await Task.WhenAll(tasks);
+
         logger.LogInformation("Job runner stopped");
+    }
+
+    private async Task RunWorker(int workerId, CancellationToken stoppingToken)
+    {
+      while (!stoppingToken.IsCancellationRequested)
+      {
+        try
+        {
+          var job = await jobs.Dequeue(stoppingToken);
+
+          if (job is null)
+          {
+            await Task.Delay(IdleDelay, stoppingToken);
+            continue;
+          }
+
+          logger.LogInformation(
+            "Processing workerId {WorkerId} job {JobId} type={JobType} key={JobKey} attempts={Attempts}",
+            workerId,
+            job.Id,
+            job.JobType,
+            job.JobKey,
+            job.Attempts);
+
+          try
+          {
+            await processor.Process(job, stoppingToken);
+            await jobs.MarkDone(job.Id, stoppingToken);
+          }
+          catch (Exception e)
+          {
+            if (job.Attempts >= MaxAttempts)
+            {
+              logger.LogError(e, "Job {JobId} permanently failed after {Attempts} attempts", job.Id, job.Attempts);
+              await jobs.MarkFailed(job.Id, e.Message, stoppingToken);
+            }
+            else
+            {
+              logger.LogWarning(e, "Job {JobId} failed (attempt {Attempts}/{MaxAttempts}), will retry", job.Id, job.Attempts, MaxAttempts);
+
+              var retryDelay = CalculateRetryDelay(job.Attempts);
+              await jobs.MarkPendingForRetry(job.Id, e.Message, retryDelay, stoppingToken);
+            }
+          }
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+          break;
+        }
+        catch (Exception e)
+        {
+          logger.LogError(e, "WorkerId {WorkerId}: loop error", workerId);
+          await Task.Delay(LoopErrorDelay, stoppingToken);
+        }
+      }
     }
 
     private static TimeSpan CalculateRetryDelay(int attempts)

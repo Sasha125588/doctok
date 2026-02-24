@@ -11,10 +11,6 @@ public sealed record FeedItem(
     string Body,
     int Position);
 
-public sealed record FeedResponse(
-    IReadOnlyList<FeedItem> Items,
-    string? NextCursor);
-
 public static class FeedEndpoint
 {
     public static IEndpointRouteBuilder MapFeed(this IEndpointRouteBuilder app)
@@ -43,7 +39,7 @@ public static class FeedEndpoint
                 ? CursorCodec.Encode(rows.Last().Id)
                 : null;
 
-            return Results.Ok(new FeedResponse(items, nextCursor));
+            return Results.Ok(new Response(items, nextCursor));
         });
 
         return app;

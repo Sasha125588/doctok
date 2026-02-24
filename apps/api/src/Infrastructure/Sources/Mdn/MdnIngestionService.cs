@@ -22,6 +22,7 @@ public sealed class MdnIngestionService(
 {
     public async Task FetchRawAsync(string lang, string externalRef, CancellationToken ct)
     {
+        lang = LanguageHelpers.NormalizeLang(lang);
         externalRef = NormalizeExternalRef(externalRef);
 
         MdnApiDoc doc;
@@ -29,10 +30,10 @@ public sealed class MdnIngestionService(
         {
             doc = await apiClient.FetchAsync(lang, externalRef, ct);
         }
-        catch (HttpRequestException) when (lang != "en-US")
+        catch (HttpRequestException) when (lang != "en")
         {
-            doc = await apiClient.FetchAsync("en-US", externalRef, ct);
-            lang = "en-US";
+            doc = await apiClient.FetchAsync("en", externalRef, ct);
+            lang = "en";
         }
 
         var (text, links) = converter.Convert(doc);
@@ -60,7 +61,7 @@ public sealed class MdnIngestionService(
 
         var internalLinks = links
             .Where(x => x.Kind == "internal" && x.TargetLang is not null && x.TargetExternalRef is not null)
-            .Select(x => (targetLang: LanguageHelpers.ToMdnLang(x.TargetLang!), targetExternalRef: NormalizeExternalRef(x.TargetExternalRef!), label: x.Label))
+            .Select(x => (targetLang: LanguageHelpers.NormalizeLang(x.TargetLang!), targetExternalRef: NormalizeExternalRef(x.TargetExternalRef!), label: x.Label))
             .ToList();
 
         if (internalLinks.Count > 0)

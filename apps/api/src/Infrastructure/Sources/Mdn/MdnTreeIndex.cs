@@ -11,7 +11,11 @@ public sealed class MdnTreeIndex(GitHubTreeClient treeClient) : IDisposable
     private const string MdnRef = "main";
 
     private readonly SemaphoreSlim _lock = new (1, 1);
+
+    // key = мова, значення(List<string>) = slugs  ( чому це називається "slug"? )
+    // "en" -> ["web/API/Fetch_API", ...]
     private Task<Dictionary<string, List<string>>>? _buildTask;
+
     private DateTimeOffset _builtAt = DateTimeOffset.MinValue;
     private static readonly TimeSpan CacheTtl = TimeSpan.FromHours(12);
 

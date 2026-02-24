@@ -16,6 +16,7 @@ using Infrastructure.Persistence.Repos.Raw;
 using Infrastructure.Persistence.Repos.Resolve;
 using Infrastructure.Persistence.Repos.Sources;
 using Infrastructure.Persistence.Repos.Topics;
+using Infrastructure.Sources.Common;
 using Infrastructure.Sources.GitHub;
 using Infrastructure.Sources.Mdn;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -98,6 +99,8 @@ builder.Services.AddHttpClient<MdnApiClient>(client =>
 
 builder.Services.AddHttpClient<GitHubTreeClient>(client =>
 {
+    client.BaseAddress = new Uri(gh.ApiBaseUrl);
+
     client.DefaultRequestHeaders.UserAgent.Clear();
     client.DefaultRequestHeaders.UserAgent.Add(
         new System.Net.Http.Headers.ProductInfoHeaderValue(gh.UserAgent, "1.0"));
@@ -113,6 +116,8 @@ builder.Services.AddHttpClient<GitHubTreeClient>(client =>
 builder.Services.AddSingleton<MdnTreeIndex>();
 builder.Services.AddSingleton<MdnContentConverter>();
 builder.Services.AddSingleton<MdnIngestionService>();
+builder.Services.AddSingleton<MdnSourceJobHandler>();
+builder.Services.AddSingleton<ISourceJobHandler>(sp => sp.GetRequiredService<MdnSourceJobHandler>());
 builder.Services.AddSingleton<Api.Features.Admin.Mdn.Preload.Handler>();
 
 builder.Services.AddSingleton<RawDocumentsRepository>();

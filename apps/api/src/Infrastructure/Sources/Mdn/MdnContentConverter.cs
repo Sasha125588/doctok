@@ -180,7 +180,7 @@ public sealed class MdnContentConverter
                         sb.Append('[');
                         ProcessNode(el, sb, links);
                         sb.Append("](");
-                        sb.Append(slug);
+                        sb.Append(slug.ToLowerInvariant());
                         sb.Append(')');
                     }
                     else
