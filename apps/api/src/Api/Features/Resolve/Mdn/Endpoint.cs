@@ -7,7 +7,7 @@ public static class ResolveMdnEndpoint
         app.MapGet("/resolve/mdn/{*externalRef}", async (
             string externalRef,
             string? lang,
-            Handler handler,
+            ResolveMdnHandler handler,
             CancellationToken ct) =>
         {
             if (string.IsNullOrWhiteSpace(externalRef))

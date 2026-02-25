@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.RegularExpressions;
+using Domain.Common;
 
 namespace Infrastructure.Cards;
 
@@ -36,7 +37,7 @@ public sealed class FastCardGenerator
 
             if (!string.IsNullOrWhiteSpace(first))
             {
-                cards.Add(new FastCard("summary", null, Clean(first), pos++));
+                cards.Add(new FastCard(CardKinds.Summary, null, Clean(first), pos++));
             }
         }
 
@@ -128,7 +129,7 @@ public sealed class FastCardGenerator
                 var code = m.Groups["code"].Value.Trim();
                 if (code.Length > 20)
                 {
-                    cards.Add(new FastCard("example", null, code, pos++));
+                    cards.Add(new FastCard(CardKinds.Example, null, code, pos++));
                 }
             }
 
@@ -170,7 +171,7 @@ public sealed class FastCardGenerator
             sb.AppendLine();
             sb.Append("```");
 
-            cards.Add(new FastCard("example", heading, sb.ToString().Trim(), pos++));
+            cards.Add(new FastCard(CardKinds.Example, heading, sb.ToString().Trim(), pos++));
         }
 
         return pos;
@@ -198,7 +199,7 @@ public sealed class FastCardGenerator
                 continue;
             }
 
-            cards.Add(new FastCard("fact", null, text, pos++));
+            cards.Add(new FastCard(CardKinds.Fact, null, text, pos++));
         }
 
         return pos;

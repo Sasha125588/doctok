@@ -9,11 +9,12 @@ public static class LanguageHelpers
       return "en";
     }
 
-    return lang.Trim().ToLowerInvariant() switch
+    var normalized = lang.Trim().ToLowerInvariant();
+    return normalized switch
     {
       "en" or "en-us" => "en",
       "ru" => "ru",
-      _ => lang.Trim().ToLowerInvariant()
+      _ => normalized
     };
   }
 
