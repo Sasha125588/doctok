@@ -1,8 +1,9 @@
 using System.Text.Json;
 using Domain.Common;
+using Infrastructure.Persistence.Repos.Jobs;
 using Infrastructure.Sources.Common;
 
-namespace Infrastructure.Persistence.Repos.Jobs;
+namespace Infrastructure.Jobs;
 
 public sealed class JobProcessor(IEnumerable<ISourceJobHandler> sourceHandlers)
 {

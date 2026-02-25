@@ -1,3 +1,4 @@
+using System.Data.Common;
 using System.Globalization;
 using System.Text;
 using Dapper;
@@ -17,8 +18,8 @@ public sealed class CardsRepository(IDbConnectionFactory dbf)
         var cardList = cards as IReadOnlyList<CardInsert> ?? cards.ToList();
 
         using var db = dbf.Create();
-        db.Open();
-        using var tx = db.BeginTransaction();
+        await ((DbConnection)db).OpenAsync(ct);
+        using var tx = await ((DbConnection)db).BeginTransactionAsync(ct);
 
         const string deleteSql = """
                                  delete from public.cards
@@ -55,7 +56,7 @@ public sealed class CardsRepository(IDbConnectionFactory dbf)
             await db.ExecuteAsync(new CommandDefinition(sb.ToString(), parameters, transaction: tx, cancellationToken: ct));
         }
 
-        tx.Commit();
+        await tx.CommitAsync(ct);
     }
 }
 

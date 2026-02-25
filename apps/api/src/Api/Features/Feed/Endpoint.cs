@@ -24,9 +24,9 @@ public static class FeedEndpoint
         {
             var take = Math.Clamp(limit ?? 20, 1, 50);
             var resolvedLang = LanguageHelpers.NormalizeLang(lang ?? "en");
-            var cursorId = CursorCodec.Decode(cursor);
+            var feedCursor = CursorCodec.Decode(cursor);
 
-            var rows = await feedRepo.GetPage(cursorId, resolvedLang, take, ct);
+            var rows = await feedRepo.GetPage(feedCursor, resolvedLang, take, ct);
             var items = rows.Select(r => new FeedItem(
                 r.Id,
                 r.Topic_Slug,
@@ -36,7 +36,7 @@ public static class FeedEndpoint
                 r.Position)).ToList();
 
             var nextCursor = rows.Count == take
-                ? CursorCodec.Encode(rows.Last().Id)
+                ? CursorCodec.Encode(new FeedCursor(rows[^1].Popularity, rows[^1].Id))
                 : null;
 
             return Results.Ok(new Response(items, nextCursor));

@@ -6,7 +6,7 @@ public static class Endpoint
   {
     app.MapPost("/api/admin/mdn/preload", async (
         Request req,
-        Handler handler,
+        PreloadMdnHandler handler,
         CancellationToken ct) =>
       {
         var res = await handler.Handle(

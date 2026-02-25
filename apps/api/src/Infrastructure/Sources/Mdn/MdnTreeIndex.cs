@@ -35,16 +35,18 @@ public sealed class MdnTreeIndex(GitHubTreeClient treeClient) : IDisposable
 
     private async Task<Dictionary<string, List<string>>> GetOrBuildAsync(CancellationToken ct)
     {
-        if (_buildTask != null && DateTimeOffset.UtcNow - _builtAt < CacheTtl)
-            return await _buildTask.WaitAsync(ct);
+        var task = _buildTask;
+        if (task != null && !task.IsFaulted && !task.IsCanceled && DateTimeOffset.UtcNow - _builtAt < CacheTtl)
+            return await task.WaitAsync(ct);
 
         await _lock.WaitAsync(ct);
         try
         {
-            if (_buildTask != null && DateTimeOffset.UtcNow - _builtAt < CacheTtl)
-                return await _buildTask.WaitAsync(ct);
+            task = _buildTask;
+            if (task != null && !task.IsFaulted && !task.IsCanceled && DateTimeOffset.UtcNow - _builtAt < CacheTtl)
+                return await task.WaitAsync(ct);
 
-            _buildTask = BuildIndexAsync(ct);
+            _buildTask = BuildIndexAsync(CancellationToken.None);
             _builtAt = DateTimeOffset.UtcNow;
 
             return await _buildTask.WaitAsync(ct);
@@ -60,11 +62,12 @@ public sealed class MdnTreeIndex(GitHubTreeClient treeClient) : IDisposable
         var contentTask = treeClient.GetFilePathsAsync(MdnOwner, MdnContentRepo, MdnRef, ct);
         var translatedTask = treeClient.GetFilePathsAsync(MdnOwner, MdnTranslatedRepo, MdnRef, ct);
 
-        await Task.WhenAll(contentTask, translatedTask);
+        var content = await contentTask;
+        var translated = await translatedTask;
 
         var index = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var path in contentTask.Result.Concat(translatedTask.Result))
+        foreach (var path in content.Concat(translated))
         {
             if (!path.EndsWith("/index.md", StringComparison.OrdinalIgnoreCase)) continue;
 

@@ -38,4 +38,26 @@ public sealed class RawDocumentsRepository(IDbConnectionFactory dbf)
                 new { sourceId, lang, externalRef, title, content, pageType, popularity, sourceModifiedAt, otherLocales },
                 cancellationToken: ct));
     }
+
+    public async Task<RawDocumentForCards?> GetForCardGeneration(
+        long sourceId,
+        string lang,
+        string externalRef,
+        CancellationToken ct)
+    {
+        const string query = """
+                             select rd.id, rd.content, td.topic_id
+                             from raw_documents rd
+                             join topic_documents td on td.raw_document_id = rd.id
+                             where rd.source_id = @sourceId
+                               and rd.lang = @lang
+                               and rd.external_ref = @externalRef
+                             """;
+
+        using var db = dbf.Create();
+        return await db.QuerySingleOrDefaultAsync<RawDocumentForCards>(
+            new CommandDefinition(query, new { sourceId, lang, externalRef }, cancellationToken: ct));
+    }
+
+    public sealed record RawDocumentForCards(long Id, string Content, long Topic_Id);
 }

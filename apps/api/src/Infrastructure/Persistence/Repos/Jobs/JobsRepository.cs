@@ -16,6 +16,8 @@ public sealed class JobsRepository(IDbConnectionFactory dbf)
                                  payload = excluded.payload,
                                  status = 'pending',
                                  last_error = null,
+                                 attempts = 0,
+                                 next_attempt_at = now(),
                                  updated_at = now()
                            returning id
                            """;
