@@ -1,18 +1,13 @@
 using Api;
-using Api.Features.Admin.Mdn.Preload;
-using Api.Features.Feed;
-using Api.Features.Resolve.Mdn;
-using Api.Features.Session.Me;
-using Api.Features.System.DbPing;
-using Api.Features.System.Health;
-using Api.Features.Topics;
-using Api.Features.Topics._slug_.Links;
+using Api.Extensions;
 using Infrastructure;
 using Scalar.AspNetCore;
 
 DotNetEnv.Env.TraversePath().Load();
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddEndpoints(typeof(Program).Assembly);
 
 builder.Services.AddWebServices(builder.Configuration);
 builder.Services.AddInfrastructureServices(builder.Configuration);
@@ -32,13 +27,6 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapHealth();
-app.MapMe();
-app.MapDbPing();
-app.MapFeed();
-app.MapTopics();
-app.MapTopicsLinks();
-app.MapResolveMdn();
-app.MapAdminMdnPreload();
+app.MapEndpoints();
 
 app.Run();

@@ -46,19 +46,19 @@ public static class WebServiceRegistration
         {
           ValidateIssuer = true,
           ValidIssuer = supabaseJwtOptions.Issuer,
+
           ValidateAudience = true,
           ValidAudience = supabaseJwtOptions.JwtAudience,
+
           ValidateLifetime = true,
           ClockSkew = TimeSpan.FromMinutes(2),
           ValidateIssuerSigningKey = true,
         };
       });
 
-    services.AddAuthorization(options =>
-    {
-      options.AddPolicy("Admin", policy =>
+    services.AddAuthorizationBuilder()
+      .AddPolicy("Admin", policy =>
         policy.RequireClaim("user_role", "admin"));
-    });
 
     services.AddSingleton<Features.Resolve.Mdn.ResolveMdnHandler>();
     services.AddSingleton<Features.Admin.Mdn.Preload.PreloadMdnHandler>();

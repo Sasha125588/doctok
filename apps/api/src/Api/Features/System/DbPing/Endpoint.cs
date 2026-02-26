@@ -1,11 +1,12 @@
+using Api.Extensions;
 using Dapper;
 using Infrastructure.Persistence.Db;
 
 namespace Api.Features.System.DbPing;
 
-public static class DbPingEndpoint
+public sealed class DbPingEndpoint : IEndpoint
 {
-    public static IEndpointRouteBuilder MapDbPing(this IEndpointRouteBuilder app)
+    public void Map(IEndpointRouteBuilder app)
     {
         app.MapGet("/db/ping", async (IDbConnectionFactory dbf, CancellationToken ct = default) =>
         {
@@ -20,7 +21,5 @@ public static class DbPingEndpoint
         .WithSummary("Checks DB connectivity")
         .Produces(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status401Unauthorized);
-
-        return app;
     }
 }
