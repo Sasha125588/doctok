@@ -1,11 +1,12 @@
 using System.Security.Claims;
 using Api.Auth;
+using Api.Extensions;
 
 namespace Api.Features.Session.Me;
 
-public static class MeEndpoint
+public sealed class MeEndpoint : IEndpoint
 {
-    public static IEndpointRouteBuilder MapMe(this IEndpointRouteBuilder app)
+    public void Map(IEndpointRouteBuilder app)
     {
         app.MapGet("/me", (ClaimsPrincipal user) =>
         {
@@ -18,7 +19,5 @@ public static class MeEndpoint
         .WithSummary("Returns the current user id from Supabase JWT")
         .Produces<Response>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status401Unauthorized);
-
-        return app;
     }
 }

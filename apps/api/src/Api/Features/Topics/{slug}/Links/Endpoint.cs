@@ -1,11 +1,12 @@
+using Api.Extensions;
 using Domain.Common;
 using Infrastructure.Persistence.Repos.Topics;
 
 namespace Api.Features.Topics._slug_.Links;
 
-public static class TopicsLinksEndpoint
+public sealed class TopicsLinksEndpoint : IEndpoint
 {
-    public static IEndpointRouteBuilder MapTopicsLinks(this IEndpointRouteBuilder app)
+    public void Map(IEndpointRouteBuilder app)
     {
         app.MapGet("/topics/{slug}/links", async (
             string slug,
@@ -17,7 +18,5 @@ public static class TopicsLinksEndpoint
             var links = await topicLinksRepo.GetLinkedTopics(slug, resolvedLang, ct);
             return Results.Ok(links);
         });
-
-        return app;
     }
 }

@@ -1,3 +1,4 @@
+using Api.Extensions;
 using Domain.Common;
 using Infrastructure.Persistence.Repos.Feed;
 
@@ -11,9 +12,9 @@ public sealed record FeedItem(
     string Body,
     int Position);
 
-public static class FeedEndpoint
+public sealed class FeedEndpoint : IEndpoint
 {
-    public static IEndpointRouteBuilder MapFeed(this IEndpointRouteBuilder app)
+    public void Map(IEndpointRouteBuilder app)
     {
         app.MapGet("/feed", async (
             string? cursor,
@@ -41,7 +42,5 @@ public static class FeedEndpoint
 
             return Results.Ok(new Response(items, nextCursor));
         });
-
-        return app;
     }
 }

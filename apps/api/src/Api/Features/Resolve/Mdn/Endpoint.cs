@@ -1,8 +1,10 @@
+using Api.Extensions;
+
 namespace Api.Features.Resolve.Mdn;
 
-public static class ResolveMdnEndpoint
+public sealed class ResolveMdnEndpoint : IEndpoint
 {
-    public static IEndpointRouteBuilder MapResolveMdn(this IEndpointRouteBuilder app)
+    public void Map(IEndpointRouteBuilder app)
     {
         app.MapGet("/resolve/mdn/{*externalRef}", async (
             string externalRef,
@@ -20,7 +22,5 @@ public static class ResolveMdnEndpoint
 
             return Results.Ok(res);
         });
-
-        return app;
     }
 }

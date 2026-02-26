@@ -1,11 +1,12 @@
+using Api.Extensions;
 using Domain.Common;
 using Infrastructure.Persistence.Repos.Topics;
 
 namespace Api.Features.Topics;
 
-public static class TopicsEndpoint
+public sealed class TopicsEndpoint : IEndpoint
 {
-    public static IEndpointRouteBuilder MapTopics(this IEndpointRouteBuilder app)
+    public void Map(IEndpointRouteBuilder app)
     {
         app.MapGet("/topics/{slug}", async (
             string slug,
@@ -27,7 +28,5 @@ public static class TopicsEndpoint
                 c.Body,
                 c.Position)));
         });
-
-        return app;
     }
 }
