@@ -5,32 +5,38 @@ namespace Infrastructure.Persistence.Repos.Topics;
 
 public sealed class TopicReadRepository(IDbConnectionFactory dbf)
 {
-    public async Task<IReadOnlyList<TopicCardRow>> GetCards(
+    public async Task<IReadOnlyList<TopicPostRow>> GetPosts(
         string slug,
         string lang,
         CancellationToken ct)
     {
       const string query = """
                            select
-                             c.id,
-                             c.kind,
-                             c.body,
-                             c.position
+                             p.id,
+                             p.kind,
+                             p.body,
+                             p.position,
+                             p.like_count,
+                             p.dislike_count,
+                             p.comment_count
                            from topics t
-                           join cards c on c.topic_id = t.id
+                           join posts p on p.topic_id = t.id
                            where t.slug = @slug
-                             and c.lang = @lang
-                           order by c.position
+                             and p.lang = @lang
+                           order by p.position
                            """;
 
       using var db = dbf.Create();
 
-      return (await db.QueryAsync<TopicCardRow>(new CommandDefinition(query, new { slug, lang }, cancellationToken: ct))).ToList();
+      return (await db.QueryAsync<TopicPostRow>(new CommandDefinition(query, new { slug, lang }, cancellationToken: ct))).ToList();
     }
 
-    public sealed record TopicCardRow(
+    public sealed record TopicPostRow(
         long Id,
         string Kind,
         string Body,
-        int Position);
+        int Position,
+        int Like_Count,
+        int Dislike_Count,
+        int Comment_Count);
 }

@@ -1,26 +1,26 @@
-using Infrastructure.Persistence.Repos.Cards;
+using Infrastructure.Persistence.Repos.Posts;
 using Infrastructure.Persistence.Repos.Raw;
 using Infrastructure.Persistence.Repos.Sources;
 
-namespace Infrastructure.Cards;
+namespace Infrastructure.Posts;
 
-public sealed class FastCardGenerationService(
+public sealed class FastPostGenerationService(
     RawDocumentsRepository rawDocs,
-    CardsRepository cardsRepo,
+    PostsRepository postsRepo,
     SourcesRepository sources,
-    FastCardGenerator gen)
+    FastPostGenerator gen)
 {
     public async Task GenerateAsync(string sourceCode, string lang, string externalRef, CancellationToken ct)
     {
         var sourceId = await sources.GetSourceIdByCode(sourceCode, ct);
 
-        var row = await rawDocs.GetForCardGeneration(sourceId, lang, externalRef, ct)
+        var row = await rawDocs.GetForPostGeneration(sourceId, lang, externalRef, ct)
                   ?? throw new InvalidOperationException(
                       $"Raw document not found: source={sourceCode}, lang={lang}, ref={externalRef}");
 
-        var cards = gen.Generate(row.Content)
-            .Select(c => new CardInsert(c.Kind, c.Title, c.Body, c.Position));
+        var posts = gen.Generate(row.Content)
+            .Select(post => new PostInsert(post.Kind, post.Title, post.Body, post.Position));
 
-        await cardsRepo.ReplaceForDocument(row.Id, row.Topic_Id, lang, cards, ct);
+        await postsRepo.ReplaceForDocument(row.Id, row.Topic_Id, lang, posts, ct);
     }
 }

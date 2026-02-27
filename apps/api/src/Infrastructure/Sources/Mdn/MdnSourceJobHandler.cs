@@ -1,12 +1,12 @@
 using Domain.Common;
-using Infrastructure.Cards;
+using Infrastructure.Posts;
 using Infrastructure.Sources.Common;
 
 namespace Infrastructure.Sources.Mdn;
 
 public sealed class MdnSourceJobHandler(
   MdnIngestionService ingestion,
-  FastCardGenerationService cardGeneration)
+  FastPostGenerationService postGeneration)
   : ISourceJobHandler
 {
   public string SourceCode => SourceCodes.Mdn;
@@ -14,6 +14,6 @@ public sealed class MdnSourceJobHandler(
   public Task FetchRawAsync(string lang, string externalRef, CancellationToken ct)
     => ingestion.FetchRawAsync(lang, externalRef, ct);
 
-  public Task GenerateFastCardsAsync(string lang, string externalRef, CancellationToken ct)
-    => cardGeneration.GenerateAsync(SourceCode, lang, externalRef, ct);
+  public Task GenerateFastPostsAsync(string lang, string externalRef, CancellationToken ct)
+    => postGeneration.GenerateAsync(SourceCode, lang, externalRef, ct);
 }

@@ -1,13 +1,15 @@
-using Infrastructure.Cards;
 using Infrastructure.Jobs;
 using Infrastructure.Persistence.Db;
-using Infrastructure.Persistence.Repos.Cards;
+using Infrastructure.Persistence.Repos.Comments;
 using Infrastructure.Persistence.Repos.Feed;
 using Infrastructure.Persistence.Repos.Jobs;
+using Infrastructure.Persistence.Repos.Posts;
 using Infrastructure.Persistence.Repos.Raw;
 using Infrastructure.Persistence.Repos.Resolve;
 using Infrastructure.Persistence.Repos.Sources;
 using Infrastructure.Persistence.Repos.Topics;
+using Infrastructure.Persistence.Repos.Votes;
+using Infrastructure.Posts;
 using Infrastructure.Sources.Common;
 using Infrastructure.Sources.GitHub;
 using Infrastructure.Sources.Mdn;
@@ -44,10 +46,12 @@ public static class InfrastructureServiceRegistration
     services.AddSingleton<SourcesRepository>();
     services.AddSingleton<ResolveRepository>();
     services.AddSingleton<JobsRepository>();
-    services.AddSingleton<CardsRepository>();
+    services.AddSingleton<PostsRepository>();
     services.AddSingleton<FeedRepository>();
     services.AddSingleton<TopicReadRepository>();
     services.AddSingleton<TopicLinksRepository>();
+    services.AddSingleton<VotesRepository>();
+    services.AddSingleton<CommentsRepository>();
 
     // HTTP clients
     services.AddSingleton(mdnApiOptions);
@@ -82,9 +86,9 @@ public static class InfrastructureServiceRegistration
     services.AddSingleton<MdnSourceJobHandler>();
     services.AddSingleton<ISourceJobHandler>(sp => sp.GetRequiredService<MdnSourceJobHandler>());
 
-    // Card generation
-    services.AddSingleton<FastCardGenerator>();
-    services.AddSingleton<FastCardGenerationService>();
+    // Post generation
+    services.AddSingleton<FastPostGenerator>();
+    services.AddSingleton<FastPostGenerationService>();
 
     // Background jobs
     services.AddSingleton<JobProcessor>();

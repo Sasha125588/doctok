@@ -39,7 +39,7 @@ public sealed class RawDocumentsRepository(IDbConnectionFactory dbf)
                 cancellationToken: ct));
     }
 
-    public async Task<RawDocumentForCards?> GetForCardGeneration(
+    public async Task<RawDocumentForPosts?> GetForPostGeneration(
         long sourceId,
         string lang,
         string externalRef,
@@ -55,9 +55,9 @@ public sealed class RawDocumentsRepository(IDbConnectionFactory dbf)
                              """;
 
         using var db = dbf.Create();
-        return await db.QuerySingleOrDefaultAsync<RawDocumentForCards>(
+        return await db.QuerySingleOrDefaultAsync<RawDocumentForPosts>(
             new CommandDefinition(query, new { sourceId, lang, externalRef }, cancellationToken: ct));
     }
 
-    public sealed record RawDocumentForCards(long Id, string Content, long Topic_Id);
+    public sealed record RawDocumentForPosts(long Id, string Content, long Topic_Id);
 }

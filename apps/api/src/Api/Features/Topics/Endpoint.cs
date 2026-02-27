@@ -15,18 +15,21 @@ public sealed class TopicsEndpoint : IEndpoint
             CancellationToken ct) =>
         {
             var resolvedLang = LanguageHelpers.NormalizeLang(lang ?? "en");
-            var cards = await topicRepo.GetCards(slug, resolvedLang, ct);
+            var posts = await topicRepo.GetPosts(slug, resolvedLang, ct);
 
-            if (cards.Count == 0)
+            if (posts.Count == 0)
             {
                 return Results.NotFound();
             }
 
-            return Results.Ok(cards.Select(c => new Response(
-                c.Id,
-                c.Kind,
-                c.Body,
-                c.Position)));
+            return Results.Ok(posts.Select(post => new Response(
+                post.Id,
+                post.Kind,
+                post.Body,
+                post.Position,
+                post.Like_Count,
+                post.Dislike_Count,
+                post.Comment_Count)));
         });
     }
 }

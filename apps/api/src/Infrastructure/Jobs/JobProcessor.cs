@@ -34,7 +34,7 @@ public sealed class JobProcessor(IEnumerable<ISourceJobHandler> sourceHandlers)
                 return;
 
             case JobTypes.GenerateFast:
-                await sourceHandler.GenerateFastCardsAsync(lang, externalRef, ct);
+                await sourceHandler.GenerateFastPostsAsync(lang, externalRef, ct);
                 return;
 
             default:

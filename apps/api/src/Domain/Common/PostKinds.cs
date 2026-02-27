@@ -1,6 +1,6 @@
 namespace Domain.Common;
 
-public static class CardKinds
+public static class PostKinds
 {
     public const string Summary = "summary";
     public const string Fact = "fact";

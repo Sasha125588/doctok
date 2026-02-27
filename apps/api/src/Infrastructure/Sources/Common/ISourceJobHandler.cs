@@ -6,5 +6,5 @@ public interface ISourceJobHandler
 
   Task FetchRawAsync(string lang, string externalRef, CancellationToken ct);
 
-  Task GenerateFastCardsAsync(string lang, string externalRef, CancellationToken ct);
+  Task GenerateFastPostsAsync(string lang, string externalRef, CancellationToken ct);
 }

@@ -2,9 +2,9 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Domain.Common;
 
-namespace Infrastructure.Cards;
+namespace Infrastructure.Posts;
 
-public sealed class FastCardGenerator
+public sealed class FastPostGenerator
 {
     private static readonly Regex MdnMacro =
         new (@"\{\{[^}]*\}\}", RegexOptions.Compiled);
@@ -18,17 +18,17 @@ public sealed class FastCardGenerator
     private static readonly Regex CodeFence =
         new (@"```[a-z]*\n(?<code>[\s\S]*?)```", RegexOptions.Compiled);
 
-    public IReadOnlyList<FastCard> Generate(string markdown)
+    public IReadOnlyList<FastPost> Generate(string markdown)
     {
         ArgumentNullException.ThrowIfNull(markdown);
         markdown = MdnMacro.Replace(markdown, string.Empty);
 
-        var cards = new List<FastCard>();
+        var posts = new List<FastPost>();
         var pos = 0;
 
         var sections = SplitIntoSections(markdown);
 
-        // Preamble (before first ## heading) → summary card
+        // Preamble (before first ## heading) → summary post
         if (sections.Count > 0 && sections[0].Title is null)
         {
             var first = sections[0].Body
@@ -37,7 +37,7 @@ public sealed class FastCardGenerator
 
             if (!string.IsNullOrWhiteSpace(first))
             {
-                cards.Add(new FastCard(CardKinds.Summary, null, Clean(first), pos++));
+              posts.Add(new FastPost(PostKinds.Summary, null, Clean(first), pos++));
             }
         }
 
@@ -51,18 +51,18 @@ public sealed class FastCardGenerator
             switch (ClassifySection(section.Title))
             {
                 case SectionType.Examples:
-                    pos = AddExampleCards(cards, section.Body, pos);
+                    pos = AddExamplePosts(posts, section.Body, pos);
                     break;
 
                 case SectionType.Description:
-                    pos = AddDescriptionFacts(cards, section.Body, pos);
+                    pos = AddSummaryPosts(posts, section.Body, pos);
                     break;
 
                 // SkipList and Other: ignore
             }
         }
 
-        return cards;
+        return posts;
     }
 
     private static IReadOnlyList<Section> SplitIntoSections(string markdown)
@@ -117,7 +117,7 @@ public sealed class FastCardGenerator
         return SectionType.Other;
     }
 
-    private static int AddExampleCards(List<FastCard> cards, string body, int pos)
+    private static int AddExamplePosts(List<FastPost> posts, string body, int pos)
     {
         var subMatches = SubSectionSplit.Matches(body);
 
@@ -129,7 +129,7 @@ public sealed class FastCardGenerator
                 var code = m.Groups["code"].Value.Trim();
                 if (code.Length > 20)
                 {
-                    cards.Add(new FastCard(CardKinds.Example, null, code, pos++));
+                  posts.Add(new FastPost(PostKinds.Example, null, code, pos++));
                 }
             }
 
@@ -171,13 +171,13 @@ public sealed class FastCardGenerator
             sb.AppendLine();
             sb.Append("```");
 
-            cards.Add(new FastCard(CardKinds.Example, heading, sb.ToString().Trim(), pos++));
+            posts.Add(new FastPost(PostKinds.Example, heading, sb.ToString().Trim(), pos++));
         }
 
         return pos;
     }
 
-    private static int AddDescriptionFacts(List<FastCard> cards, string body, int pos)
+    private static int AddSummaryPosts(List<FastPost> posts, string body, int pos)
     {
         foreach (var line in body.Split('\n'))
         {
@@ -199,7 +199,7 @@ public sealed class FastCardGenerator
                 continue;
             }
 
-            cards.Add(new FastCard(CardKinds.Fact, null, text, pos++));
+            posts.Add(new FastPost(PostKinds.Fact, null, text, pos++));
         }
 
         return pos;
@@ -223,4 +223,4 @@ public sealed class FastCardGenerator
     }
 }
 
-public sealed record FastCard(string Kind, string? Title, string Body, int Position);
+public sealed record FastPost(string Kind, string? Title, string Body, int Position);

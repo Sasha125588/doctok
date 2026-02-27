@@ -62,6 +62,7 @@ public static class WebServiceRegistration
 
     services.AddSingleton<Features.Resolve.Mdn.ResolveMdnHandler>();
     services.AddSingleton<Features.Admin.Mdn.Preload.PreloadMdnHandler>();
+    services.AddSingleton<Features.Posts.Comments.Create.CreateCommentHandler>();
 
     return services;
   }
