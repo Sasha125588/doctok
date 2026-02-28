@@ -8,6 +8,7 @@ namespace Api.Features.Feed;
 
 public sealed record FeedItem(
   long PostId,
+  string Title,
   string TopicSlug,
   string TopicTitle,
   string Kind,
@@ -43,6 +44,7 @@ public sealed class FeedEndpoint : IEndpoint
 
         var items = rows.Select(r => new FeedItem(
           r.Id,
+          r.Title,
           r.Topic_Slug,
           r.Topic_Title,
           r.Kind,

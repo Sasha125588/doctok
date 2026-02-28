@@ -46,7 +46,7 @@ public sealed class RawDocumentsRepository(IDbConnectionFactory dbf)
         CancellationToken ct)
     {
         const string query = """
-                             select rd.id, rd.content, td.topic_id
+                             select rd.id, rd.title, rd.content, td.topic_id
                              from raw_documents rd
                              join topic_documents td on td.raw_document_id = rd.id
                              where rd.source_id = @sourceId
@@ -59,5 +59,5 @@ public sealed class RawDocumentsRepository(IDbConnectionFactory dbf)
             new CommandDefinition(query, new { sourceId, lang, externalRef }, cancellationToken: ct));
     }
 
-    public sealed record RawDocumentForPosts(long Id, string Content, long Topic_Id);
+    public sealed record RawDocumentForPosts(long Id, string Title, string Content, long Topic_Id);
 }

@@ -17,6 +17,7 @@ public sealed class FeedRepository(IDbConnectionFactory dbf)
                        select
                          p.id,
                          p.kind,
+                         p.title,
                          p.body,
                          p.position,
                          p.like_count,
@@ -61,6 +62,7 @@ public sealed class FeedRepository(IDbConnectionFactory dbf)
   public sealed record FeedRow(
     long Id,
     string Kind,
+    string Title,
     string Body,
     int Position,
     int Like_Count,

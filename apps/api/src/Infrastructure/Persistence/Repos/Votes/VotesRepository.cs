@@ -96,12 +96,12 @@ public sealed class VotesRepository(IDbConnectionFactory dbf)
     {
         var valueText = value == VoteValue.Like ? "like" : "dislike";
 
-        using var db = dbf.Create();
-        await ((DbConnection)db).OpenAsync(ct);
-        await using var tx = await ((DbConnection)db).BeginTransactionAsync(ct);
+        var conn = (DbConnection)dbf.Create();
+        await conn.OpenAsync(ct);
+        await using var tx = await conn.BeginTransactionAsync(ct);
 
         // Один roundtrip, всё атомарно
-        var row = await db.QuerySingleAsync<DbRow>(
+        var row = await conn.QuerySingleAsync<DbRow>(
             new CommandDefinition(
                 ToggleSql,
                 new { post_id = postId, user_id = userId, value = valueText },

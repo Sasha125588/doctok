@@ -13,6 +13,7 @@ public sealed class TopicReadRepository(IDbConnectionFactory dbf)
       const string query = """
                            select
                              p.id,
+                             p.title,
                              p.kind,
                              p.body,
                              p.position,
@@ -33,6 +34,7 @@ public sealed class TopicReadRepository(IDbConnectionFactory dbf)
 
     public sealed record TopicPostRow(
         long Id,
+        string Title,
         string Kind,
         string Body,
         int Position,

@@ -24,6 +24,7 @@ public sealed class TopicsEndpoint : IEndpoint
 
             return Results.Ok(posts.Select(post => new Response(
                 post.Id,
+                post.Title,
                 post.Kind,
                 post.Body,
                 post.Position,

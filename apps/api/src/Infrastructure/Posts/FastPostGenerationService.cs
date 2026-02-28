@@ -1,25 +1,37 @@
 using Infrastructure.Persistence.Repos.Posts;
 using Infrastructure.Persistence.Repos.Raw;
 using Infrastructure.Persistence.Repos.Sources;
+using Infrastructure.Posts.Title;
 
 namespace Infrastructure.Posts;
 
 public sealed class FastPostGenerationService(
-    RawDocumentsRepository rawDocs,
+    RawDocumentsRepository rawDocsRepo,
     PostsRepository postsRepo,
-    SourcesRepository sources,
-    FastPostGenerator gen)
+    SourcesRepository sourcesRepo,
+    FastPostGenerator postGen,
+    ITitleGenerator titleGen)
 {
     public async Task GenerateAsync(string sourceCode, string lang, string externalRef, CancellationToken ct)
     {
-        var sourceId = await sources.GetSourceIdByCode(sourceCode, ct);
+        var sourceId = await sourcesRepo.GetSourceIdByCode(sourceCode, ct);
 
-        var row = await rawDocs.GetForPostGeneration(sourceId, lang, externalRef, ct)
+        var row = await rawDocsRepo.GetForPostGeneration(sourceId, lang, externalRef, ct)
                   ?? throw new InvalidOperationException(
                       $"Raw document not found: source={sourceCode}, lang={lang}, ref={externalRef}");
 
-        var posts = gen.Generate(row.Content)
-            .Select(post => new PostInsert(post.Kind, post.Title, post.Body, post.Position));
+        var rawPosts = postGen.Generate(row.Content).ToList();
+
+        var titleTasks = rawPosts.Select(post => titleGen.GenerateTitleAsync(post.Kind, row.Title, post.Body, lang, ct));
+
+        var titles = await Task.WhenAll(titleTasks);
+
+        var posts = rawPosts.Zip(
+          titles, (post, title) => new PostInsert(
+            post.Kind,
+            title ?? post.Title,
+            post.Body,
+            post.Position)).ToList();
 
         await postsRepo.ReplaceForDocument(row.Id, row.Topic_Id, lang, posts, ct);
     }
