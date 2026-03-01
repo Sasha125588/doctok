@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace Infrastructure.Sources.GitHub;
+namespace Infrastructure.GitHub;
 
 public sealed class GitHubTreeClient(HttpClient http)
 {

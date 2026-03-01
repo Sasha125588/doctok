@@ -17,7 +17,12 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.MapScalarApiReference();
+    app.MapScalarApiReference("/docs", options =>
+    {
+      options.WithTitle("DocTok");
+      options.DarkMode = true;
+      options.AddPreferredSecuritySchemes("BearerAuth");
+    });
 }
 
 app.UseExceptionHandler();

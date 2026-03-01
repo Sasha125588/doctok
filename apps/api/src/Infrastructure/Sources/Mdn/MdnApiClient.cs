@@ -3,12 +3,12 @@ using Domain.Common;
 
 namespace Infrastructure.Sources.Mdn;
 
-public sealed class MdnApiClient(HttpClient http, MdnApiOptions options)
+public sealed class MdnApiClient(HttpClient http)
 {
     public async Task<MdnApiDoc> FetchAsync(string lang, string slug, CancellationToken ct)
     {
         var mdnLang = LanguageHelpers.ToMdnLang(lang);
-        var url = $"{options.BaseUrl}/{mdnLang}/docs/{slug}/index.json";
+        var url = $"{Constants.BaseUrl}/{mdnLang}/docs/{slug}/index.json";
 
         using var resp = await http.GetAsync(new Uri(url), ct);
         resp.EnsureSuccessStatusCode();

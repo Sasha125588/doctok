@@ -1,4 +1,4 @@
-namespace Infrastructure.Sources.Common;
+namespace Infrastructure.Jobs;
 
 public interface ISourceJobHandler
 {

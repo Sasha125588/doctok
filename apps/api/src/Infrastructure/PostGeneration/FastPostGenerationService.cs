@@ -1,9 +1,9 @@
 using Infrastructure.Persistence.Repos.Posts;
 using Infrastructure.Persistence.Repos.Raw;
 using Infrastructure.Persistence.Repos.Sources;
-using Infrastructure.Posts.Title;
+using Infrastructure.PostGeneration.Title;
 
-namespace Infrastructure.Posts;
+namespace Infrastructure.PostGeneration;
 
 public sealed class FastPostGenerationService(
     RawDocumentsRepository rawDocsRepo,

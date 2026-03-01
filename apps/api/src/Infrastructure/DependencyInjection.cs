@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using Infrastructure.GitHub;
 using Infrastructure.Jobs;
 using Infrastructure.Llm;
 using Infrastructure.Persistence.Db;
@@ -11,10 +12,8 @@ using Infrastructure.Persistence.Repos.Resolve;
 using Infrastructure.Persistence.Repos.Sources;
 using Infrastructure.Persistence.Repos.Topics;
 using Infrastructure.Persistence.Repos.Votes;
-using Infrastructure.Posts;
-using Infrastructure.Posts.Title;
-using Infrastructure.Sources.Common;
-using Infrastructure.Sources.GitHub;
+using Infrastructure.PostGeneration;
+using Infrastructure.PostGeneration.Title;
 using Infrastructure.Sources.Mdn;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,20 +28,26 @@ public static class InfrastructureServiceRegistration
     this IServiceCollection services,
     IConfiguration configuration)
   {
-    var connStr = configuration.GetConnectionString("Default")
-                  ?? throw new InvalidOperationException("ConnectionStrings:Default missing");
-
-    var gh = configuration.GetSection("GitHub").Get<GitHubOptions>()
-             ?? throw new InvalidOperationException("GitHub config missing");
-
-    var mdnApiOptions = configuration.GetSection("Mdn").Get<MdnApiOptions>()
-                        ?? new MdnApiOptions();
+    services
+      .AddOptions<GitHubOptions>()
+      .BindConfiguration("GitHub")
+      .ValidateDataAnnotations()
+      .ValidateOnStart();
 
     services
-      .Configure<OpenRouterOptions>(
-        configuration.GetSection("OpenRouter"))
-      .Configure<TitleGeneratorOptions>(
-        configuration.GetSection("OpenRouter:TitleGenerator"));
+      .AddOptions<OpenRouterOptions>()
+      .BindConfiguration("OpenRouter")
+      .ValidateDataAnnotations()
+      .ValidateOnStart();
+
+    services
+      .AddOptions<TitleGeneratorOptions>()
+      .BindConfiguration("OpenRouter:TitleGenerator")
+      .ValidateDataAnnotations()
+      .ValidateOnStart();
+
+    var connStr = configuration.GetConnectionString("Default")
+                  ?? throw new InvalidOperationException("ConnectionStrings:Default missing");
 
     // Database
     services.AddSingleton(_ => NpgsqlDataSource.Create(connStr));
@@ -64,8 +69,6 @@ public static class InfrastructureServiceRegistration
     services.AddSingleton<CommentsRepository>();
 
     // HTTP clients
-    services.AddSingleton(mdnApiOptions);
-
     services.AddHttpClient<MdnApiClient>(client =>
     {
       client.DefaultRequestHeaders.Accept.Clear();
@@ -73,8 +76,10 @@ public static class InfrastructureServiceRegistration
         new MediaTypeWithQualityHeaderValue("application/json"));
     });
 
-    services.AddHttpClient<GitHubTreeClient>(client =>
+    services.AddHttpClient<GitHubTreeClient>((sp, client) =>
     {
+      var gh = sp.GetRequiredService<IOptions<GitHubOptions>>().Value;
+
       client.BaseAddress = new Uri(gh.ApiBaseUrl);
 
       client.DefaultRequestHeaders.UserAgent.Clear();

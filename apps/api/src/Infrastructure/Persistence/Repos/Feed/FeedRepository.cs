@@ -25,8 +25,8 @@ public sealed class FeedRepository(IDbConnectionFactory dbf)
                          p.comment_count,
                          t.slug as topic_slug,
                          t.title as topic_title,
-                         rd.popularity,
-                         coalesce(v.value::text, 'none') as my_vote
+                         coalesce(v.value::text, 'none') as my_vote,
+                         rd.popularity
                        from posts p
                        join topics t on t.id = p.topic_id
                        join raw_documents rd on rd.id = p.raw_document_id
@@ -70,7 +70,7 @@ public sealed class FeedRepository(IDbConnectionFactory dbf)
     int Comment_Count,
     string Topic_Slug,
     string Topic_Title,
-    double? Popularity,
-    string My_Vote
+    string My_Vote,
+    double? Popularity
   );
 }

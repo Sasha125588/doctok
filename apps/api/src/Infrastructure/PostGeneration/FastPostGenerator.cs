@@ -2,7 +2,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Domain.Common;
 
-namespace Infrastructure.Posts;
+namespace Infrastructure.PostGeneration;
 
 public sealed class FastPostGenerator
 {

@@ -3,13 +3,7 @@ using Infrastructure.Llm;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Infrastructure.Posts.Title;
-
-public sealed class TitleGeneratorOptions
-{
-    public string Model { get; init; } = "arcee-ai/trinity-large-preview:free";
-    public int MaxTokens { get; init; } = 60;
-}
+namespace Infrastructure.PostGeneration.Title;
 
 public sealed class TitleGenerator(
     OpenRouterClient openRouter,

@@ -3,13 +3,6 @@ using System.Text.Json.Serialization;
 
 namespace Infrastructure.Llm;
 
-public sealed class OpenRouterOptions
-{
-    public string ApiKey { get; init; } = "";
-    public string Referer { get; init; } = "http://localhost:5005";
-    public string AppName { get; init; } = "DocTok";
-}
-
 public sealed class OpenRouterClient(HttpClient http)
 {
     public async Task<string?> CompleteChatAsync(

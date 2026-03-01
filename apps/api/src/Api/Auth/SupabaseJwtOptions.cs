@@ -1,8 +1,11 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Api.Auth;
 
 public sealed class SupabaseJwtOptions
 {
-    public required string ProjectRef { get; init; }
+    [Required]
+    public string ProjectRef { get; init; } = default!;
 
     public string JwtAudience { get; init; } = "authenticated";
 

@@ -1,6 +1,6 @@
 using Domain.Common;
-using Infrastructure.Posts;
-using Infrastructure.Sources.Common;
+using Infrastructure.Jobs;
+using Infrastructure.PostGeneration;
 
 namespace Infrastructure.Sources.Mdn;
 

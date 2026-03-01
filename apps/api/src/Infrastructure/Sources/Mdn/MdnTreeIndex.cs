@@ -1,14 +1,14 @@
 using Domain.Common;
-using Infrastructure.Sources.GitHub;
+using Infrastructure.GitHub;
 
 namespace Infrastructure.Sources.Mdn;
 
 public sealed class MdnTreeIndex(GitHubTreeClient treeClient) : IDisposable
 {
-    private const string MdnOwner = "mdn";
-    private const string MdnContentRepo = "content";
-    private const string MdnTranslatedRepo = "translated-content";
-    private const string MdnRef = "main";
+    private const string _owner = "mdn";
+    private const string _contentRepo = "content";
+    private const string _translatedRepo = "translated-content";
+    private const string _ref = "main";
 
     private readonly SemaphoreSlim _lock = new (1, 1);
 
@@ -59,8 +59,8 @@ public sealed class MdnTreeIndex(GitHubTreeClient treeClient) : IDisposable
 
     private async Task<Dictionary<string, List<string>>> BuildIndexAsync(CancellationToken ct)
     {
-        var contentTask = treeClient.GetFilePathsAsync(MdnOwner, MdnContentRepo, MdnRef, ct);
-        var translatedTask = treeClient.GetFilePathsAsync(MdnOwner, MdnTranslatedRepo, MdnRef, ct);
+        var contentTask = treeClient.GetFilePathsAsync(_owner, _contentRepo, _ref, ct);
+        var translatedTask = treeClient.GetFilePathsAsync(_owner, _translatedRepo, _ref, ct);
 
         var content = await contentTask;
         var translated = await translatedTask;

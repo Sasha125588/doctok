@@ -13,7 +13,7 @@ public sealed record ExtractedLink(
     string? Url,
     string? Label);
 
-public sealed class MdnContentConverter
+public sealed class MdnContentConverter()
 {
     private static readonly Regex MultipleNewlines = new (@"\n{3,}", RegexOptions.Compiled);
 
@@ -40,7 +40,7 @@ public sealed class MdnContentConverter
         return (text, links.DistinctBy(l => (l.Kind, l.TargetLang, l.TargetExternalRef, l.Url)).ToList());
     }
 
-    private static string ConvertHtml(string html, List<ExtractedLink> links)
+    private string ConvertHtml(string html, List<ExtractedLink> links)
     {
         if (string.IsNullOrWhiteSpace(html))
             return "";
@@ -54,7 +54,7 @@ public sealed class MdnContentConverter
         return MultipleNewlines.Replace(sb.ToString(), "\n\n").Trim();
     }
 
-    private static void ProcessNode(HtmlNode node, StringBuilder sb, List<ExtractedLink> links)
+    private void ProcessNode(HtmlNode node, StringBuilder sb, List<ExtractedLink> links)
     {
         foreach (var child in node.ChildNodes)
         {
@@ -72,7 +72,7 @@ public sealed class MdnContentConverter
         }
     }
 
-    private static void ProcessElement(HtmlNode el, StringBuilder sb, List<ExtractedLink> links)
+    private void ProcessElement(HtmlNode el, StringBuilder sb, List<ExtractedLink> links)
     {
         var tag = el.Name.ToLowerInvariant();
 
@@ -246,7 +246,7 @@ public sealed class MdnContentConverter
         return "";
     }
 
-    private static void TryAddLink(string href, List<ExtractedLink> links)
+    private void TryAddLink(string href, List<ExtractedLink> links)
     {
         var url = href.Trim();
         var hash = url.IndexOf('#');
@@ -256,7 +256,7 @@ public sealed class MdnContentConverter
         if (string.IsNullOrWhiteSpace(url))
             return;
 
-        if (url.StartsWith("https://developer.mozilla.org", StringComparison.OrdinalIgnoreCase))
+        if (url.StartsWith(Constants.BaseUrl, StringComparison.OrdinalIgnoreCase))
         {
             var uri = new Uri(url);
             url = uri.AbsolutePath;

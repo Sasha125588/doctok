@@ -17,7 +17,8 @@ public sealed record FeedItem(
   int LikeCount,
   int DislikeCount,
   int CommentCount,
-  string MyVote // "like" | "dislike" | "none"
+  string MyVote, // "like" | "dislike" | "none",
+  double? Popularity
 );
 
 public sealed class FeedEndpoint : IEndpoint
@@ -53,7 +54,8 @@ public sealed class FeedEndpoint : IEndpoint
           r.Like_Count,
           r.Dislike_Count,
           r.Comment_Count,
-          r.My_Vote)).ToList();
+          r.My_Vote,
+          r.Popularity)).ToList();
 
         var nextCursor = rows.Count == take
           ? CursorCodec.Encode(new FeedCursor(rows[^1].Popularity, rows[^1].Id))

@@ -1,4 +1,4 @@
-﻿namespace Infrastructure.Posts.Title;
+﻿namespace Infrastructure.PostGeneration.Title;
 
 public interface ITitleGenerator
 {

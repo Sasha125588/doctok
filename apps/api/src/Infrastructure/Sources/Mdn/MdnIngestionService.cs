@@ -5,8 +5,6 @@ using Infrastructure.Persistence.Repos.Raw;
 using Infrastructure.Persistence.Repos.Sources;
 using Infrastructure.Persistence.Repos.Topics;
 
-using static Domain.Common.JobTypes;
-
 namespace Infrastructure.Sources.Mdn;
 
 public sealed class MdnIngestionService(
@@ -60,7 +58,7 @@ public sealed class MdnIngestionService(
         await topicDocs.Link(topicId, rawId, ct);
 
         var internalLinks = links
-            .Where(x => x.Kind == "internal" && x.TargetLang is not null && x.TargetExternalRef is not null)
+            .Where(x => x is { Kind: "internal", TargetLang: not null, TargetExternalRef: not null })
             .Select(x => (targetLang: LanguageHelpers.NormalizeLang(x.TargetLang!), targetExternalRef: NormalizeExternalRef(x.TargetExternalRef!), label: x.Label))
             .ToList();
 
@@ -74,7 +72,7 @@ public sealed class MdnIngestionService(
         }
 
         var externalLinks = links
-            .Where(x => x.Kind == "external" && x.Url is not null)
+            .Where(x => x is { Kind: "external", Url: not null })
             .Select(x => (url: x.Url!, label: x.Label))
             .ToList();
 

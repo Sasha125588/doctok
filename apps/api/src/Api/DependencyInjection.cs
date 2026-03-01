@@ -1,6 +1,7 @@
 using Api.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 
 namespace Api;
 
@@ -25,14 +26,35 @@ public static class WebServiceRegistration
       });
     });
 
+    services.AddOpenApi(options =>
+    {
+      options.AddDocumentTransformer((document, context, ct) =>
+      {
+        document.Components ??= new OpenApiComponents();
+        document.Components.SecuritySchemes = new Dictionary<string, IOpenApiSecurityScheme>
+        {
+          ["BearerAuth"] = new OpenApiSecurityScheme
+          {
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT",
+            Description = "Enter your JWT token"
+          }
+        };
+        return Task.CompletedTask;
+      });
+    });
+
     services.AddProblemDetails();
-    services.AddOpenApi();
 
-    services.Configure<SupabaseJwtOptions>(configuration.GetSection("Supabase"));
+    services
+      .AddOptions<SupabaseJwtOptions>()
+      .BindConfiguration("Supabase")
+      .ValidateDataAnnotations()
+      .ValidateOnStart();
 
-    var supabaseJwtOptions =
-      configuration.GetSection("Supabase").Get<SupabaseJwtOptions>()
-      ?? throw new InvalidOperationException("Supabase config missing");
+    var supabaseJwtOptions = configuration.GetSection("Supabase").Get<SupabaseJwtOptions>()
+                             ?? throw new InvalidOperationException("Supabase config missing");
 
     services
       .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -46,10 +68,8 @@ public static class WebServiceRegistration
         {
           ValidateIssuer = true,
           ValidIssuer = supabaseJwtOptions.Issuer,
-
           ValidateAudience = true,
           ValidAudience = supabaseJwtOptions.JwtAudience,
-
           ValidateLifetime = true,
           ClockSkew = TimeSpan.FromMinutes(2),
           ValidateIssuerSigningKey = true,
