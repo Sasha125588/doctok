@@ -2,9 +2,29 @@
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["eslint", "typescript", "unicorn", "oxc", "vue"],
   "env": {
-    "browser": true
+    "browser": true,
+    "node": true
   },
   "categories": {
     "correctness": "error"
+  },
+  "globals": {
+    "defineNuxtConfig": "readonly",
+    "defineNuxtPlugin": "readonly",
+    "definePageMeta": "readonly",
+    "useNuxtApp": "readonly",
+    "useRuntimeConfig": "readonly",
+    "useFetch": "readonly",
+    "useAsyncData": "readonly",
+    "useLazyFetch": "readonly",
+    "navigateTo": "readonly",
+    "useRoute": "readonly",
+    "useRouter": "readonly",
+    "useState": "readonly",
+    "useHead": "readonly",
+    "useSeoMeta": "readonly",
+    "useError": "readonly",
+    "clearError": "readonly",
+    "showError": "readonly"
   }
 }
