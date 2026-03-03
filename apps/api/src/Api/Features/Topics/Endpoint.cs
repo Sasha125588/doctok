@@ -1,36 +1,69 @@
+using System.Security.Claims;
+using Api.Auth;
 using Api.Extensions;
 using Domain.Common;
 using Infrastructure.Persistence.Repos.Topics;
 
 namespace Api.Features.Topics;
 
-public sealed class TopicsEndpoint : IEndpoint
+public sealed record TopicPostItem(
+  long Id,
+  string Title,
+  string TopicSlug,
+  string TopicTitle,
+  string Kind,
+  string Body,
+  int Position,
+  int LikeCount,
+  int DislikeCount,
+  int CommentCount,
+  string MyVote,
+  double? Popularity
+);
+
+public sealed class Endpoint : IEndpoint
 {
-    public void Map(IEndpointRouteBuilder app)
+  public void Map(IEndpointRouteBuilder app)
+  {
+    app.MapGet("/topics/{slug}", async (
+      string slug,
+      string? lang,
+      ClaimsPrincipal user,
+      TopicReadRepository topicRepo,
+      CancellationToken ct) =>
     {
-        app.MapGet("/topics/{slug}", async (
-            string slug,
-            string? lang,
-            TopicReadRepository topicRepo,
-            CancellationToken ct) =>
-        {
-            var resolvedLang = LanguageHelpers.NormalizeLang(lang ?? "en");
-            var posts = await topicRepo.GetPosts(slug, resolvedLang, ct);
+      Guid? userId = null;
+      if (user.Identity?.IsAuthenticated == true)
+        userId = CurrentUser.GetUserIdOrThrow(user);
 
-            if (posts.Count == 0)
-            {
-                return Results.NotFound();
-            }
+      var resolvedLang = LanguageHelpers.NormalizeLang(lang ?? "en");
+      var posts = await topicRepo.GetPosts(slug, resolvedLang, userId, ct);
 
-            return Results.Ok(posts.Select(post => new Response(
-                post.Id,
-                post.Title,
-                post.Kind,
-                post.Body,
-                post.Position,
-                post.Like_Count,
-                post.Dislike_Count,
-                post.Comment_Count)));
-        });
-    }
+      if (posts.Count == 0)
+      {
+        return Results.NotFound();
+      }
+
+      var items = posts.Select(post => new TopicPostItem(
+        post.Id,
+        post.Title,
+        post.Topic_Slug,
+        post.Topic_Title,
+        post.Kind,
+        post.Body,
+        post.Position,
+        post.Like_Count,
+        post.Dislike_Count,
+        post.Comment_Count,
+        post.My_Vote,
+        post.Popularity)).ToList();
+
+      return Results.Ok(new TopicPostsResponse(items));
+    })
+    .WithTags("Topics")
+    .WithSummary("Returns posts for a topic")
+    .WithName("TopicsGetPosts")
+    .Produces<TopicPostsResponse>(StatusCodes.Status200OK)
+    .Produces(StatusCodes.Status404NotFound);
+  }
 }

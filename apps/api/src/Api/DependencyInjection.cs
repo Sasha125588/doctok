@@ -1,5 +1,7 @@
 using Api.Auth;
+using Api.Errors;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 
@@ -30,6 +32,13 @@ public static class WebServiceRegistration
     {
       options.AddDocumentTransformer((document, context, ct) =>
       {
+        document.Info = new OpenApiInfo
+        {
+          Title = "DocTok API",
+          Version = "v1",
+          Description = "DocTok HTTP API. JWT authentication uses Supabase bearer tokens."
+        };
+
         document.Components ??= new OpenApiComponents();
         document.Components.SecuritySchemes = new Dictionary<string, IOpenApiSecurityScheme>
         {
@@ -43,9 +52,32 @@ public static class WebServiceRegistration
         };
         return Task.CompletedTask;
       });
+
+      options.AddOperationTransformer((operation, context, ct) =>
+      {
+        var metadata = context.Description.ActionDescriptor.EndpointMetadata;
+        var allowAnonymous = metadata.OfType<IAllowAnonymous>().Any();
+        var requiresAuthorization = metadata.OfType<IAuthorizeData>().Any();
+
+        if (!allowAnonymous && requiresAuthorization)
+        {
+          operation.Security ??= [];
+          operation.Security.Add(new OpenApiSecurityRequirement
+          {
+            [new OpenApiSecuritySchemeReference("BearerAuth", context.Document, null)] = []
+          });
+
+          operation.Responses ??= new OpenApiResponses();
+          operation.Responses.TryAdd("401", new OpenApiResponse { Description = "Unauthorized" });
+          operation.Responses.TryAdd("403", new OpenApiResponse { Description = "Forbidden" });
+        }
+
+        return Task.CompletedTask;
+      });
     });
 
     services.AddProblemDetails();
+    services.AddExceptionHandler<ApiExceptionHandler>();
 
     services
       .AddOptions<SupabaseJwtOptions>()
@@ -80,9 +112,9 @@ public static class WebServiceRegistration
       .AddPolicy("Admin", policy =>
         policy.RequireClaim("user_role", "admin"));
 
-    services.AddSingleton<Features.Resolve.Mdn.ResolveMdnHandler>();
-    services.AddSingleton<Features.Admin.Mdn.Preload.PreloadMdnHandler>();
-    services.AddSingleton<Features.Posts.Comments.Create.CreateCommentHandler>();
+    services.AddSingleton<Features.Resolve.Mdn.Handler>();
+    services.AddSingleton<Features.Admin.Mdn.Preload.Handler>();
+    services.AddSingleton<Features.Posts.Comments.Create.Handler>();
 
     return services;
   }

@@ -16,10 +16,20 @@ public sealed class Endpoint : IEndpoint
         CancellationToken ct) =>
       {
         var userId = CurrentUser.GetUserIdOrThrow(user);
-        await repo.Delete(commentId, userId, ct);
+        var deleted = await repo.Delete(commentId, userId, ct);
+        if (!deleted)
+        {
+          return Results.NotFound();
+        }
+
         return Results.NoContent();
       })
       .RequireAuthorization()
-      .WithTags("Comments");
+      .WithTags("Comments")
+      .WithSummary("Soft-deletes a comment owned by the current user")
+      .WithName("CommentsDelete")
+      .Produces(StatusCodes.Status204NoContent)
+      .Produces(StatusCodes.Status401Unauthorized)
+      .Produces(StatusCodes.Status404NotFound);
   }
 }

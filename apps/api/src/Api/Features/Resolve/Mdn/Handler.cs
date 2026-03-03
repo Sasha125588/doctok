@@ -5,9 +5,9 @@ using Infrastructure.Persistence.Repos.Sources;
 
 namespace Api.Features.Resolve.Mdn;
 
-public sealed class ResolveMdnHandler(SourcesRepository sources, ResolveRepository resolve, JobsRepository jobs)
+public sealed class Handler(SourcesRepository sources, ResolveRepository resolve, JobsRepository jobs)
 {
-    public async Task<ResolveMdnResult> Handle(Query q, CancellationToken ct)
+    public async Task<ResolveMdnResponse> Handle(Query q, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(q);
 
@@ -26,9 +26,9 @@ public sealed class ResolveMdnHandler(SourcesRepository sources, ResolveReposito
                 payload: new { provider = SourceCodes.Mdn, lang, externalRef },
                 ct);
 
-            return ResolveMdnResult.Pending(jobId);
+            return ResolveMdnResponse.Pending(jobId);
         }
 
-        return ResolveMdnResult.Ready(slug, lang);
+        return ResolveMdnResponse.Ready(slug, lang);
     }
 }

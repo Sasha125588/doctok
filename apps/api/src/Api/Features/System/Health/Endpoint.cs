@@ -2,7 +2,7 @@ using Api.Extensions;
 
 namespace Api.Features.System.Health;
 
-public sealed class HealthEndpoint : IEndpoint
+public sealed class Endpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
@@ -10,6 +10,7 @@ public sealed class HealthEndpoint : IEndpoint
             .AllowAnonymous()
             .WithTags("System")
             .WithSummary("Health check")
+            .WithName("SystemHealth")
             .Produces(StatusCodes.Status200OK);
     }
 }

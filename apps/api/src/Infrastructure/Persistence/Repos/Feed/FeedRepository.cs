@@ -58,19 +58,19 @@ public sealed class FeedRepository(IDbConnectionFactory dbf)
     return (await db.QueryAsync<FeedRow>(
       new CommandDefinition(sql, parameters, cancellationToken: ct))).ToList();
   }
-
-  public sealed record FeedRow(
-    long Id,
-    string Kind,
-    string Title,
-    string Body,
-    int Position,
-    int Like_Count,
-    int Dislike_Count,
-    int Comment_Count,
-    string Topic_Slug,
-    string Topic_Title,
-    string My_Vote,
-    double? Popularity
-  );
 }
+
+public sealed record FeedRow(
+  long Id,
+  string Kind,
+  string Title,
+  string Body,
+  int Position,
+  int Like_Count,
+  int Dislike_Count,
+  int Comment_Count,
+  string Topic_Slug,
+  string Topic_Title,
+  string My_Vote,
+  double? Popularity
+);

@@ -7,7 +7,7 @@ using Infrastructure.Persistence.Repos.Feed;
 namespace Api.Features.Feed;
 
 public sealed record FeedItem(
-  long PostId,
+  long Id,
   string Title,
   string TopicSlug,
   string TopicTitle,
@@ -21,11 +21,11 @@ public sealed record FeedItem(
   double? Popularity
 );
 
-public sealed class FeedEndpoint : IEndpoint
+public sealed class Endpoint : IEndpoint
 {
-    public void Map(IEndpointRouteBuilder app)
-    {
-      app.MapGet("/feed", async (
+  public void Map(IEndpointRouteBuilder app)
+  {
+    app.MapGet("/feed", async (
         string? cursor,
         string? lang,
         int? limit,
@@ -61,7 +61,11 @@ public sealed class FeedEndpoint : IEndpoint
           ? CursorCodec.Encode(new FeedCursor(rows[^1].Popularity, rows[^1].Id))
           : null;
 
-        return Results.Ok(new Response(items, nextCursor));
-      });
-    }
+        return Results.Ok(new FeedResponse(items, nextCursor));
+      })
+      .WithTags("Feed")
+      .WithSummary("Returns paginated feed items")
+      .WithName("FeedList")
+      .Produces<FeedResponse>(StatusCodes.Status200OK);
+  }
 }

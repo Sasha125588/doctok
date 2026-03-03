@@ -4,9 +4,9 @@ using Infrastructure.Sources.Mdn;
 
 namespace Api.Features.Admin.Mdn.Preload;
 
-public sealed class PreloadMdnHandler(MdnTreeIndex index, JobsRepository jobs)
+public sealed class Handler(MdnTreeIndex index, JobsRepository jobs)
 {
-    public async Task<Response> Handle(Command cmd, CancellationToken ct)
+    public async Task<PreloadMdnResponse> Handle(Command cmd, CancellationToken ct)
     {
         var lang = LanguageHelpers.NormalizeLang(cmd.Lang ?? "en");
         var count = Math.Clamp(cmd.Count ?? 5, 1, 200);
@@ -34,6 +34,6 @@ public sealed class PreloadMdnHandler(MdnTreeIndex index, JobsRepository jobs)
                 ct: ct);
         }
 
-        return new Response(chosen);
+        return new PreloadMdnResponse(chosen);
     }
 }

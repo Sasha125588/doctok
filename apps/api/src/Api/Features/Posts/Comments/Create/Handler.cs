@@ -1,21 +1,23 @@
+using Api.Features.Comments.Shared;
 using Infrastructure.Persistence.Repos.Comments;
 
 namespace Api.Features.Posts.Comments.Create;
 
-public sealed class CreateCommentHandler(CommentsRepository repo)
+public sealed class Handler(CommentsRepository commentsRepo)
 {
-    public async Task<CommentDto> Handle(Command cmd, CancellationToken ct)
+  public async Task<CommentResponse> Handle(Command cmd, CancellationToken ct)
+  {
+    if (string.IsNullOrWhiteSpace(cmd.Body))
     {
-        if (string.IsNullOrWhiteSpace(cmd.Body))
-        {
-            throw new ArgumentException("Comment body cannot be empty.");
-        }
-
-        if (cmd.Body.Length > 2000)
-        {
-            throw new ArgumentException("Comment body exceeds 2000 characters.");
-        }
-
-        return await repo.CreateRoot(cmd.PostId, cmd.UserId, cmd.Body.Trim(), ct);
+      throw new ArgumentException("Comment body cannot be empty.");
     }
+
+    if (cmd.Body.Length > 2000)
+    {
+      throw new ArgumentException("Comment body exceeds 2000 characters.");
+    }
+
+    var comment = await commentsRepo.CreateRoot(cmd.PostId, cmd.UserId, cmd.Body.Trim(), ct);
+    return comment.ToResponse();
+  }
 }

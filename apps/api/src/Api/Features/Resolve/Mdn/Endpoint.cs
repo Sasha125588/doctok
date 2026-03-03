@@ -2,14 +2,14 @@ using Api.Extensions;
 
 namespace Api.Features.Resolve.Mdn;
 
-public sealed class ResolveMdnEndpoint : IEndpoint
+public sealed class Endpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
         app.MapGet("/resolve/mdn/{*externalRef}", async (
             string externalRef,
             string? lang,
-            ResolveMdnHandler handler,
+            Handler handler,
             CancellationToken ct) =>
         {
             if (string.IsNullOrWhiteSpace(externalRef))
@@ -21,6 +21,11 @@ public sealed class ResolveMdnEndpoint : IEndpoint
             var res = await handler.Handle(q, ct);
 
             return Results.Ok(res);
-        });
+        })
+        .WithTags("Resolve")
+        .WithSummary("Resolves an MDN external path to a DocTok topic")
+        .WithName("ResolveMdn")
+        .Produces<ResolveMdnResponse>(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status400BadRequest);
     }
 }

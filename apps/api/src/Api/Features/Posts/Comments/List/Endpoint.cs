@@ -1,26 +1,28 @@
 using Api.Extensions;
+using Api.Features.Comments.Shared;
 using Infrastructure.Persistence.Repos.Comments;
 
 namespace Api.Features.Posts.Comments.List;
 
-public sealed class ListCommentsEndpoint : IEndpoint
+public sealed class Endpoint : IEndpoint
 {
-    public void Map(IEndpointRouteBuilder app)
-    {
-        app.MapGet("/posts/{postId:long}/comments", async (
-            long postId,
-            int? limit,
-            CommentsRepository repo,
-            CancellationToken ct) =>
-        {
-            var take = Math.Clamp(limit ?? 20, 1, 50);
+  public void Map(IEndpointRouteBuilder app)
+  {
+    app.MapGet("/posts/{postId:long}/comments", async (
+        long postId,
+        int? limit,
+        CommentsRepository commentsRepo,
+        CancellationToken ct) =>
+      {
+        var take = Math.Clamp(limit ?? 20, 1, 50);
 
-            var items = await repo.ListRoots(postId, take, ct);
+        var items = (await commentsRepo.ListRoots(postId, take, ct)).ToResponses();
 
-            return Results.Ok(items);
-        })
-        .WithTags("Comments")
-        .WithSummary("Returns root comments for a post")
-        .Produces<IReadOnlyList<CommentDto>>(StatusCodes.Status200OK);
-    }
+        return Results.Ok(items);
+      })
+      .WithTags("Comments")
+      .WithSummary("Returns root comments for a post")
+      .WithName("PostsCommentsList")
+      .Produces<IReadOnlyList<CommentResponse>>(StatusCodes.Status200OK);
+  }
 }

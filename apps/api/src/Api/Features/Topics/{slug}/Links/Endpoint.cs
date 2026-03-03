@@ -4,7 +4,7 @@ using Infrastructure.Persistence.Repos.Topics;
 
 namespace Api.Features.Topics._slug_.Links;
 
-public sealed class TopicsLinksEndpoint : IEndpoint
+public sealed class Endpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
@@ -17,6 +17,10 @@ public sealed class TopicsLinksEndpoint : IEndpoint
             var resolvedLang = LanguageHelpers.NormalizeLang(lang ?? "en");
             var links = await topicLinksRepo.GetLinkedTopics(slug, resolvedLang, ct);
             return Results.Ok(links);
-        });
+        })
+        .WithTags("Topics")
+        .WithSummary("Returns linked topics for a topic")
+        .WithName("TopicsGetLinks")
+        .Produces<IReadOnlyList<TopicLinksRepository.TopicLinkRow>>(StatusCodes.Status200OK);
     }
 }

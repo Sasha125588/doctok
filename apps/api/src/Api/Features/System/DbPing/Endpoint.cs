@@ -4,7 +4,7 @@ using Infrastructure.Persistence.Db;
 
 namespace Api.Features.System.DbPing;
 
-public sealed class DbPingEndpoint : IEndpoint
+public sealed class Endpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
@@ -19,6 +19,7 @@ public sealed class DbPingEndpoint : IEndpoint
         }).RequireAuthorization()
         .WithTags("System")
         .WithSummary("Checks DB connectivity")
+        .WithName("SystemDbPing")
         .Produces(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status401Unauthorized);
     }

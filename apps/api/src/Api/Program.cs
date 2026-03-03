@@ -14,16 +14,12 @@ builder.Services.AddInfrastructureServices(builder.Configuration);
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+app.MapOpenApi("/openapi/{documentName}.json");
+app.MapScalarApiReference("/docs", options =>
 {
-    app.MapOpenApi();
-    app.MapScalarApiReference("/docs", options =>
-    {
-      options.WithTitle("DocTok");
-      options.DarkMode = true;
-      options.AddPreferredSecuritySchemes("BearerAuth");
-    });
-}
+  options.WithTitle("DocTok API");
+  options.AddPreferredSecuritySchemes("BearerAuth");
+});
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
