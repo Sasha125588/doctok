@@ -1,7 +1,7 @@
 using Api.Extensions;
 using Infrastructure.Persistence.Repos.Comments;
 
-namespace Api.Features.Posts.Comments.List;
+namespace Api.Features.Comments.List;
 
 public sealed class Endpoint : IEndpoint
 {

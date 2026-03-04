@@ -1,8 +1,9 @@
 using System.Security.Claims;
 using Api.Auth;
 using Api.Extensions;
+using Infrastructure.Persistence.Repos.Comments;
 
-namespace Api.Features.Posts.Comments.Create;
+namespace Api.Features.Comments.Create;
 
 public sealed class Endpoint : IEndpoint
 {
@@ -12,12 +13,11 @@ public sealed class Endpoint : IEndpoint
         long postId,
         CreateCommentRequest req,
         ClaimsPrincipal user,
-        Handler handler,
+        CommentsRepository commentsRepo,
         CancellationToken ct) =>
       {
         var userId = CurrentUser.GetUserIdOrThrow(user);
-
-        var comment = await handler.Handle(new Command(postId, userId, req.Body), ct);
+        var comment = await commentsRepo.CreateRoot(postId, userId, req.Body.Trim(), ct);
         return Results.Created($"/api/posts/{postId}/comments/{comment.Id}", comment);
       })
       .RequireAuthorization()
