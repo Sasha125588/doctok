@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Api.Auth;
+using Api.Errors;
 using Api.Extensions;
 
 namespace Api.Features.Topics;
@@ -20,7 +21,7 @@ public sealed class Endpoint : IEndpoint
         userId = CurrentUser.GetUserIdOrThrow(user);
 
       var result = await handler.Handle(new Query(slug, lang, userId), ct);
-      return result is null ? Results.NotFound() : Results.Ok(result);
+      return result.ToResponse(value => Results.Ok(value));
     })
     .WithTags("Topics")
     .WithSummary("Returns posts for a topic")

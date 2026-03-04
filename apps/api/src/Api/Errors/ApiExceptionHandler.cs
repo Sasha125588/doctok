@@ -1,22 +1,26 @@
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Errors;
 
-public sealed class ApiExceptionHandler(ILogger<ApiExceptionHandler> logger) : IExceptionHandler
+public sealed class ApiExceptionHandler(
+  ILogger<ApiExceptionHandler> logger,
+  IProblemDetailsService problemDetailsService)
+  : IExceptionHandler
 {
   public async ValueTask<bool> TryHandleAsync(
     HttpContext httpContext,
     Exception exception,
     CancellationToken cancellationToken)
   {
-    var (status, title) = exception switch
+    var status = exception switch
     {
-      ArgumentException => (StatusCodes.Status400BadRequest, "Bad Request"),
-      FormatException => (StatusCodes.Status400BadRequest, "Bad Request"),
-      KeyNotFoundException => (StatusCodes.Status404NotFound, "Not Found"),
-      UnauthorizedAccessException => (StatusCodes.Status401Unauthorized, "Unauthorized"),
-      _ => (0, string.Empty)
+      ArgumentException => StatusCodes.Status400BadRequest,
+      FormatException => StatusCodes.Status400BadRequest,
+      KeyNotFoundException => StatusCodes.Status404NotFound,
+      UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
+      _ => 0,
     };
 
     if (status == 0)
@@ -26,15 +30,23 @@ public sealed class ApiExceptionHandler(ILogger<ApiExceptionHandler> logger) : I
 
     logger.LogWarning(exception, "Handled API exception with status code {StatusCode}", status);
 
+    httpContext.Response.StatusCode = status;
+
     var details = new ProblemDetails
     {
       Status = status,
-      Title = title,
-      Detail = exception.Message
+      Title = ProblemDetailsMetadata.GetTitle(status),
+      Detail = exception.Message,
+      Type = ProblemDetailsMetadata.GetTypeLink(status),
     };
 
-    httpContext.Response.StatusCode = status;
-    await httpContext.Response.WriteAsJsonAsync(details, cancellationToken);
+    await problemDetailsService.WriteAsync(new ProblemDetailsContext
+    {
+      HttpContext = httpContext,
+      ProblemDetails = details,
+      Exception = exception,
+    });
+
     return true;
   }
 }

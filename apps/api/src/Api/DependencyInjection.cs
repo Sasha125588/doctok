@@ -77,7 +77,18 @@ public static class WebServiceRegistration
     });
 
     services.AddValidation();
-    services.AddProblemDetails();
+    services.AddProblemDetails(options =>
+    {
+      options.CustomizeProblemDetails = context =>
+      {
+        if (!context.ProblemDetails.Extensions.ContainsKey("traceId"))
+        {
+          context.ProblemDetails.Extensions["traceId"] = context.HttpContext.TraceIdentifier;
+        }
+
+        context.ProblemDetails.Instance ??= context.HttpContext.Request.Path;
+      };
+    });
     services.AddExceptionHandler<ApiExceptionHandler>();
 
     services
