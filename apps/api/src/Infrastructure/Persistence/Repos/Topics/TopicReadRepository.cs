@@ -1,11 +1,12 @@
 using Dapper;
+using Domain.Models;
 using Infrastructure.Persistence.Db;
 
 namespace Infrastructure.Persistence.Repos.Topics;
 
 public sealed class TopicReadRepository(IDbConnectionFactory dbf)
 {
-  public async Task<IReadOnlyList<TopicPostRow>> GetPosts(
+  public async Task<IReadOnlyList<PostItem>> GetPosts(
     string slug,
     string lang,
     Guid? userId,
@@ -38,37 +39,7 @@ public sealed class TopicReadRepository(IDbConnectionFactory dbf)
 
     using var db = dbf.Create();
 
-    return (await db.QueryAsync<TopicPostRow>(
+    return (await db.QueryAsync<PostItem>(
       new CommandDefinition(query, new { slug, lang, userId }, cancellationToken: ct))).ToList();
   }
 }
-
-public sealed record TopicPostRow(
-  long Id,
-  string Kind,
-  string Title,
-  string Body,
-  int Position,
-  int Like_Count,
-  int Dislike_Count,
-  int Comment_Count,
-  string Topic_Slug,
-  string Topic_Title,
-  string My_Vote,
-  double? Popularity
-);
-
-// public sealed record FeedItem(
-//   long Id,
-//   string Title,
-//   string TopicSlug,
-//   string TopicTitle,
-//   string Kind,
-//   string Body,
-//   int Position,
-//   int LikeCount,
-//   int DislikeCount,
-//   int CommentCount,
-//   string MyVote, // "like" | "dislike" | "none",
-//   double? Popularity
-// );

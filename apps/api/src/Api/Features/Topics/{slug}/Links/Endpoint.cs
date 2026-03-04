@@ -1,5 +1,6 @@
 using Api.Extensions;
 using Domain.Common;
+using Domain.Models;
 using Infrastructure.Persistence.Repos.Topics;
 
 namespace Api.Features.Topics._slug_.Links;
@@ -21,6 +22,6 @@ public sealed class Endpoint : IEndpoint
         .WithTags("Topics")
         .WithSummary("Returns linked topics for a topic")
         .WithName("TopicsGetLinks")
-        .Produces<IReadOnlyList<TopicLinksRepository.TopicLinkRow>>(StatusCodes.Status200OK);
+        .Produces<IReadOnlyList<TopicLink>>(StatusCodes.Status200OK);
     }
 }

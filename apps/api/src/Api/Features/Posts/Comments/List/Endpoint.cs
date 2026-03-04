@@ -1,5 +1,4 @@
 using Api.Extensions;
-using Api.Features.Comments.Shared;
 using Infrastructure.Persistence.Repos.Comments;
 
 namespace Api.Features.Posts.Comments.List;
@@ -15,14 +14,12 @@ public sealed class Endpoint : IEndpoint
         CancellationToken ct) =>
       {
         var take = Math.Clamp(limit ?? 20, 1, 50);
-
-        var items = (await commentsRepo.ListRoots(postId, take, ct)).ToResponses();
-
+        var items = await commentsRepo.ListRoots(postId, take, ct);
         return Results.Ok(items);
       })
       .WithTags("Comments")
       .WithSummary("Returns root comments for a post")
       .WithName("PostsCommentsList")
-      .Produces<IReadOnlyList<CommentResponse>>(StatusCodes.Status200OK);
+      .Produces<IReadOnlyList<Domain.Models.Comment>>(StatusCodes.Status200OK);
   }
 }

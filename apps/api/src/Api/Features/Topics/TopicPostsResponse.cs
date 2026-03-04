@@ -1,3 +1,5 @@
-﻿namespace Api.Features.Topics;
+using Domain.Models;
 
-public sealed record TopicPostsResponse(IReadOnlyList<TopicPostItem> Items);
+namespace Api.Features.Topics;
+
+public sealed record TopicPostsResponse(IReadOnlyList<PostItem> Items);

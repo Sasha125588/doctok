@@ -33,6 +33,6 @@ public sealed class FastPostGenerationService(
             post.Body,
             post.Position)).ToList();
 
-        await postsRepo.ReplaceForDocument(row.Id, row.Topic_Id, lang, posts, ct);
+        await postsRepo.ReplaceForDocument(row.Id, row.TopicId, lang, posts, ct);
     }
 }

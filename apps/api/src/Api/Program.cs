@@ -1,13 +1,17 @@
 using Api;
 using Api.Extensions;
+using Dapper;
 using Infrastructure;
 using Scalar.AspNetCore;
 
 DotNetEnv.Env.TraversePath().Load();
 
+DefaultTypeMap.MatchNamesWithUnderscores = true;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpoints(typeof(Program).Assembly);
+builder.Services.AddHandlers(typeof(Program).Assembly);
 
 builder.Services.AddWebServices(builder.Configuration);
 builder.Services.AddInfrastructureServices(builder.Configuration);

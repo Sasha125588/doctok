@@ -59,5 +59,5 @@ public sealed class RawDocumentsRepository(IDbConnectionFactory dbf)
             new CommandDefinition(query, new { sourceId, lang, externalRef }, cancellationToken: ct));
     }
 
-    public sealed record RawDocumentForPosts(long Id, string Title, string Content, long Topic_Id);
+    public sealed record RawDocumentForPosts(long Id, string Title, string Content, long TopicId);
 }

@@ -1,3 +1,4 @@
+using Api.Extensions;
 using Domain.Common;
 using Infrastructure.Persistence.Repos.Jobs;
 using Infrastructure.Persistence.Repos.Resolve;
@@ -5,7 +6,7 @@ using Infrastructure.Persistence.Repos.Sources;
 
 namespace Api.Features.Resolve.Mdn;
 
-public sealed class Handler(SourcesRepository sources, ResolveRepository resolve, JobsRepository jobs)
+public sealed class Handler(SourcesRepository sources, ResolveRepository resolve, JobsRepository jobs) : IHandler
 {
     public async Task<ResolveMdnResponse> Handle(Query q, CancellationToken ct)
     {

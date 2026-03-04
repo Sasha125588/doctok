@@ -1,10 +1,11 @@
+using Api.Extensions;
 using Domain.Common;
 using Infrastructure.Persistence.Repos.Jobs;
 using Infrastructure.Sources.Mdn;
 
 namespace Api.Features.Admin.Mdn.Preload;
 
-public sealed class Handler(MdnTreeIndex index, JobsRepository jobs)
+public sealed class Handler(MdnTreeIndex index, JobsRepository jobs) : IHandler
 {
     public async Task<PreloadMdnResponse> Handle(Command cmd, CancellationToken ct)
     {

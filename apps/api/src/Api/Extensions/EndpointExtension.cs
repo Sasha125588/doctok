@@ -23,6 +23,20 @@ public static class EndpointExtensions
       return services;
     }
 
+    public static IServiceCollection AddHandlers(this IServiceCollection services, Assembly assembly)
+    {
+      var handlerTypes = assembly.DefinedTypes
+        .Where(type => type is { IsAbstract: false, IsInterface: false } && type.IsAssignableTo(typeof(IHandler)));
+
+      foreach (var type in handlerTypes)
+      {
+        var descriptor = ServiceDescriptor.Singleton(type.AsType(), type.AsType());
+        services.Add(descriptor);
+      }
+
+      return services;
+    }
+
     public static IApplicationBuilder MapEndpoints(this WebApplication app)
     {
         var endpoints = app.Services.GetRequiredService<IEnumerable<IEndpoint>>();

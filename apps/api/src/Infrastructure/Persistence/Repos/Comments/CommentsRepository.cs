@@ -1,22 +1,22 @@
 using System.Data.Common;
 using Dapper;
-
 using Infrastructure.Persistence.Db;
 
 namespace Infrastructure.Persistence.Repos.Comments;
+
 public sealed class CommentsRepository(IDbConnectionFactory dbf)
 {
   private sealed record CommentRow(
-    long id,
-    long post_id,
-    Guid user_id,
-    long? parent_comment_id,
-    string body,
-    DateTime created_at,
-    DateTime? deleted_at
+    long Id,
+    long PostId,
+    Guid UserId,
+    long? ParentCommentId,
+    string Body,
+    DateTime CreatedAt,
+    DateTime? DeletedAt
   );
 
-  public async Task<CommentDto> CreateRoot(long postId, Guid userId, string body, CancellationToken ct)
+  public async Task<Domain.Models.Comment> CreateRoot(long postId, Guid userId, string body, CancellationToken ct)
   {
     using var db = dbf.Create();
     await ((DbConnection)db).OpenAsync(ct);
@@ -44,10 +44,10 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
     }
 
     await tx.CommitAsync(ct);
-    return ToDto(row);
+    return ToModel(row);
   }
 
-  public async Task<CommentDto> Reply(long parentCommentId, Guid userId, string body, CancellationToken ct)
+  public async Task<Domain.Models.Comment> Reply(long parentCommentId, Guid userId, string body, CancellationToken ct)
   {
     using var db = dbf.Create();
     await ((DbConnection)db).OpenAsync(ct);
@@ -87,16 +87,16 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
                            where id = @postId
                            """;
 
-    await db.ExecuteAsync(new CommandDefinition(bumpSql, new { postId }, transaction: tx,  cancellationToken: ct));
+    await db.ExecuteAsync(new CommandDefinition(bumpSql, new { postId }, transaction: tx, cancellationToken: ct));
 
     await tx.CommitAsync(ct);
-    return ToDto(row);
+    return ToModel(row);
   }
 
-  public async Task<IReadOnlyList<CommentDto>> ListRoots(long postId, int limit, CancellationToken ct)
+  public async Task<IReadOnlyList<Domain.Models.Comment>> ListRoots(long postId, int limit, CancellationToken ct)
   {
     const string sql = """
-                       select id, post_id, user_id, parent_comment_id, body, created_at, deleted_at 
+                       select id, post_id, user_id, parent_comment_id, body, created_at, deleted_at
                        from comments
                        where post_id = @postId
                             and parent_comment_id is null
@@ -107,10 +107,10 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
     using var db = dbf.Create();
     var rows = await db.QueryAsync<CommentRow>(new CommandDefinition(sql, new { postId, limit }, cancellationToken: ct));
 
-    return rows.Select(ToDto).ToList();
+    return rows.Select(ToModel).ToList();
   }
 
-  public async Task<IReadOnlyList<CommentDto>> ListReplies(long commentId, int limit, CancellationToken ct)
+  public async Task<IReadOnlyList<Domain.Models.Comment>> ListReplies(long commentId, int limit, CancellationToken ct)
   {
     const string sql = """
                        select id, post_id, user_id, parent_comment_id, body, created_at, deleted_at
@@ -123,7 +123,7 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
     using var db = dbf.Create();
     var rows = await db.QueryAsync<CommentRow>(new CommandDefinition(sql, new { commentId, limit }, cancellationToken: ct));
 
-    return rows.Select(ToDto).ToList();
+    return rows.Select(ToModel).ToList();
   }
 
   public async Task<bool> Delete(long commentId, Guid userId, CancellationToken ct)
@@ -143,7 +143,6 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
 
     var postId = await db.QuerySingleOrDefaultAsync<long?>(new CommandDefinition(delSql, new { commentId, userId }, transaction: tx, cancellationToken: ct));
 
-    // якщо коментарій вже видалений, то виходимо з функції
     if (postId is null)
     {
       await tx.CommitAsync(ct);
@@ -162,23 +161,13 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
     return true;
   }
 
-  private static CommentDto ToDto(CommentRow r) => new (
-    Id: r.id,
-    PostId: r.post_id,
-    UserId: r.user_id,
-    ParentCommentId: r.parent_comment_id,
-    Body: r.deleted_at is null ? r.body : "",
-    CreatedAt: new DateTimeOffset(r.created_at),
-    IsDeleted: r.deleted_at is not null
+  private static Domain.Models.Comment ToModel(CommentRow r) => new (
+    Id: r.Id,
+    PostId: r.PostId,
+    UserId: r.UserId,
+    ParentCommentId: r.ParentCommentId,
+    Body: r.DeletedAt is null ? r.Body : "",
+    CreatedAt: new DateTimeOffset(r.CreatedAt),
+    IsDeleted: r.DeletedAt is not null
   );
 }
-
-public sealed record CommentDto(
-  long Id,
-  long PostId,
-  Guid UserId,
-  long? ParentCommentId,
-  string Body,
-  DateTimeOffset CreatedAt,
-  bool IsDeleted
-);

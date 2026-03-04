@@ -1,11 +1,12 @@
 using Dapper;
+using Domain.Models;
 using Infrastructure.Persistence.Db;
 
 namespace Infrastructure.Persistence.Repos.Topics;
 
 public sealed class TopicLinksRepository(IDbConnectionFactory dbf)
 {
-    public async Task<IReadOnlyList<TopicLinkRow>> GetLinkedTopics(
+    public async Task<IReadOnlyList<TopicLink>> GetLinkedTopics(
         string slug,
         string lang,
         CancellationToken ct)
@@ -27,8 +28,6 @@ public sealed class TopicLinksRepository(IDbConnectionFactory dbf)
 
         using var db = dbf.Create();
 
-        return (await db.QueryAsync<TopicLinkRow>(new CommandDefinition(sql, new { slug, lang }, cancellationToken: ct))).ToList();
+        return (await db.QueryAsync<TopicLink>(new CommandDefinition(sql, new { slug, lang }, cancellationToken: ct))).ToList();
     }
-
-    public sealed record TopicLinkRow(string Slug, string Title);
 }

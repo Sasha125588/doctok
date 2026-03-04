@@ -1,6 +1,7 @@
 using System.Data.Common;
 using Dapper;
 using Domain.Common;
+using Domain.Models;
 using Infrastructure.Persistence.Db;
 
 namespace Infrastructure.Persistence.Repos.Votes;
@@ -90,17 +91,16 @@ public sealed class VotesRepository(IDbConnectionFactory dbf)
     cross join delta d;
     """;
 
-    private sealed record DbRow(int like_count, int dislike_count, string my_vote);
+    private sealed record DbRow(int LikeCount, int DislikeCount, string MyVote);
 
-    public async Task<Response> Toggle(long postId, Guid userId, VoteValue value, CancellationToken ct)
+    public async Task<VoteResult> Toggle(long postId, Guid userId, VoteValue value, CancellationToken ct)
     {
         var valueText = value == VoteValue.Like ? "like" : "dislike";
 
-        var conn = (DbConnection)dbf.Create();
+        await using var conn = (DbConnection)dbf.Create();
         await conn.OpenAsync(ct);
         await using var tx = await conn.BeginTransactionAsync(ct);
 
-        // Один roundtrip, всё атомарно
         var row = await conn.QuerySingleAsync<DbRow>(
             new CommandDefinition(
                 ToggleSql,
@@ -110,15 +110,9 @@ public sealed class VotesRepository(IDbConnectionFactory dbf)
 
         await tx.CommitAsync(ct);
 
-        return new Response(
-            MyVote: row.my_vote,
-            LikeCount: row.like_count,
-            DislikeCount: row.dislike_count);
+        return new VoteResult(
+            MyVote: row.MyVote,
+            LikeCount: row.LikeCount,
+            DislikeCount: row.DislikeCount);
     }
 }
-
-public sealed record Response(
-  string MyVote,     // "like" | "dislike" | "none"
-  int LikeCount,
-  int DislikeCount
-);

@@ -1,12 +1,13 @@
 using Dapper;
 using Domain.Common;
+using Domain.Models;
 using Infrastructure.Persistence.Db;
 
 namespace Infrastructure.Persistence.Repos.Feed;
 
 public sealed class FeedRepository(IDbConnectionFactory dbf)
 {
-  public async Task<IReadOnlyList<FeedRow>> GetPage(
+  public async Task<IReadOnlyList<PostItem>> GetPage(
     FeedCursor? cursor,
     Guid? userId,
     string lang,
@@ -50,27 +51,12 @@ public sealed class FeedRepository(IDbConnectionFactory dbf)
     {
       cursorPopularity = cursor?.Popularity,
       cursorId = cursor?.Id,
-      userId, // null => join не матчиться => 'none'
+      userId,
       lang,
       limit,
     };
 
-    return (await db.QueryAsync<FeedRow>(
+    return (await db.QueryAsync<PostItem>(
       new CommandDefinition(sql, parameters, cancellationToken: ct))).ToList();
   }
 }
-
-public sealed record FeedRow(
-  long Id,
-  string Kind,
-  string Title,
-  string Body,
-  int Position,
-  int Like_Count,
-  int Dislike_Count,
-  int Comment_Count,
-  string Topic_Slug,
-  string Topic_Title,
-  string My_Vote,
-  double? Popularity
-);

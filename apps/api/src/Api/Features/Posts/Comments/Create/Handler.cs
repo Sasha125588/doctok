@@ -1,11 +1,11 @@
-using Api.Features.Comments.Shared;
+using Api.Extensions;
 using Infrastructure.Persistence.Repos.Comments;
 
 namespace Api.Features.Posts.Comments.Create;
 
-public sealed class Handler(CommentsRepository commentsRepo)
+public sealed class Handler(CommentsRepository commentsRepo) : IHandler
 {
-  public async Task<CommentResponse> Handle(Command cmd, CancellationToken ct)
+  public async Task<Domain.Models.Comment> Handle(Command cmd, CancellationToken ct)
   {
     if (string.IsNullOrWhiteSpace(cmd.Body))
     {
@@ -17,7 +17,6 @@ public sealed class Handler(CommentsRepository commentsRepo)
       throw new ArgumentException("Comment body exceeds 2000 characters.");
     }
 
-    var comment = await commentsRepo.CreateRoot(cmd.PostId, cmd.UserId, cmd.Body.Trim(), ct);
-    return comment.ToResponse();
+    return await commentsRepo.CreateRoot(cmd.PostId, cmd.UserId, cmd.Body.Trim(), ct);
   }
 }

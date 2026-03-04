@@ -112,10 +112,6 @@ public static class WebServiceRegistration
       .AddPolicy("Admin", policy =>
         policy.RequireClaim("user_role", "admin"));
 
-    services.AddSingleton<Features.Resolve.Mdn.Handler>();
-    services.AddSingleton<Features.Admin.Mdn.Preload.Handler>();
-    services.AddSingleton<Features.Posts.Comments.Create.Handler>();
-
     return services;
   }
 }
