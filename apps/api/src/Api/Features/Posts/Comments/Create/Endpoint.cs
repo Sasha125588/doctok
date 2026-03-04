@@ -10,7 +10,7 @@ public sealed class Endpoint : IEndpoint
   {
     app.MapPost("/posts/{postId:long}/comments", async (
         long postId,
-        CreatePostCommentRequest req,
+        CreateCommentRequest req,
         ClaimsPrincipal user,
         Handler handler,
         CancellationToken ct) =>

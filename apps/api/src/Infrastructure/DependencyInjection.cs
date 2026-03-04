@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using Domain.Common;
 using Infrastructure.GitHub;
 using Infrastructure.Jobs;
 using Infrastructure.Llm;
@@ -110,12 +111,11 @@ public static class InfrastructureServiceRegistration
         client.Timeout = TimeSpan.FromSeconds(20);
       });
 
-    // Source handlers
+    // Source handlers (keyed by source code for JobProcessor lookup)
     services.AddSingleton<MdnTreeIndex>();
     services.AddSingleton<MdnContentConverter>();
     services.AddSingleton<MdnIngestionService>();
-    services.AddSingleton<MdnSourceJobHandler>();
-    services.AddSingleton<ISourceJobHandler>(sp => sp.GetRequiredService<MdnSourceJobHandler>());
+    services.AddKeyedSingleton<ISourceJobHandler, MdnSourceJobHandler>(SourceCodes.Mdn);
 
     // Post generation
     services.AddSingleton<FastPostGenerator>();

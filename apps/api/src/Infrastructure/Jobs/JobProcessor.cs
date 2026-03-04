@@ -1,15 +1,12 @@
 using System.Text.Json;
 using Domain.Common;
 using Infrastructure.Persistence.Repos.Jobs;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Infrastructure.Jobs;
 
-public sealed class JobProcessor(IEnumerable<ISourceJobHandler> sourceHandlers)
+public sealed class JobProcessor(IServiceProvider serviceProvider)
 {
-    private readonly Dictionary<string, ISourceJobHandler> _sourceHandlers = sourceHandlers
-        .GroupBy(x => x.SourceCode, StringComparer.OrdinalIgnoreCase)
-        .ToDictionary(x => x.Key, x => x.Single(), StringComparer.OrdinalIgnoreCase);
-
     public async Task Process(JobEnvelope job, CancellationToken ct)
     {
         using var payload = JsonDocument.Parse(job.PayloadJson);
@@ -21,10 +18,8 @@ public sealed class JobProcessor(IEnumerable<ISourceJobHandler> sourceHandlers)
         var externalRef = root.GetProperty("externalRef").GetString()
                           ?? throw new InvalidOperationException("payload.externalRef missing");
 
-        if (!_sourceHandlers.TryGetValue(provider, out var sourceHandler))
-        {
-            throw new NotSupportedException($"provider '{provider}' is not supported");
-        }
+        var sourceHandler = serviceProvider.GetKeyedService<ISourceJobHandler>(provider)
+                            ?? throw new NotSupportedException($"provider '{provider}' is not supported");
 
         switch (job.JobType)
         {

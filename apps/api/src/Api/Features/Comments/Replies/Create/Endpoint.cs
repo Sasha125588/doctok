@@ -1,11 +1,10 @@
 using System.Security.Claims;
 using Api.Auth;
 using Api.Extensions;
+using Api.Features.Posts.Comments.Create;
 using Infrastructure.Persistence.Repos.Comments;
 
 namespace Api.Features.Comments.Replies.Create;
-
-public sealed record CreateCommentReplyRequest(string Body);
 
 public sealed class Endpoint : IEndpoint
 {
@@ -13,7 +12,7 @@ public sealed class Endpoint : IEndpoint
   {
     app.MapPost("/comments/{commentId:long}/replies", async (
         long commentId,
-        CreateCommentReplyRequest req,
+        CreateCommentRequest req,
         ClaimsPrincipal user,
         CommentsRepository commentsRepo,
         CancellationToken ct) =>

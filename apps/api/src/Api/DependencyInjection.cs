@@ -76,6 +76,7 @@ public static class WebServiceRegistration
       });
     });
 
+    services.AddValidation();
     services.AddProblemDetails();
     services.AddExceptionHandler<ApiExceptionHandler>();
 
