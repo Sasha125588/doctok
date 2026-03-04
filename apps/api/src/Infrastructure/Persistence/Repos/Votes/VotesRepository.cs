@@ -93,7 +93,7 @@ public sealed class VotesRepository(IDbConnectionFactory dbf)
 
     private sealed record DbRow(int LikeCount, int DislikeCount, string MyVote);
 
-    public async Task<VoteResult> Toggle(long postId, Guid userId, VoteValue value, CancellationToken ct)
+    public async Task<VoteResult?> Toggle(long postId, Guid userId, VoteValue value, CancellationToken ct)
     {
         var valueText = value == VoteValue.Like ? "like" : "dislike";
 
@@ -101,12 +101,18 @@ public sealed class VotesRepository(IDbConnectionFactory dbf)
         await conn.OpenAsync(ct);
         await using var tx = await conn.BeginTransactionAsync(ct);
 
-        var row = await conn.QuerySingleAsync<DbRow>(
+        var row = await conn.QuerySingleOrDefaultAsync<DbRow>(
             new CommandDefinition(
                 ToggleSql,
                 new { post_id = postId, user_id = userId, value = valueText },
                 transaction: tx,
                 cancellationToken: ct));
+
+        if (row is null)
+        {
+          await tx.RollbackAsync(ct);
+          return null;
+        }
 
         await tx.CommitAsync(ct);
 

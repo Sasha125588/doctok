@@ -1,7 +1,7 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Api.Auth;
+using Api.Errors;
 using Api.Extensions;
-using Infrastructure.Persistence.Repos.Comments;
 
 namespace Api.Features.Comments.Delete;
 
@@ -12,17 +12,13 @@ public sealed class Endpoint : IEndpoint
     app.MapDelete("/comments/{commentId:long}", async (
         long commentId,
         ClaimsPrincipal user,
-        CommentsRepository repo,
+        Handler handler,
         CancellationToken ct) =>
       {
         var userId = CurrentUser.GetUserIdOrThrow(user);
-        var deleted = await repo.Delete(commentId, userId, ct);
-        if (!deleted)
-        {
-          return Results.NotFound();
-        }
+        var result = await handler.Handle(new Command(commentId, userId), ct);
 
-        return Results.NoContent();
+        return result.ToResponse(_ => Results.NoContent());
       })
       .RequireAuthorization()
       .WithTags("Comments")

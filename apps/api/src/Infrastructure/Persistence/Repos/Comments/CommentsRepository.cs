@@ -23,23 +23,32 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
     await using var tx = await ((DbConnection)db).BeginTransactionAsync(ct);
 
     const string insertSql = """
-                             insert into comments(post_id, user_id, parent_comment_id, body)
-                             values(@postId, @userId, null, @body)
-                             returning id, post_id, user_id, parent_comment_id, body, created_at, deleted_at
+                             with post as (
+                               update posts
+                               set comment_count = comment_count + 1
+                               where id = @postId
+                               returning id
+                             ),
+                             inserted as (
+                               insert into comments(post_id, user_id, parent_comment_id, body)
+                               select post.id, @userId, null, @body
+                               from post
+                               returning id, post_id, user_id, parent_comment_id, body, created_at, deleted_at
+                             )
+                             select id, post_id, user_id, parent_comment_id, body, created_at, deleted_at
+                             from inserted
                              """;
 
-    var row = await db.QuerySingleAsync<CommentRow>(new CommandDefinition(insertSql, new { postId, userId, body }, transaction: tx, cancellationToken: ct));
+    var row = await db.QuerySingleOrDefaultAsync<CommentRow>(
+      new CommandDefinition(
+        insertSql,
+        new { postId, userId, body },
+        transaction: tx,
+        cancellationToken: ct));
 
-    const string bumpSql = """
-                           update posts
-                           set comment_count = comment_count + 1
-                           where id = @postId
-                           """;
-
-    var affected = await db.ExecuteAsync(new CommandDefinition(bumpSql, new { postId }, transaction: tx, cancellationToken: ct));
-
-    if (affected == 0)
+    if (row is null)
     {
+      await tx.RollbackAsync(ct);
       throw new KeyNotFoundException("Post not found");
     }
 
@@ -54,19 +63,45 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
     await using var tx = await ((DbConnection)db).BeginTransactionAsync(ct);
 
     const string getParentSql = """
-                                 select id, post_id, parent_comment_id
-                                 from comments
-                                 where id = @parentCommentId
-                                    and deleted_at is null
-                                 """;
+                                select id, post_id, parent_comment_id
+                                from comments
+                                where id = @parentCommentId
+                                   and deleted_at is null
+                                for update
+                                """;
 
     var parent = await db.QuerySingleOrDefaultAsync<(long id, long post_id, long? parent_comment_id)>(
       new CommandDefinition(getParentSql, new { parentCommentId }, transaction: tx, cancellationToken: ct));
 
-    if (parent == default) throw new KeyNotFoundException("Parent comment not found");
-    if (parent.parent_comment_id is not null) throw new ArgumentException("Replies to replies are not supported");
+    if (parent == default)
+    {
+      throw new KeyNotFoundException("Parent comment not found");
+    }
 
-    var postId = parent.post_id;
+    if (parent.parent_comment_id is not null)
+    {
+      throw new ArgumentException("Replies to replies are not supported");
+    }
+
+    const string bumpSql = """
+                           update posts
+                           set comment_count = comment_count + 1
+                           where id = @postId
+                           returning id
+                           """;
+
+    var postId = await db.QuerySingleOrDefaultAsync<long?>(
+      new CommandDefinition(
+        bumpSql,
+        new { postId = parent.post_id },
+        transaction: tx,
+        cancellationToken: ct));
+
+    if (postId is null)
+    {
+      await tx.RollbackAsync(ct);
+      throw new KeyNotFoundException("Parent comment not found");
+    }
 
     const string insertSql = """
                              insert into comments(post_id, user_id, parent_comment_id, body)
@@ -80,14 +115,6 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
         new { postId, userId, parentCommentId, body },
         transaction: tx,
         cancellationToken: ct));
-
-    const string bumpSql = """
-                           update posts
-                           set comment_count = comment_count + 1
-                           where id = @postId
-                           """;
-
-    await db.ExecuteAsync(new CommandDefinition(bumpSql, new { postId }, transaction: tx, cancellationToken: ct));
 
     await tx.CommitAsync(ct);
     return ToModel(row);
@@ -105,7 +132,11 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
                        """;
 
     using var db = dbf.Create();
-    var rows = await db.QueryAsync<CommentRow>(new CommandDefinition(sql, new { postId, limit }, cancellationToken: ct));
+    var rows = await db.QueryAsync<CommentRow>(
+      new CommandDefinition(
+        sql,
+        new { postId, limit },
+        cancellationToken: ct));
 
     return rows.Select(ToModel).ToList();
   }
@@ -121,7 +152,11 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
                        """;
 
     using var db = dbf.Create();
-    var rows = await db.QueryAsync<CommentRow>(new CommandDefinition(sql, new { commentId, limit }, cancellationToken: ct));
+    var rows = await db.QueryAsync<CommentRow>(
+      new CommandDefinition(
+        sql,
+        new { commentId, limit },
+        cancellationToken: ct));
 
     return rows.Select(ToModel).ToList();
   }
@@ -141,7 +176,12 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
                           returning post_id
                           """;
 
-    var postId = await db.QuerySingleOrDefaultAsync<long?>(new CommandDefinition(delSql, new { commentId, userId }, transaction: tx, cancellationToken: ct));
+    var postId = await db.QuerySingleOrDefaultAsync<long?>(
+      new CommandDefinition(
+        delSql,
+        new { commentId, userId },
+        transaction: tx,
+        cancellationToken: ct));
 
     if (postId is null)
     {
@@ -155,7 +195,12 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
                           where id = @postId
                           """;
 
-    await db.ExecuteAsync(new CommandDefinition(decSql, new { postId }, transaction: tx, cancellationToken: ct));
+    await db.ExecuteAsync(
+      new CommandDefinition(
+        decSql,
+        new { postId },
+        transaction: tx,
+        cancellationToken: ct));
 
     await tx.CommitAsync(ct);
     return true;

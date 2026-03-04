@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using Api.Auth;
+using Api.Errors;
 using Api.Extensions;
-using Infrastructure.Persistence.Repos.Comments;
 
 namespace Api.Features.Comments.Replies.Create;
 
@@ -13,12 +13,13 @@ public sealed class Endpoint : IEndpoint
         long commentId,
         CreateCommentRequest req,
         ClaimsPrincipal user,
-        CommentsRepository commentsRepo,
+        Handler handler,
         CancellationToken ct) =>
       {
         var userId = CurrentUser.GetUserIdOrThrow(user);
-        var comment = await commentsRepo.Reply(commentId, userId, req.Body.Trim(), ct);
-        return Results.Created($"/api/comments/{commentId}/replies/{comment.Id}", comment);
+        var result = await handler.Handle(new Command(commentId, userId, req.Body.Trim()), ct);
+
+        return result.ToResponse(comment => Results.Created($"/api/comments/{commentId}/replies/{comment.Id}", comment));
       })
       .RequireAuthorization()
       .WithTags("Comments")
