@@ -9,6 +9,7 @@ export default defineNuxtConfig({
     'shadcn-nuxt',
     '@nuxt/icon',
     'nuxt-svgo',
+    '@peterbud/nuxt-query',
   ],
 
   experimental: {
@@ -17,6 +18,18 @@ export default defineNuxtConfig({
 
   nitro: {
     preset: 'bun',
+  },
+
+  nuxtQuery: {
+    devtools: true,
+    queryClientOptions: {
+      defaultOptions: {
+        queries: {
+          refetchOnWindowFocus: false,
+          staleTime: 5000,
+        },
+      },
+    },
   },
 
   shadcn: {

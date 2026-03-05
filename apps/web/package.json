@@ -11,10 +11,12 @@
     "lint": "oxlint -c .oxlintrc.json",
     "lint:fix": "oxlint . --fix",
     "fmt": "oxfmt -c .oxfmtrc.json",
-    "fmt:check": "oxfmt -c .oxfmtrc.json --check"
+    "fmt:check": "oxfmt -c .oxfmtrc.json --check",
+    "generate:client": "openapi-ts"
   },
   "dependencies": {
     "@nuxt/icon": "2.2.1",
+    "@peterbud/nuxt-query": "^1.5.2",
     "@pinia/nuxt": "0.11.3",
     "@tanstack/vue-query": "^5.92.9",
     "@vueuse/nuxt": "14.2.1",
@@ -26,10 +28,12 @@
     "nuxt-svgo": "4.2.6",
     "shadcn-nuxt": "2.4.3",
     "tailwind-merge": "^3.5.0",
+    "valibot": "^1.2.0",
     "vue": "^3.5.29",
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
+    "@hey-api/openapi-ts": "0.94.0",
     "@nuxtjs/tailwindcss": "7.0.0-beta.1",
     "oxfmt": "^0.36.0",
     "oxlint": "^1.51.0",
