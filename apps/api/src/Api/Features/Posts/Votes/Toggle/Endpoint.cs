@@ -8,27 +8,31 @@ namespace Api.Features.Posts.Votes.Toggle;
 
 public sealed class Endpoint : IEndpoint
 {
-    public void Map(IEndpointRouteBuilder app)
-    {
-      app.MapPut("/posts/{postId:long}/vote", async (
-          long postId,
-          TogglePostVoteRequest req,
-          ClaimsPrincipal user,
-          Handler handler,
-          CancellationToken ct) =>
-        {
-          var userId = CurrentUser.GetUserIdOrThrow(user);
-          var result = await handler.Handle(new Command(postId, userId, req.Value), ct);
+  public void Map(IEndpointRouteBuilder app)
+  {
+    app.MapPatch("/posts/{postId:long}/vote", async (
+        long postId,
+        TogglePostVoteRequest req,
+        ClaimsPrincipal user,
+        Handler handler,
+        CancellationToken ct) =>
+      {
+        var userId = CurrentUser.GetUserIdOrThrow(user);
+        var result = await handler.Handle(new Command(postId, userId, req.Value), ct);
 
-          return result.ToResponse(value => Results.Ok(value));
-        })
-        .RequireAuthorization()
-        .WithTags("Votes")
-        .WithSummary("Toggles a like or dislike on a post")
-        .WithName("PostsVotesToggle")
-        .Produces<VoteResult>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status404NotFound)
-        .Produces(StatusCodes.Status401Unauthorized);
-    }
+        return result.ToResponse(value => Results.Ok(value));
+      })
+      .RequireAuthorization()
+      .WithTags("Votes")
+      .WithSummary("Toggles a like or dislike on a post")
+      .WithDescription(
+        "Sets the current user's vote for a post. Allowed values are 'like' and 'dislike'. " +
+        "Sending the same value again removes the vote.")
+      .WithName("PostsVotesToggle")
+      .Produces<VoteResult>(StatusCodes.Status200OK)
+      .ProducesProblem(StatusCodes.Status400BadRequest)
+      .ProducesProblem(StatusCodes.Status401Unauthorized)
+      .ProducesProblem(StatusCodes.Status403Forbidden)
+      .ProducesProblem(StatusCodes.Status404NotFound);
+  }
 }

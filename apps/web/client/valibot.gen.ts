@@ -93,6 +93,25 @@ export const vCreateCommentRequest = v.object({
   body: v.pipe(v.string(), v.minLength(1), v.maxLength(2000)),
 })
 
+export const vHttpValidationProblemDetails = v.object({
+  type: v.nullish(v.string()),
+  title: v.nullish(v.string()),
+  status: v.nullish(
+    v.union([
+      v.pipe(
+        v.number(),
+        v.integer(),
+        v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'),
+        v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'),
+      ),
+      v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
+    ]),
+  ),
+  detail: v.nullish(v.string()),
+  instance: v.nullish(v.string()),
+  errors: v.optional(v.record(v.string(), v.array(v.string()))),
+})
+
 export const vPostItem = v.object({
   id: v.union([
     v.pipe(
@@ -176,12 +195,15 @@ export const vFeedResponse = v.object({
 })
 
 export const vPreloadMdnRequest = v.object({
-  lang: v.pipe(v.string(), v.minLength(0), v.maxLength(10)),
-  count: v.union([
-    v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(100)),
-    v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
-  ]),
-  seed: v.nullable(
+  lang: v.nullish(v.pipe(v.string(), v.minLength(0), v.maxLength(10)), 'en'),
+  count: v.nullish(
+    v.union([
+      v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(100)),
+      v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
+    ]),
+    5,
+  ),
+  seed: v.nullish(
     v.union([
       v.pipe(
         v.number(),
@@ -192,11 +214,29 @@ export const vPreloadMdnRequest = v.object({
       v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
     ]),
   ),
-  prefix: v.nullable(v.string()),
+  prefix: v.nullish(v.string()),
 })
 
 export const vPreloadMdnResponse = v.object({
   sample: v.array(v.string()),
+})
+
+export const vProblemDetails = v.object({
+  type: v.nullish(v.string()),
+  title: v.nullish(v.string()),
+  status: v.nullish(
+    v.union([
+      v.pipe(
+        v.number(),
+        v.integer(),
+        v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'),
+        v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'),
+      ),
+      v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
+    ]),
+  ),
+  detail: v.nullish(v.string()),
+  instance: v.nullish(v.string()),
 })
 
 export const vResolveMdnResponse = v.object({
@@ -238,6 +278,14 @@ export const vSessionMeResponse = v.object({
   email: v.nullable(v.string()),
 })
 
+export const vSystemDbPingResponse = v.object({
+  ok: v.boolean(),
+})
+
+export const vSystemHealthResponse = v.object({
+  ok: v.boolean(),
+})
+
 export const vTopicLink = v.object({
   slug: v.string(),
   title: v.string(),
@@ -269,7 +317,7 @@ export const vVoteResult = v.object({
   ]),
 })
 
-export const vVoteValue = v.pipe(v.number(), v.integer())
+export const vVoteValue = v.picklist(['like', 'dislike'])
 
 export const vTogglePostVoteRequest = v.object({
   value: vVoteValue,
@@ -293,7 +341,7 @@ export const vTopicsGetPostsData = v.object({
   }),
   query: v.optional(
     v.object({
-      lang: v.optional(v.string()),
+      lang: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(10)), 'en'),
     }),
   ),
 })
@@ -310,7 +358,7 @@ export const vTopicsGetLinksData = v.object({
   }),
   query: v.optional(
     v.object({
-      lang: v.optional(v.string()),
+      lang: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(10)), 'en'),
     }),
   ),
 })
@@ -326,11 +374,21 @@ export const vSystemHealthData = v.object({
   query: v.optional(v.never()),
 })
 
+/**
+ * OK
+ */
+export const vSystemHealthResponse2 = vSystemHealthResponse
+
 export const vSystemDbPingData = v.object({
   body: v.optional(v.never()),
   path: v.optional(v.never()),
   query: v.optional(v.never()),
 })
+
+/**
+ * OK
+ */
+export const vSystemDbPingResponse2 = vSystemDbPingResponse
 
 export const vSessionMeGetData = v.object({
   body: v.optional(v.never()),
@@ -350,7 +408,7 @@ export const vResolveMdnData = v.object({
   }),
   query: v.optional(
     v.object({
-      lang: v.optional(v.string()),
+      lang: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(10)), 'en'),
     }),
   ),
 })
@@ -389,19 +447,15 @@ export const vFeedListData = v.object({
   path: v.optional(v.never()),
   query: v.optional(
     v.object({
-      cursor: v.optional(v.string()),
-      lang: v.optional(v.string()),
+      cursor: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(512))),
       limit: v.optional(
         v.union([
-          v.pipe(
-            v.number(),
-            v.integer(),
-            v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'),
-            v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'),
-          ),
+          v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(50)),
           v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
         ]),
+        20,
       ),
+      lang: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(10)), 'en'),
     }),
   ),
 })
@@ -431,14 +485,10 @@ export const vCommentsRepliesListData = v.object({
     v.object({
       limit: v.optional(
         v.union([
-          v.pipe(
-            v.number(),
-            v.integer(),
-            v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'),
-            v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'),
-          ),
+          v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(50)),
           v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
         ]),
+        20,
       ),
     }),
   ),
@@ -493,14 +543,10 @@ export const vPostsCommentsListData = v.object({
     v.object({
       limit: v.optional(
         v.union([
-          v.pipe(
-            v.number(),
-            v.integer(),
-            v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'),
-            v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'),
-          ),
+          v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(50)),
           v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
         ]),
+        20,
       ),
     }),
   ),

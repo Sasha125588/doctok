@@ -15,12 +15,13 @@ public sealed class Endpoint : IEndpoint
             var one = await db.ExecuteScalarAsync<int>(
                 new CommandDefinition("select 1", cancellationToken: ct));
 
-            return Results.Ok(new { ok = one == 1 });
+            return Results.Ok(new SystemDbPingResponse(one == 1));
         }).RequireAuthorization()
         .WithTags("System")
         .WithSummary("Checks DB connectivity")
         .WithName("SystemDbPing")
-        .Produces(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status401Unauthorized);
+        .Produces<SystemDbPingResponse>(StatusCodes.Status200OK)
+        .ProducesProblem(StatusCodes.Status401Unauthorized)
+        .ProducesProblem(StatusCodes.Status403Forbidden);
     }
 }

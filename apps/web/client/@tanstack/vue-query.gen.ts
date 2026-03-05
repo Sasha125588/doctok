@@ -28,30 +28,45 @@ import {
 } from '../sdk.gen'
 import type {
   AdminMdnPreloadData,
+  AdminMdnPreloadError,
   AdminMdnPreloadResponse,
   CommentsDeleteData,
+  CommentsDeleteError,
   CommentsDeleteResponse,
   CommentsRepliesCreateData,
+  CommentsRepliesCreateError,
   CommentsRepliesCreateResponse,
   CommentsRepliesListData,
+  CommentsRepliesListError,
   CommentsRepliesListResponse,
   FeedListData,
+  FeedListError,
   FeedListResponse,
   PostsCommentsCreateData,
+  PostsCommentsCreateError,
   PostsCommentsCreateResponse,
   PostsCommentsListData,
+  PostsCommentsListError,
   PostsCommentsListResponse,
   PostsVotesToggleData,
+  PostsVotesToggleError,
   PostsVotesToggleResponse,
   ResolveMdnData,
+  ResolveMdnError,
   ResolveMdnResponse2,
   SessionMeGetData,
+  SessionMeGetError,
   SessionMeGetResponse,
   SystemDbPingData,
+  SystemDbPingError,
+  SystemDbPingResponse2,
   SystemHealthData,
+  SystemHealthResponse2,
   TopicsGetLinksData,
+  TopicsGetLinksError,
   TopicsGetLinksResponse,
   TopicsGetPostsData,
+  TopicsGetPostsError,
   TopicsGetPostsResponse,
 } from '../types.gen'
 
@@ -60,10 +75,14 @@ import type {
  */
 export const adminMdnPreloadMutation = (
   options?: Partial<Options<AdminMdnPreloadData>>,
-): UseMutationOptions<AdminMdnPreloadResponse, DefaultError, Options<AdminMdnPreloadData>> => {
+): UseMutationOptions<
+  AdminMdnPreloadResponse,
+  AdminMdnPreloadError,
+  Options<AdminMdnPreloadData>
+> => {
   const mutationOptions: UseMutationOptions<
     AdminMdnPreloadResponse,
-    DefaultError,
+    AdminMdnPreloadError,
     Options<AdminMdnPreloadData>
   > = {
     mutationFn: async (fnOptions) => {
@@ -126,7 +145,7 @@ export const topicsGetPostsQueryKey = (options: Options<TopicsGetPostsData>) =>
 export const topicsGetPostsOptions = (options: Options<TopicsGetPostsData>) =>
   queryOptions<
     TopicsGetPostsResponse,
-    DefaultError,
+    TopicsGetPostsError,
     TopicsGetPostsResponse,
     ReturnType<typeof topicsGetPostsQueryKey>
   >({
@@ -151,7 +170,7 @@ export const topicsGetLinksQueryKey = (options: Options<TopicsGetLinksData>) =>
 export const topicsGetLinksOptions = (options: Options<TopicsGetLinksData>) =>
   queryOptions<
     TopicsGetLinksResponse,
-    DefaultError,
+    TopicsGetLinksError,
     TopicsGetLinksResponse,
     ReturnType<typeof topicsGetLinksQueryKey>
   >({
@@ -174,7 +193,12 @@ export const systemHealthQueryKey = (options?: Options<SystemHealthData>) =>
  * Health check
  */
 export const systemHealthOptions = (options?: Options<SystemHealthData>) =>
-  queryOptions<unknown, DefaultError, unknown, ReturnType<typeof systemHealthQueryKey>>({
+  queryOptions<
+    SystemHealthResponse2,
+    DefaultError,
+    SystemHealthResponse2,
+    ReturnType<typeof systemHealthQueryKey>
+  >({
     queryFn: async ({ queryKey, signal }) => {
       const { data } = await systemHealth({
         ...options,
@@ -194,7 +218,12 @@ export const systemDbPingQueryKey = (options?: Options<SystemDbPingData>) =>
  * Checks DB connectivity
  */
 export const systemDbPingOptions = (options?: Options<SystemDbPingData>) =>
-  queryOptions<unknown, DefaultError, unknown, ReturnType<typeof systemDbPingQueryKey>>({
+  queryOptions<
+    SystemDbPingResponse2,
+    SystemDbPingError,
+    SystemDbPingResponse2,
+    ReturnType<typeof systemDbPingQueryKey>
+  >({
     queryFn: async ({ queryKey, signal }) => {
       const { data } = await systemDbPing({
         ...options,
@@ -216,7 +245,7 @@ export const sessionMeGetQueryKey = (options?: Options<SessionMeGetData>) =>
 export const sessionMeGetOptions = (options?: Options<SessionMeGetData>) =>
   queryOptions<
     SessionMeGetResponse,
-    DefaultError,
+    SessionMeGetError,
     SessionMeGetResponse,
     ReturnType<typeof sessionMeGetQueryKey>
   >({
@@ -241,7 +270,7 @@ export const resolveMdnQueryKey = (options: Options<ResolveMdnData>) =>
 export const resolveMdnOptions = (options: Options<ResolveMdnData>) =>
   queryOptions<
     ResolveMdnResponse2,
-    DefaultError,
+    ResolveMdnError,
     ResolveMdnResponse2,
     ReturnType<typeof resolveMdnQueryKey>
   >({
@@ -259,13 +288,19 @@ export const resolveMdnOptions = (options: Options<ResolveMdnData>) =>
 
 /**
  * Toggles a like or dislike on a post
+ *
+ * Sets the current user's vote for a post. Allowed values are 'like' and 'dislike'. Sending the same value again removes the vote.
  */
 export const postsVotesToggleMutation = (
   options?: Partial<Options<PostsVotesToggleData>>,
-): UseMutationOptions<PostsVotesToggleResponse, DefaultError, Options<PostsVotesToggleData>> => {
+): UseMutationOptions<
+  PostsVotesToggleResponse,
+  PostsVotesToggleError,
+  Options<PostsVotesToggleData>
+> => {
   const mutationOptions: UseMutationOptions<
     PostsVotesToggleResponse,
-    DefaultError,
+    PostsVotesToggleError,
     Options<PostsVotesToggleData>
   > = {
     mutationFn: async (fnOptions) => {
@@ -289,7 +324,7 @@ export const feedListQueryKey = (options?: Options<FeedListData>) =>
 export const feedListOptions = (options?: Options<FeedListData>) =>
   queryOptions<
     FeedListResponse,
-    DefaultError,
+    FeedListError,
     FeedListResponse,
     ReturnType<typeof feedListQueryKey>
   >({
@@ -349,7 +384,7 @@ export const feedListInfiniteQueryKey = (
 export const feedListInfiniteOptions = (options?: Options<FeedListData>) =>
   infiniteQueryOptions<
     FeedListResponse,
-    DefaultError,
+    FeedListError,
     InfiniteData<FeedListResponse>,
     QueryKey<Options<FeedListData>>,
     string | Pick<QueryKey<Options<FeedListData>>[0], 'body' | 'headers' | 'path' | 'query'>
@@ -391,7 +426,7 @@ export const commentsRepliesListQueryKey = (options: Options<CommentsRepliesList
 export const commentsRepliesListOptions = (options: Options<CommentsRepliesListData>) =>
   queryOptions<
     CommentsRepliesListResponse,
-    DefaultError,
+    CommentsRepliesListError,
     CommentsRepliesListResponse,
     ReturnType<typeof commentsRepliesListQueryKey>
   >({
@@ -414,12 +449,12 @@ export const commentsRepliesCreateMutation = (
   options?: Partial<Options<CommentsRepliesCreateData>>,
 ): UseMutationOptions<
   CommentsRepliesCreateResponse,
-  DefaultError,
+  CommentsRepliesCreateError,
   Options<CommentsRepliesCreateData>
 > => {
   const mutationOptions: UseMutationOptions<
     CommentsRepliesCreateResponse,
-    DefaultError,
+    CommentsRepliesCreateError,
     Options<CommentsRepliesCreateData>
   > = {
     mutationFn: async (fnOptions) => {
@@ -443,7 +478,7 @@ export const postsCommentsListQueryKey = (options: Options<PostsCommentsListData
 export const postsCommentsListOptions = (options: Options<PostsCommentsListData>) =>
   queryOptions<
     PostsCommentsListResponse,
-    DefaultError,
+    PostsCommentsListError,
     PostsCommentsListResponse,
     ReturnType<typeof postsCommentsListQueryKey>
   >({
@@ -466,12 +501,12 @@ export const postsCommentsCreateMutation = (
   options?: Partial<Options<PostsCommentsCreateData>>,
 ): UseMutationOptions<
   PostsCommentsCreateResponse,
-  DefaultError,
+  PostsCommentsCreateError,
   Options<PostsCommentsCreateData>
 > => {
   const mutationOptions: UseMutationOptions<
     PostsCommentsCreateResponse,
-    DefaultError,
+    PostsCommentsCreateError,
     Options<PostsCommentsCreateData>
   > = {
     mutationFn: async (fnOptions) => {
@@ -491,10 +526,10 @@ export const postsCommentsCreateMutation = (
  */
 export const commentsDeleteMutation = (
   options?: Partial<Options<CommentsDeleteData>>,
-): UseMutationOptions<CommentsDeleteResponse, DefaultError, Options<CommentsDeleteData>> => {
+): UseMutationOptions<CommentsDeleteResponse, CommentsDeleteError, Options<CommentsDeleteData>> => {
   const mutationOptions: UseMutationOptions<
     CommentsDeleteResponse,
-    DefaultError,
+    CommentsDeleteError,
     Options<CommentsDeleteData>
   > = {
     mutationFn: async (fnOptions) => {

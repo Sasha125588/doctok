@@ -23,6 +23,17 @@ export type FeedResponse = {
   nextCursor: null | string
 }
 
+export type HttpValidationProblemDetails = {
+  type?: null | string
+  title?: null | string
+  status?: null | number | string
+  detail?: null | string
+  instance?: null | string
+  errors?: {
+    [key: string]: Array<string>
+  }
+}
+
 export type PostItem = {
   id: number | string
   kind: string
@@ -39,14 +50,22 @@ export type PostItem = {
 }
 
 export type PreloadMdnRequest = {
-  lang: string
-  count: number | string
-  seed: null | number | string
-  prefix: null | string
+  lang?: null | string
+  count?: null | number | string
+  seed?: null | number | string
+  prefix?: null | string
 }
 
 export type PreloadMdnResponse = {
   sample: Array<string>
+}
+
+export type ProblemDetails = {
+  type?: null | string
+  title?: null | string
+  status?: null | number | string
+  detail?: null | string
+  instance?: null | string
 }
 
 export type ResolveMdnResponse = {
@@ -59,6 +78,14 @@ export type ResolveMdnResponse = {
 export type SessionMeResponse = {
   userId: string
   email: null | string
+}
+
+export type SystemDbPingResponse = {
+  ok: boolean
+}
+
+export type SystemHealthResponse = {
+  ok: boolean
 }
 
 export type TogglePostVoteRequest = {
@@ -80,7 +107,7 @@ export type VoteResult = {
   dislikeCount: number | string
 }
 
-export type VoteValue = number
+export type VoteValue = 'like' | 'dislike'
 
 export type AdminMdnPreloadData = {
   body: PreloadMdnRequest
@@ -91,14 +118,20 @@ export type AdminMdnPreloadData = {
 
 export type AdminMdnPreloadErrors = {
   /**
+   * Bad Request
+   */
+  400: HttpValidationProblemDetails
+  /**
    * Unauthorized
    */
-  401: unknown
+  401: ProblemDetails
   /**
    * Forbidden
    */
-  403: unknown
+  403: ProblemDetails
 }
+
+export type AdminMdnPreloadError = AdminMdnPreloadErrors[keyof AdminMdnPreloadErrors]
 
 export type AdminMdnPreloadResponses = {
   /**
@@ -122,10 +155,16 @@ export type TopicsGetPostsData = {
 
 export type TopicsGetPostsErrors = {
   /**
+   * Bad Request
+   */
+  400: HttpValidationProblemDetails
+  /**
    * Not Found
    */
-  404: unknown
+  404: ProblemDetails
 }
+
+export type TopicsGetPostsError = TopicsGetPostsErrors[keyof TopicsGetPostsErrors]
 
 export type TopicsGetPostsResponses = {
   /**
@@ -147,6 +186,15 @@ export type TopicsGetLinksData = {
   url: '/api/topics/{slug}/links'
 }
 
+export type TopicsGetLinksErrors = {
+  /**
+   * Bad Request
+   */
+  400: HttpValidationProblemDetails
+}
+
+export type TopicsGetLinksError = TopicsGetLinksErrors[keyof TopicsGetLinksErrors]
+
 export type TopicsGetLinksResponses = {
   /**
    * OK
@@ -167,8 +215,10 @@ export type SystemHealthResponses = {
   /**
    * OK
    */
-  200: unknown
+  200: SystemHealthResponse
 }
+
+export type SystemHealthResponse2 = SystemHealthResponses[keyof SystemHealthResponses]
 
 export type SystemDbPingData = {
   body?: never
@@ -181,19 +231,23 @@ export type SystemDbPingErrors = {
   /**
    * Unauthorized
    */
-  401: unknown
+  401: ProblemDetails
   /**
    * Forbidden
    */
-  403: unknown
+  403: ProblemDetails
 }
+
+export type SystemDbPingError = SystemDbPingErrors[keyof SystemDbPingErrors]
 
 export type SystemDbPingResponses = {
   /**
    * OK
    */
-  200: unknown
+  200: SystemDbPingResponse
 }
+
+export type SystemDbPingResponse2 = SystemDbPingResponses[keyof SystemDbPingResponses]
 
 export type SessionMeGetData = {
   body?: never
@@ -206,12 +260,14 @@ export type SessionMeGetErrors = {
   /**
    * Unauthorized
    */
-  401: unknown
+  401: ProblemDetails
   /**
    * Forbidden
    */
-  403: unknown
+  403: ProblemDetails
 }
+
+export type SessionMeGetError = SessionMeGetErrors[keyof SessionMeGetErrors]
 
 export type SessionMeGetResponses = {
   /**
@@ -237,8 +293,10 @@ export type ResolveMdnErrors = {
   /**
    * Bad Request
    */
-  400: unknown
+  400: HttpValidationProblemDetails
 }
+
+export type ResolveMdnError = ResolveMdnErrors[keyof ResolveMdnErrors]
 
 export type ResolveMdnResponses = {
   /**
@@ -262,20 +320,22 @@ export type PostsVotesToggleErrors = {
   /**
    * Bad Request
    */
-  400: unknown
+  400: ProblemDetails
   /**
    * Unauthorized
    */
-  401: unknown
+  401: ProblemDetails
   /**
    * Forbidden
    */
-  403: unknown
+  403: ProblemDetails
   /**
    * Not Found
    */
-  404: unknown
+  404: ProblemDetails
 }
+
+export type PostsVotesToggleError = PostsVotesToggleErrors[keyof PostsVotesToggleErrors]
 
 export type PostsVotesToggleResponses = {
   /**
@@ -291,11 +351,20 @@ export type FeedListData = {
   path?: never
   query?: {
     cursor?: string
-    lang?: string
     limit?: number | string
+    lang?: string
   }
   url: '/api/feed'
 }
+
+export type FeedListErrors = {
+  /**
+   * Bad Request
+   */
+  400: HttpValidationProblemDetails
+}
+
+export type FeedListError = FeedListErrors[keyof FeedListErrors]
 
 export type FeedListResponses = {
   /**
@@ -316,6 +385,15 @@ export type CommentsRepliesListData = {
   }
   url: '/api/comments/{commentId}/replies'
 }
+
+export type CommentsRepliesListErrors = {
+  /**
+   * Bad Request
+   */
+  400: HttpValidationProblemDetails
+}
+
+export type CommentsRepliesListError = CommentsRepliesListErrors[keyof CommentsRepliesListErrors]
 
 export type CommentsRepliesListResponses = {
   /**
@@ -340,20 +418,23 @@ export type CommentsRepliesCreateErrors = {
   /**
    * Bad Request
    */
-  400: unknown
+  400: ProblemDetails
   /**
    * Unauthorized
    */
-  401: unknown
+  401: ProblemDetails
   /**
    * Forbidden
    */
-  403: unknown
+  403: ProblemDetails
   /**
    * Not Found
    */
-  404: unknown
+  404: ProblemDetails
 }
+
+export type CommentsRepliesCreateError =
+  CommentsRepliesCreateErrors[keyof CommentsRepliesCreateErrors]
 
 export type CommentsRepliesCreateResponses = {
   /**
@@ -375,6 +456,15 @@ export type PostsCommentsListData = {
   }
   url: '/api/posts/{postId}/comments'
 }
+
+export type PostsCommentsListErrors = {
+  /**
+   * Bad Request
+   */
+  400: HttpValidationProblemDetails
+}
+
+export type PostsCommentsListError = PostsCommentsListErrors[keyof PostsCommentsListErrors]
 
 export type PostsCommentsListResponses = {
   /**
@@ -398,20 +488,22 @@ export type PostsCommentsCreateErrors = {
   /**
    * Bad Request
    */
-  400: unknown
+  400: ProblemDetails
   /**
    * Unauthorized
    */
-  401: unknown
+  401: ProblemDetails
   /**
    * Forbidden
    */
-  403: unknown
+  403: ProblemDetails
   /**
    * Not Found
    */
-  404: unknown
+  404: ProblemDetails
 }
+
+export type PostsCommentsCreateError = PostsCommentsCreateErrors[keyof PostsCommentsCreateErrors]
 
 export type PostsCommentsCreateResponses = {
   /**
@@ -436,16 +528,18 @@ export type CommentsDeleteErrors = {
   /**
    * Unauthorized
    */
-  401: unknown
+  401: ProblemDetails
   /**
    * Forbidden
    */
-  403: unknown
+  403: ProblemDetails
   /**
    * Not Found
    */
-  404: unknown
+  404: ProblemDetails
 }
+
+export type CommentsDeleteError = CommentsDeleteErrors[keyof CommentsDeleteErrors]
 
 export type CommentsDeleteResponses = {
   /**

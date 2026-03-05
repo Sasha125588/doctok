@@ -11,7 +11,7 @@ public sealed class Endpoint : IEndpoint
   {
     app.MapGet("/topics/{slug}", async (
       string slug,
-      string? lang,
+      [AsParameters] TopicsGetPostsQueryParams query,
       ClaimsPrincipal user,
       Handler handler,
       CancellationToken ct) =>
@@ -20,13 +20,14 @@ public sealed class Endpoint : IEndpoint
       if (user.Identity?.IsAuthenticated == true)
         userId = CurrentUser.GetUserIdOrThrow(user);
 
-      var result = await handler.Handle(new Query(slug, lang, userId), ct);
+      var result = await handler.Handle(new Query(slug, query.Lang, userId), ct);
       return result.ToResponse(value => Results.Ok(value));
     })
     .WithTags("Topics")
     .WithSummary("Returns posts for a topic")
     .WithName("TopicsGetPosts")
     .Produces<TopicPostsResponse>(StatusCodes.Status200OK)
-    .Produces(StatusCodes.Status404NotFound);
+    .ProducesProblem(StatusCodes.Status404NotFound)
+    .ProducesValidationProblem(StatusCodes.Status400BadRequest);
   }
 }

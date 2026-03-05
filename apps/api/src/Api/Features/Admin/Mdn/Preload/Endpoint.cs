@@ -19,6 +19,9 @@ public sealed class Endpoint : IAdminEndpoint
         })
         .WithName("AdminMdnPreload")
         .WithSummary("Enqueues batch MDN fetch_raw jobs (dev/admin)")
-        .Produces<PreloadMdnResponse>(StatusCodes.Status200OK);
+        .Produces<PreloadMdnResponse>(StatusCodes.Status200OK)
+        .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status401Unauthorized)
+        .ProducesProblem(StatusCodes.Status403Forbidden);
     }
 }

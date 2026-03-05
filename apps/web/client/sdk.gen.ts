@@ -15,13 +15,16 @@ import type {
   CommentsRepliesCreateErrors,
   CommentsRepliesCreateResponses,
   CommentsRepliesListData,
+  CommentsRepliesListErrors,
   CommentsRepliesListResponses,
   FeedListData,
+  FeedListErrors,
   FeedListResponses,
   PostsCommentsCreateData,
   PostsCommentsCreateErrors,
   PostsCommentsCreateResponses,
   PostsCommentsListData,
+  PostsCommentsListErrors,
   PostsCommentsListResponses,
   PostsVotesToggleData,
   PostsVotesToggleErrors,
@@ -38,6 +41,7 @@ import type {
   SystemHealthData,
   SystemHealthResponses,
   TopicsGetLinksData,
+  TopicsGetLinksErrors,
   TopicsGetLinksResponses,
   TopicsGetPostsData,
   TopicsGetPostsErrors,
@@ -65,7 +69,9 @@ import {
   vSessionMeGetData,
   vSessionMeGetResponse,
   vSystemDbPingData,
+  vSystemDbPingResponse2,
   vSystemHealthData,
+  vSystemHealthResponse2,
   vTopicsGetLinksData,
   vTopicsGetLinksResponse,
   vTopicsGetPostsData,
@@ -126,7 +132,7 @@ export const topicsGetPosts = <ThrowOnError extends boolean = false>(
 export const topicsGetLinks = <ThrowOnError extends boolean = false>(
   options: Options<TopicsGetLinksData, ThrowOnError>,
 ) =>
-  (options.client ?? client).get<TopicsGetLinksResponses, unknown, ThrowOnError>({
+  (options.client ?? client).get<TopicsGetLinksResponses, TopicsGetLinksErrors, ThrowOnError>({
     requestValidator: async (data) => await v.parseAsync(vTopicsGetLinksData, data),
     responseValidator: async (data) => await v.parseAsync(vTopicsGetLinksResponse, data),
     url: '/api/topics/{slug}/links',
@@ -141,6 +147,7 @@ export const systemHealth = <ThrowOnError extends boolean = false>(
 ) =>
   (options?.client ?? client).get<SystemHealthResponses, unknown, ThrowOnError>({
     requestValidator: async (data) => await v.parseAsync(vSystemHealthData, data),
+    responseValidator: async (data) => await v.parseAsync(vSystemHealthResponse2, data),
     url: '/api/health',
     ...options,
   })
@@ -153,6 +160,7 @@ export const systemDbPing = <ThrowOnError extends boolean = false>(
 ) =>
   (options?.client ?? client).get<SystemDbPingResponses, SystemDbPingErrors, ThrowOnError>({
     requestValidator: async (data) => await v.parseAsync(vSystemDbPingData, data),
+    responseValidator: async (data) => await v.parseAsync(vSystemDbPingResponse2, data),
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/db/ping',
     ...options,
@@ -187,21 +195,25 @@ export const resolveMdn = <ThrowOnError extends boolean = false>(
 
 /**
  * Toggles a like or dislike on a post
+ *
+ * Sets the current user's vote for a post. Allowed values are 'like' and 'dislike'. Sending the same value again removes the vote.
  */
 export const postsVotesToggle = <ThrowOnError extends boolean = false>(
   options: Options<PostsVotesToggleData, ThrowOnError>,
 ) =>
-  (options.client ?? client).put<PostsVotesToggleResponses, PostsVotesToggleErrors, ThrowOnError>({
-    requestValidator: async (data) => await v.parseAsync(vPostsVotesToggleData, data),
-    responseValidator: async (data) => await v.parseAsync(vPostsVotesToggleResponse, data),
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/posts/{postId}/vote',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
+  (options.client ?? client).patch<PostsVotesToggleResponses, PostsVotesToggleErrors, ThrowOnError>(
+    {
+      requestValidator: async (data) => await v.parseAsync(vPostsVotesToggleData, data),
+      responseValidator: async (data) => await v.parseAsync(vPostsVotesToggleResponse, data),
+      security: [{ scheme: 'bearer', type: 'http' }],
+      url: '/api/posts/{postId}/vote',
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
     },
-  })
+  )
 
 /**
  * Returns paginated feed items
@@ -209,7 +221,7 @@ export const postsVotesToggle = <ThrowOnError extends boolean = false>(
 export const feedList = <ThrowOnError extends boolean = false>(
   options?: Options<FeedListData, ThrowOnError>,
 ) =>
-  (options?.client ?? client).get<FeedListResponses, unknown, ThrowOnError>({
+  (options?.client ?? client).get<FeedListResponses, FeedListErrors, ThrowOnError>({
     requestValidator: async (data) => await v.parseAsync(vFeedListData, data),
     responseValidator: async (data) => await v.parseAsync(vFeedListResponse, data),
     url: '/api/feed',
@@ -222,7 +234,11 @@ export const feedList = <ThrowOnError extends boolean = false>(
 export const commentsRepliesList = <ThrowOnError extends boolean = false>(
   options: Options<CommentsRepliesListData, ThrowOnError>,
 ) =>
-  (options.client ?? client).get<CommentsRepliesListResponses, unknown, ThrowOnError>({
+  (options.client ?? client).get<
+    CommentsRepliesListResponses,
+    CommentsRepliesListErrors,
+    ThrowOnError
+  >({
     requestValidator: async (data) => await v.parseAsync(vCommentsRepliesListData, data),
     responseValidator: async (data) => await v.parseAsync(vCommentsRepliesListResponse, data),
     url: '/api/comments/{commentId}/replies',
@@ -257,12 +273,14 @@ export const commentsRepliesCreate = <ThrowOnError extends boolean = false>(
 export const postsCommentsList = <ThrowOnError extends boolean = false>(
   options: Options<PostsCommentsListData, ThrowOnError>,
 ) =>
-  (options.client ?? client).get<PostsCommentsListResponses, unknown, ThrowOnError>({
-    requestValidator: async (data) => await v.parseAsync(vPostsCommentsListData, data),
-    responseValidator: async (data) => await v.parseAsync(vPostsCommentsListResponse, data),
-    url: '/api/posts/{postId}/comments',
-    ...options,
-  })
+  (options.client ?? client).get<PostsCommentsListResponses, PostsCommentsListErrors, ThrowOnError>(
+    {
+      requestValidator: async (data) => await v.parseAsync(vPostsCommentsListData, data),
+      responseValidator: async (data) => await v.parseAsync(vPostsCommentsListResponse, data),
+      url: '/api/posts/{postId}/comments',
+      ...options,
+    },
+  )
 
 /**
  * Adds a comment to a post

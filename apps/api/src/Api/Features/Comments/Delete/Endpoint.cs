@@ -25,7 +25,8 @@ public sealed class Endpoint : IEndpoint
       .WithSummary("Soft-deletes a comment owned by the current user")
       .WithName("CommentsDelete")
       .Produces(StatusCodes.Status204NoContent)
-      .Produces(StatusCodes.Status401Unauthorized)
-      .Produces(StatusCodes.Status404NotFound);
+      .ProducesProblem(StatusCodes.Status401Unauthorized)
+      .ProducesProblem(StatusCodes.Status403Forbidden)
+      .ProducesProblem(StatusCodes.Status404NotFound);
   }
 }

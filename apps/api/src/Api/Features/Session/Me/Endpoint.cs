@@ -19,6 +19,7 @@ public sealed class Endpoint : IEndpoint
         .WithSummary("Returns the current user id from Supabase JWT")
         .WithName("SessionMeGet")
         .Produces<SessionMeResponse>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status401Unauthorized);
+        .ProducesProblem(StatusCodes.Status401Unauthorized)
+        .ProducesProblem(StatusCodes.Status403Forbidden);
     }
 }

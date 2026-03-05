@@ -11,17 +11,18 @@ public sealed class Endpoint : IEndpoint
     {
         app.MapGet("/topics/{slug}/links", async (
             string slug,
-            string? lang,
+            [AsParameters] TopicsGetLinksQueryParams query,
             TopicLinksRepository topicLinksRepo,
             CancellationToken ct) =>
         {
-            var resolvedLang = LanguageHelpers.NormalizeLang(lang ?? "en");
+            var resolvedLang = LanguageHelpers.NormalizeLang(query.Lang ?? "en");
             var links = await topicLinksRepo.GetLinkedTopics(slug, resolvedLang, ct);
             return Results.Ok(links);
         })
         .WithTags("Topics")
         .WithSummary("Returns linked topics for a topic")
         .WithName("TopicsGetLinks")
-        .Produces<IReadOnlyList<TopicLink>>(StatusCodes.Status200OK);
+        .Produces<IReadOnlyList<TopicLink>>(StatusCodes.Status200OK)
+        .ProducesValidationProblem(StatusCodes.Status400BadRequest);
     }
 }

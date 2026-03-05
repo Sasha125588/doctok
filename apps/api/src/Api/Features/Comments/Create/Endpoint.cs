@@ -26,8 +26,9 @@ public sealed class Endpoint : IEndpoint
       .WithSummary("Adds a comment to a post")
       .WithName("PostsCommentsCreate")
       .Produces<Domain.Models.Comment>(StatusCodes.Status201Created)
-      .Produces(StatusCodes.Status400BadRequest)
-      .Produces(StatusCodes.Status404NotFound)
-      .Produces(StatusCodes.Status401Unauthorized);
+      .ProducesProblem(StatusCodes.Status400BadRequest)
+      .ProducesProblem(StatusCodes.Status401Unauthorized)
+      .ProducesProblem(StatusCodes.Status403Forbidden)
+      .ProducesProblem(StatusCodes.Status404NotFound);
   }
 }

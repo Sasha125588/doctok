@@ -4,20 +4,40 @@ import { useInfiniteQuery } from '@tanstack/vue-query'
 
 const response = useInfiniteQuery({
   ...feedListInfiniteOptions({
-    query: {
-      lang: 'ru',
-    },
+    query: { lang: 'ru' },
   }),
   getNextPageParam: (lastPage) => lastPage.nextCursor,
 })
-
-console.log('@data', response.data.value?.pages[0]?.items[0])
 </script>
 
 <template>
   <div>
     <NuxtRouteAnnouncer />
     <NuxtWelcome />
-    <pre>{{ response.data.value?.pages[0]?.items[0] }}</pre>
+    <div
+      style="
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        border: 1px solid #ccc;
+        padding: 10px;
+        border-radius: 5px;
+      "
+      v-for="post in response.data.value?.pages[0]?.items"
+      :key="post.id"
+    >
+      <h2>{{ post.title }}</h2>
+      <p>{{ post.body }}</p>
+      <p>{{ post.position }}</p>
+      <p>{{ post.likeCount }}</p>
+      <p>{{ post.dislikeCount }}</p>
+      <p>{{ post.commentCount }}</p>
+      <p>{{ post.topicSlug }}</p>
+      <p>{{ post.topicTitle }}</p>
+      <p>{{ post.myVote }}</p>
+      <p>{{ post.popularity }}</p>
+      <p>{{ post.id }}</p>
+      <p>{{ post.kind }}</p>
+    </div>
   </div>
 </template>

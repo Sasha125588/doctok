@@ -1,6 +1,5 @@
 using System.Data.Common;
 using Dapper;
-using Domain.Common;
 using Domain.Models;
 using Infrastructure.Persistence.Db;
 
@@ -93,10 +92,8 @@ public sealed class VotesRepository(IDbConnectionFactory dbf)
 
     private sealed record DbRow(int LikeCount, int DislikeCount, string MyVote);
 
-    public async Task<VoteResult?> Toggle(long postId, Guid userId, VoteValue value, CancellationToken ct)
+    public async Task<VoteResult?> Toggle(long postId, Guid userId, string value, CancellationToken ct)
     {
-        var valueText = value == VoteValue.Like ? "like" : "dislike";
-
         await using var conn = (DbConnection)dbf.Create();
         await conn.OpenAsync(ct);
         await using var tx = await conn.BeginTransactionAsync(ct);
@@ -104,7 +101,7 @@ public sealed class VotesRepository(IDbConnectionFactory dbf)
         var row = await conn.QuerySingleOrDefaultAsync<DbRow>(
             new CommandDefinition(
                 ToggleSql,
-                new { post_id = postId, user_id = userId, value = valueText },
+                new { post_id = postId, user_id = userId, value },
                 transaction: tx,
                 cancellationToken: ct));
 

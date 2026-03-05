@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Api.Auth;
 using Api.Errors;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -74,6 +76,11 @@ public static class WebServiceRegistration
 
         return Task.CompletedTask;
       });
+    });
+
+    services.ConfigureHttpJsonOptions(options =>
+    {
+      options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
     });
 
     services.AddValidation();
