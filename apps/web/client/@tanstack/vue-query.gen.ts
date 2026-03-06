@@ -3,19 +3,19 @@
 import {
   type DefaultError,
   type InfiniteData,
+  type UseMutationOptions,
   infiniteQueryOptions,
   queryOptions,
-  type UseMutationOptions,
 } from '@tanstack/vue-query'
 
 import { client } from '../client.gen'
 import {
+  type Options,
   adminMdnPreload,
   commentsDelete,
   commentsRepliesCreate,
   commentsRepliesList,
   feedList,
-  type Options,
   postsCommentsCreate,
   postsCommentsList,
   postsVotesToggle,
@@ -26,6 +26,7 @@ import {
   topicsGetLinks,
   topicsGetPosts,
 } from '../sdk.gen'
+
 import type {
   AdminMdnPreloadData,
   AdminMdnPreloadError,
@@ -74,7 +75,7 @@ import type {
  * Enqueues batch MDN fetch_raw jobs (dev/admin)
  */
 export const adminMdnPreloadMutation = (
-  options?: Partial<Options<AdminMdnPreloadData>>,
+  options?: Partial<Options<AdminMdnPreloadData>>
 ): UseMutationOptions<
   AdminMdnPreloadResponse,
   AdminMdnPreloadError,
@@ -109,7 +110,7 @@ const createQueryKey = <TOptions extends Options>(
   id: string,
   options?: TOptions,
   infinite?: boolean,
-  tags?: ReadonlyArray<string>,
+  tags?: ReadonlyArray<string>
 ): [QueryKey<TOptions>[0]] => {
   const params: QueryKey<TOptions>[0] = {
     _id: id,
@@ -292,7 +293,7 @@ export const resolveMdnOptions = (options: Options<ResolveMdnData>) =>
  * Sets the current user's vote for a post. Allowed values are 'like' and 'dislike'. Sending the same value again removes the vote.
  */
 export const postsVotesToggleMutation = (
-  options?: Partial<Options<PostsVotesToggleData>>,
+  options?: Partial<Options<PostsVotesToggleData>>
 ): UseMutationOptions<
   PostsVotesToggleResponse,
   PostsVotesToggleError,
@@ -344,7 +345,7 @@ const createInfiniteParams = <
   K extends Pick<QueryKey<Options>[0], 'body' | 'headers' | 'path' | 'query'>,
 >(
   queryKey: QueryKey<Options>,
-  page: K,
+  page: K
 ) => {
   const params = { ...queryKey[0] }
   if (page.body) {
@@ -375,7 +376,7 @@ const createInfiniteParams = <
 }
 
 export const feedListInfiniteQueryKey = (
-  options?: Options<FeedListData>,
+  options?: Options<FeedListData>
 ): QueryKey<Options<FeedListData>> => createQueryKey('feedList', options, true)
 
 /**
@@ -414,7 +415,7 @@ export const feedListInfiniteOptions = (options?: Options<FeedListData>) =>
         return data
       },
       queryKey: feedListInfiniteQueryKey(options),
-    },
+    }
   )
 
 export const commentsRepliesListQueryKey = (options: Options<CommentsRepliesListData>) =>
@@ -446,7 +447,7 @@ export const commentsRepliesListOptions = (options: Options<CommentsRepliesListD
  * Adds a reply to a root comment
  */
 export const commentsRepliesCreateMutation = (
-  options?: Partial<Options<CommentsRepliesCreateData>>,
+  options?: Partial<Options<CommentsRepliesCreateData>>
 ): UseMutationOptions<
   CommentsRepliesCreateResponse,
   CommentsRepliesCreateError,
@@ -498,7 +499,7 @@ export const postsCommentsListOptions = (options: Options<PostsCommentsListData>
  * Adds a comment to a post
  */
 export const postsCommentsCreateMutation = (
-  options?: Partial<Options<PostsCommentsCreateData>>,
+  options?: Partial<Options<PostsCommentsCreateData>>
 ): UseMutationOptions<
   PostsCommentsCreateResponse,
   PostsCommentsCreateError,
@@ -525,7 +526,7 @@ export const postsCommentsCreateMutation = (
  * Soft-deletes a comment owned by the current user
  */
 export const commentsDeleteMutation = (
-  options?: Partial<Options<CommentsDeleteData>>,
+  options?: Partial<Options<CommentsDeleteData>>
 ): UseMutationOptions<CommentsDeleteResponse, CommentsDeleteError, Options<CommentsDeleteData>> => {
   const mutationOptions: UseMutationOptions<
     CommentsDeleteResponse,

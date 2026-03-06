@@ -116,8 +116,8 @@ export const serializePrimitiveParam = ({
   }
 
   if (typeof value === 'object') {
-    throw new Error(
-      'Deeply-nested arrays/objects aren’t supported. Provide your own `querySerializer()` to handle these.',
+    throw new TypeError(
+      'Deeply-nested arrays/objects aren’t supported. Provide your own `querySerializer()` to handle these.'
     )
   }
 
@@ -164,7 +164,7 @@ export const serializeObjectParam = ({
         allowReserved,
         name: style === 'deepObject' ? `${name}[${key}]` : key,
         value: v as string,
-      }),
+      })
     )
     .join(separator)
   return style === 'label' || style === 'matrix' ? separator + joinedValues : joinedValues

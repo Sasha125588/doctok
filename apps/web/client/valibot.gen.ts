@@ -9,24 +9,24 @@ export const vComment = v.object({
       v.transform((x) => BigInt(x)),
       v.minValue(
         BigInt('-9223372036854775808'),
-        'Invalid value: Expected int64 to be >= -9223372036854775808',
+        'Invalid value: Expected int64 to be >= -9223372036854775808'
       ),
       v.maxValue(
         BigInt('9223372036854775807'),
-        'Invalid value: Expected int64 to be <= 9223372036854775807',
-      ),
+        'Invalid value: Expected int64 to be <= 9223372036854775807'
+      )
     ),
     v.pipe(
       v.union([v.number(), v.string(), v.bigint()]),
       v.transform((x) => BigInt(x)),
       v.minValue(
         BigInt('-9223372036854775808'),
-        'Invalid value: Expected int64 to be >= -9223372036854775808',
+        'Invalid value: Expected int64 to be >= -9223372036854775808'
       ),
       v.maxValue(
         BigInt('9223372036854775807'),
-        'Invalid value: Expected int64 to be <= 9223372036854775807',
-      ),
+        'Invalid value: Expected int64 to be <= 9223372036854775807'
+      )
     ),
   ]),
   postId: v.union([
@@ -35,24 +35,24 @@ export const vComment = v.object({
       v.transform((x) => BigInt(x)),
       v.minValue(
         BigInt('-9223372036854775808'),
-        'Invalid value: Expected int64 to be >= -9223372036854775808',
+        'Invalid value: Expected int64 to be >= -9223372036854775808'
       ),
       v.maxValue(
         BigInt('9223372036854775807'),
-        'Invalid value: Expected int64 to be <= 9223372036854775807',
-      ),
+        'Invalid value: Expected int64 to be <= 9223372036854775807'
+      )
     ),
     v.pipe(
       v.union([v.number(), v.string(), v.bigint()]),
       v.transform((x) => BigInt(x)),
       v.minValue(
         BigInt('-9223372036854775808'),
-        'Invalid value: Expected int64 to be >= -9223372036854775808',
+        'Invalid value: Expected int64 to be >= -9223372036854775808'
       ),
       v.maxValue(
         BigInt('9223372036854775807'),
-        'Invalid value: Expected int64 to be <= 9223372036854775807',
-      ),
+        'Invalid value: Expected int64 to be <= 9223372036854775807'
+      )
     ),
   ]),
   userId: v.pipe(v.string(), v.uuid()),
@@ -63,26 +63,26 @@ export const vComment = v.object({
         v.transform((x) => BigInt(x)),
         v.minValue(
           BigInt('-9223372036854775808'),
-          'Invalid value: Expected int64 to be >= -9223372036854775808',
+          'Invalid value: Expected int64 to be >= -9223372036854775808'
         ),
         v.maxValue(
           BigInt('9223372036854775807'),
-          'Invalid value: Expected int64 to be <= 9223372036854775807',
-        ),
+          'Invalid value: Expected int64 to be <= 9223372036854775807'
+        )
       ),
       v.pipe(
         v.union([v.number(), v.string(), v.bigint()]),
         v.transform((x) => BigInt(x)),
         v.minValue(
           BigInt('-9223372036854775808'),
-          'Invalid value: Expected int64 to be >= -9223372036854775808',
+          'Invalid value: Expected int64 to be >= -9223372036854775808'
         ),
         v.maxValue(
           BigInt('9223372036854775807'),
-          'Invalid value: Expected int64 to be <= 9223372036854775807',
-        ),
+          'Invalid value: Expected int64 to be <= 9223372036854775807'
+        )
       ),
-    ]),
+    ])
   ),
   body: v.string(),
   createdAt: v.pipe(v.string(), v.isoTimestamp()),
@@ -102,10 +102,10 @@ export const vHttpValidationProblemDetails = v.object({
         v.number(),
         v.integer(),
         v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'),
-        v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'),
+        v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')
       ),
       v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
-    ]),
+    ])
   ),
   detail: v.nullish(v.string()),
   instance: v.nullish(v.string()),
@@ -119,24 +119,24 @@ export const vPostItem = v.object({
       v.transform((x) => BigInt(x)),
       v.minValue(
         BigInt('-9223372036854775808'),
-        'Invalid value: Expected int64 to be >= -9223372036854775808',
+        'Invalid value: Expected int64 to be >= -9223372036854775808'
       ),
       v.maxValue(
         BigInt('9223372036854775807'),
-        'Invalid value: Expected int64 to be <= 9223372036854775807',
-      ),
+        'Invalid value: Expected int64 to be <= 9223372036854775807'
+      )
     ),
     v.pipe(
       v.union([v.number(), v.string(), v.bigint()]),
       v.transform((x) => BigInt(x)),
       v.minValue(
         BigInt('-9223372036854775808'),
-        'Invalid value: Expected int64 to be >= -9223372036854775808',
+        'Invalid value: Expected int64 to be >= -9223372036854775808'
       ),
       v.maxValue(
         BigInt('9223372036854775807'),
-        'Invalid value: Expected int64 to be <= 9223372036854775807',
-      ),
+        'Invalid value: Expected int64 to be <= 9223372036854775807'
+      )
     ),
   ]),
   kind: v.string(),
@@ -147,7 +147,7 @@ export const vPostItem = v.object({
       v.number(),
       v.integer(),
       v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'),
-      v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'),
+      v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')
     ),
     v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
   ]),
@@ -156,7 +156,7 @@ export const vPostItem = v.object({
       v.number(),
       v.integer(),
       v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'),
-      v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'),
+      v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')
     ),
     v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
   ]),
@@ -165,7 +165,7 @@ export const vPostItem = v.object({
       v.number(),
       v.integer(),
       v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'),
-      v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'),
+      v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')
     ),
     v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
   ]),
@@ -174,7 +174,7 @@ export const vPostItem = v.object({
       v.number(),
       v.integer(),
       v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'),
-      v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'),
+      v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')
     ),
     v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
   ]),
@@ -185,7 +185,7 @@ export const vPostItem = v.object({
     v.union([
       v.number(),
       v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$/)),
-    ]),
+    ])
   ),
 })
 
@@ -201,7 +201,7 @@ export const vPreloadMdnRequest = v.object({
       v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(100)),
       v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
     ]),
-    5,
+    5
   ),
   seed: v.nullish(
     v.union([
@@ -209,10 +209,10 @@ export const vPreloadMdnRequest = v.object({
         v.number(),
         v.integer(),
         v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'),
-        v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'),
+        v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')
       ),
       v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
-    ]),
+    ])
   ),
   prefix: v.nullish(v.string()),
 })
@@ -230,10 +230,10 @@ export const vProblemDetails = v.object({
         v.number(),
         v.integer(),
         v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'),
-        v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'),
+        v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')
       ),
       v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
-    ]),
+    ])
   ),
   detail: v.nullish(v.string()),
   instance: v.nullish(v.string()),
@@ -250,26 +250,26 @@ export const vResolveMdnResponse = v.object({
         v.transform((x) => BigInt(x)),
         v.minValue(
           BigInt('-9223372036854775808'),
-          'Invalid value: Expected int64 to be >= -9223372036854775808',
+          'Invalid value: Expected int64 to be >= -9223372036854775808'
         ),
         v.maxValue(
           BigInt('9223372036854775807'),
-          'Invalid value: Expected int64 to be <= 9223372036854775807',
-        ),
+          'Invalid value: Expected int64 to be <= 9223372036854775807'
+        )
       ),
       v.pipe(
         v.union([v.number(), v.string(), v.bigint()]),
         v.transform((x) => BigInt(x)),
         v.minValue(
           BigInt('-9223372036854775808'),
-          'Invalid value: Expected int64 to be >= -9223372036854775808',
+          'Invalid value: Expected int64 to be >= -9223372036854775808'
         ),
         v.maxValue(
           BigInt('9223372036854775807'),
-          'Invalid value: Expected int64 to be <= 9223372036854775807',
-        ),
+          'Invalid value: Expected int64 to be <= 9223372036854775807'
+        )
       ),
-    ]),
+    ])
   ),
 })
 
@@ -302,7 +302,7 @@ export const vVoteResult = v.object({
       v.number(),
       v.integer(),
       v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'),
-      v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'),
+      v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')
     ),
     v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
   ]),
@@ -311,7 +311,7 @@ export const vVoteResult = v.object({
       v.number(),
       v.integer(),
       v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'),
-      v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647'),
+      v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')
     ),
     v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
   ]),
@@ -342,7 +342,7 @@ export const vTopicsGetPostsData = v.object({
   query: v.optional(
     v.object({
       lang: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(10)), 'en'),
-    }),
+    })
   ),
 })
 
@@ -359,7 +359,7 @@ export const vTopicsGetLinksData = v.object({
   query: v.optional(
     v.object({
       lang: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(10)), 'en'),
-    }),
+    })
   ),
 })
 
@@ -409,7 +409,7 @@ export const vResolveMdnData = v.object({
   query: v.optional(
     v.object({
       lang: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(10)), 'en'),
-    }),
+    })
   ),
 })
 
@@ -426,12 +426,12 @@ export const vPostsVotesToggleData = v.object({
       v.transform((x) => BigInt(x)),
       v.minValue(
         BigInt('-9223372036854775808'),
-        'Invalid value: Expected int64 to be >= -9223372036854775808',
+        'Invalid value: Expected int64 to be >= -9223372036854775808'
       ),
       v.maxValue(
         BigInt('9223372036854775807'),
-        'Invalid value: Expected int64 to be <= 9223372036854775807',
-      ),
+        'Invalid value: Expected int64 to be <= 9223372036854775807'
+      )
     ),
   }),
   query: v.optional(v.never()),
@@ -453,10 +453,10 @@ export const vFeedListData = v.object({
           v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(50)),
           v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
         ]),
-        20,
+        20
       ),
       lang: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(10)), 'en'),
-    }),
+    })
   ),
 })
 
@@ -473,12 +473,12 @@ export const vCommentsRepliesListData = v.object({
       v.transform((x) => BigInt(x)),
       v.minValue(
         BigInt('-9223372036854775808'),
-        'Invalid value: Expected int64 to be >= -9223372036854775808',
+        'Invalid value: Expected int64 to be >= -9223372036854775808'
       ),
       v.maxValue(
         BigInt('9223372036854775807'),
-        'Invalid value: Expected int64 to be <= 9223372036854775807',
-      ),
+        'Invalid value: Expected int64 to be <= 9223372036854775807'
+      )
     ),
   }),
   query: v.optional(
@@ -488,9 +488,9 @@ export const vCommentsRepliesListData = v.object({
           v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(50)),
           v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
         ]),
-        20,
+        20
       ),
-    }),
+    })
   ),
 })
 
@@ -507,12 +507,12 @@ export const vCommentsRepliesCreateData = v.object({
       v.transform((x) => BigInt(x)),
       v.minValue(
         BigInt('-9223372036854775808'),
-        'Invalid value: Expected int64 to be >= -9223372036854775808',
+        'Invalid value: Expected int64 to be >= -9223372036854775808'
       ),
       v.maxValue(
         BigInt('9223372036854775807'),
-        'Invalid value: Expected int64 to be <= 9223372036854775807',
-      ),
+        'Invalid value: Expected int64 to be <= 9223372036854775807'
+      )
     ),
   }),
   query: v.optional(v.never()),
@@ -531,12 +531,12 @@ export const vPostsCommentsListData = v.object({
       v.transform((x) => BigInt(x)),
       v.minValue(
         BigInt('-9223372036854775808'),
-        'Invalid value: Expected int64 to be >= -9223372036854775808',
+        'Invalid value: Expected int64 to be >= -9223372036854775808'
       ),
       v.maxValue(
         BigInt('9223372036854775807'),
-        'Invalid value: Expected int64 to be <= 9223372036854775807',
-      ),
+        'Invalid value: Expected int64 to be <= 9223372036854775807'
+      )
     ),
   }),
   query: v.optional(
@@ -546,9 +546,9 @@ export const vPostsCommentsListData = v.object({
           v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(50)),
           v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
         ]),
-        20,
+        20
       ),
-    }),
+    })
   ),
 })
 
@@ -565,12 +565,12 @@ export const vPostsCommentsCreateData = v.object({
       v.transform((x) => BigInt(x)),
       v.minValue(
         BigInt('-9223372036854775808'),
-        'Invalid value: Expected int64 to be >= -9223372036854775808',
+        'Invalid value: Expected int64 to be >= -9223372036854775808'
       ),
       v.maxValue(
         BigInt('9223372036854775807'),
-        'Invalid value: Expected int64 to be <= 9223372036854775807',
-      ),
+        'Invalid value: Expected int64 to be <= 9223372036854775807'
+      )
     ),
   }),
   query: v.optional(v.never()),
@@ -589,12 +589,12 @@ export const vCommentsDeleteData = v.object({
       v.transform((x) => BigInt(x)),
       v.minValue(
         BigInt('-9223372036854775808'),
-        'Invalid value: Expected int64 to be >= -9223372036854775808',
+        'Invalid value: Expected int64 to be >= -9223372036854775808'
       ),
       v.maxValue(
         BigInt('9223372036854775807'),
-        'Invalid value: Expected int64 to be <= 9223372036854775807',
-      ),
+        'Invalid value: Expected int64 to be <= 9223372036854775807'
+      )
     ),
   }),
   query: v.optional(v.never()),

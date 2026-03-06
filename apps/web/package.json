@@ -8,10 +8,10 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "lint": "oxlint -c .oxlintrc.json",
-    "lint:fix": "oxlint . --fix",
-    "fmt": "oxfmt -c .oxfmtrc.json",
-    "fmt:check": "oxfmt -c .oxfmtrc.json --check",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
     "generate:client": "openapi-ts"
   },
   "dependencies": {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { feedListInfiniteOptions } from '../client/@tanstack/vue-query.gen'
 import { useInfiniteQuery } from '@tanstack/vue-query'
+
+import { feedListInfiniteOptions } from '../client/@tanstack/vue-query.gen'
 
 const response = useInfiniteQuery({
   ...feedListInfiniteOptions({

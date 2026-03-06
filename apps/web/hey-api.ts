@@ -1,4 +1,5 @@
 import { useCookie } from 'nuxt/app'
+
 import type { CreateClientConfig } from './client/client.gen'
 
 export const createClientConfig: CreateClientConfig = (config) => ({

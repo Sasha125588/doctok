@@ -2,8 +2,39 @@
 
 import * as v from 'valibot'
 
-import type { Client, Options as Options2, TDataShape } from './client'
 import { client } from './client.gen'
+import {
+  vAdminMdnPreloadData,
+  vAdminMdnPreloadResponse,
+  vCommentsDeleteData,
+  vCommentsDeleteResponse,
+  vCommentsRepliesCreateData,
+  vCommentsRepliesCreateResponse,
+  vCommentsRepliesListData,
+  vCommentsRepliesListResponse,
+  vFeedListData,
+  vFeedListResponse,
+  vPostsCommentsCreateData,
+  vPostsCommentsCreateResponse,
+  vPostsCommentsListData,
+  vPostsCommentsListResponse,
+  vPostsVotesToggleData,
+  vPostsVotesToggleResponse,
+  vResolveMdnData,
+  vResolveMdnResponse2,
+  vSessionMeGetData,
+  vSessionMeGetResponse,
+  vSystemDbPingData,
+  vSystemDbPingResponse2,
+  vSystemHealthData,
+  vSystemHealthResponse2,
+  vTopicsGetLinksData,
+  vTopicsGetLinksResponse,
+  vTopicsGetPostsData,
+  vTopicsGetPostsResponse,
+} from './valibot.gen'
+
+import type { Client, Options as Options2, TDataShape } from './client'
 import type {
   AdminMdnPreloadData,
   AdminMdnPreloadErrors,
@@ -47,36 +78,6 @@ import type {
   TopicsGetPostsErrors,
   TopicsGetPostsResponses,
 } from './types.gen'
-import {
-  vAdminMdnPreloadData,
-  vAdminMdnPreloadResponse,
-  vCommentsDeleteData,
-  vCommentsDeleteResponse,
-  vCommentsRepliesCreateData,
-  vCommentsRepliesCreateResponse,
-  vCommentsRepliesListData,
-  vCommentsRepliesListResponse,
-  vFeedListData,
-  vFeedListResponse,
-  vPostsCommentsCreateData,
-  vPostsCommentsCreateResponse,
-  vPostsCommentsListData,
-  vPostsCommentsListResponse,
-  vPostsVotesToggleData,
-  vPostsVotesToggleResponse,
-  vResolveMdnData,
-  vResolveMdnResponse2,
-  vSessionMeGetData,
-  vSessionMeGetResponse,
-  vSystemDbPingData,
-  vSystemDbPingResponse2,
-  vSystemHealthData,
-  vSystemHealthResponse2,
-  vTopicsGetLinksData,
-  vTopicsGetLinksResponse,
-  vTopicsGetPostsData,
-  vTopicsGetPostsResponse,
-} from './valibot.gen'
 
 export type Options<
   TData extends TDataShape = TDataShape,
@@ -99,7 +100,7 @@ export type Options<
  * Enqueues batch MDN fetch_raw jobs (dev/admin)
  */
 export const adminMdnPreload = <ThrowOnError extends boolean = false>(
-  options: Options<AdminMdnPreloadData, ThrowOnError>,
+  options: Options<AdminMdnPreloadData, ThrowOnError>
 ) =>
   (options.client ?? client).post<AdminMdnPreloadResponses, AdminMdnPreloadErrors, ThrowOnError>({
     requestValidator: async (data) => await v.parseAsync(vAdminMdnPreloadData, data),
@@ -117,7 +118,7 @@ export const adminMdnPreload = <ThrowOnError extends boolean = false>(
  * Returns posts for a topic
  */
 export const topicsGetPosts = <ThrowOnError extends boolean = false>(
-  options: Options<TopicsGetPostsData, ThrowOnError>,
+  options: Options<TopicsGetPostsData, ThrowOnError>
 ) =>
   (options.client ?? client).get<TopicsGetPostsResponses, TopicsGetPostsErrors, ThrowOnError>({
     requestValidator: async (data) => await v.parseAsync(vTopicsGetPostsData, data),
@@ -130,7 +131,7 @@ export const topicsGetPosts = <ThrowOnError extends boolean = false>(
  * Returns linked topics for a topic
  */
 export const topicsGetLinks = <ThrowOnError extends boolean = false>(
-  options: Options<TopicsGetLinksData, ThrowOnError>,
+  options: Options<TopicsGetLinksData, ThrowOnError>
 ) =>
   (options.client ?? client).get<TopicsGetLinksResponses, TopicsGetLinksErrors, ThrowOnError>({
     requestValidator: async (data) => await v.parseAsync(vTopicsGetLinksData, data),
@@ -143,7 +144,7 @@ export const topicsGetLinks = <ThrowOnError extends boolean = false>(
  * Health check
  */
 export const systemHealth = <ThrowOnError extends boolean = false>(
-  options?: Options<SystemHealthData, ThrowOnError>,
+  options?: Options<SystemHealthData, ThrowOnError>
 ) =>
   (options?.client ?? client).get<SystemHealthResponses, unknown, ThrowOnError>({
     requestValidator: async (data) => await v.parseAsync(vSystemHealthData, data),
@@ -156,7 +157,7 @@ export const systemHealth = <ThrowOnError extends boolean = false>(
  * Checks DB connectivity
  */
 export const systemDbPing = <ThrowOnError extends boolean = false>(
-  options?: Options<SystemDbPingData, ThrowOnError>,
+  options?: Options<SystemDbPingData, ThrowOnError>
 ) =>
   (options?.client ?? client).get<SystemDbPingResponses, SystemDbPingErrors, ThrowOnError>({
     requestValidator: async (data) => await v.parseAsync(vSystemDbPingData, data),
@@ -170,7 +171,7 @@ export const systemDbPing = <ThrowOnError extends boolean = false>(
  * Returns the current user id from Supabase JWT
  */
 export const sessionMeGet = <ThrowOnError extends boolean = false>(
-  options?: Options<SessionMeGetData, ThrowOnError>,
+  options?: Options<SessionMeGetData, ThrowOnError>
 ) =>
   (options?.client ?? client).get<SessionMeGetResponses, SessionMeGetErrors, ThrowOnError>({
     requestValidator: async (data) => await v.parseAsync(vSessionMeGetData, data),
@@ -184,7 +185,7 @@ export const sessionMeGet = <ThrowOnError extends boolean = false>(
  * Resolves an MDN external path to a DocTok topic
  */
 export const resolveMdn = <ThrowOnError extends boolean = false>(
-  options: Options<ResolveMdnData, ThrowOnError>,
+  options: Options<ResolveMdnData, ThrowOnError>
 ) =>
   (options.client ?? client).get<ResolveMdnResponses, ResolveMdnErrors, ThrowOnError>({
     requestValidator: async (data) => await v.parseAsync(vResolveMdnData, data),
@@ -199,7 +200,7 @@ export const resolveMdn = <ThrowOnError extends boolean = false>(
  * Sets the current user's vote for a post. Allowed values are 'like' and 'dislike'. Sending the same value again removes the vote.
  */
 export const postsVotesToggle = <ThrowOnError extends boolean = false>(
-  options: Options<PostsVotesToggleData, ThrowOnError>,
+  options: Options<PostsVotesToggleData, ThrowOnError>
 ) =>
   (options.client ?? client).patch<PostsVotesToggleResponses, PostsVotesToggleErrors, ThrowOnError>(
     {
@@ -212,14 +213,14 @@ export const postsVotesToggle = <ThrowOnError extends boolean = false>(
         'Content-Type': 'application/json',
         ...options.headers,
       },
-    },
+    }
   )
 
 /**
  * Returns paginated feed items
  */
 export const feedList = <ThrowOnError extends boolean = false>(
-  options?: Options<FeedListData, ThrowOnError>,
+  options?: Options<FeedListData, ThrowOnError>
 ) =>
   (options?.client ?? client).get<FeedListResponses, FeedListErrors, ThrowOnError>({
     requestValidator: async (data) => await v.parseAsync(vFeedListData, data),
@@ -232,7 +233,7 @@ export const feedList = <ThrowOnError extends boolean = false>(
  * Returns replies for a root comment
  */
 export const commentsRepliesList = <ThrowOnError extends boolean = false>(
-  options: Options<CommentsRepliesListData, ThrowOnError>,
+  options: Options<CommentsRepliesListData, ThrowOnError>
 ) =>
   (options.client ?? client).get<
     CommentsRepliesListResponses,
@@ -249,7 +250,7 @@ export const commentsRepliesList = <ThrowOnError extends boolean = false>(
  * Adds a reply to a root comment
  */
 export const commentsRepliesCreate = <ThrowOnError extends boolean = false>(
-  options: Options<CommentsRepliesCreateData, ThrowOnError>,
+  options: Options<CommentsRepliesCreateData, ThrowOnError>
 ) =>
   (options.client ?? client).post<
     CommentsRepliesCreateResponses,
@@ -271,7 +272,7 @@ export const commentsRepliesCreate = <ThrowOnError extends boolean = false>(
  * Returns root comments for a post
  */
 export const postsCommentsList = <ThrowOnError extends boolean = false>(
-  options: Options<PostsCommentsListData, ThrowOnError>,
+  options: Options<PostsCommentsListData, ThrowOnError>
 ) =>
   (options.client ?? client).get<PostsCommentsListResponses, PostsCommentsListErrors, ThrowOnError>(
     {
@@ -279,14 +280,14 @@ export const postsCommentsList = <ThrowOnError extends boolean = false>(
       responseValidator: async (data) => await v.parseAsync(vPostsCommentsListResponse, data),
       url: '/api/posts/{postId}/comments',
       ...options,
-    },
+    }
   )
 
 /**
  * Adds a comment to a post
  */
 export const postsCommentsCreate = <ThrowOnError extends boolean = false>(
-  options: Options<PostsCommentsCreateData, ThrowOnError>,
+  options: Options<PostsCommentsCreateData, ThrowOnError>
 ) =>
   (options.client ?? client).post<
     PostsCommentsCreateResponses,
@@ -308,7 +309,7 @@ export const postsCommentsCreate = <ThrowOnError extends boolean = false>(
  * Soft-deletes a comment owned by the current user
  */
 export const commentsDelete = <ThrowOnError extends boolean = false>(
-  options: Options<CommentsDeleteData, ThrowOnError>,
+  options: Options<CommentsDeleteData, ThrowOnError>
 ) =>
   (options.client ?? client).delete<CommentsDeleteResponses, CommentsDeleteErrors, ThrowOnError>({
     requestValidator: async (data) => await v.parseAsync(vCommentsDeleteData, data),
