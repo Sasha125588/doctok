@@ -1,13 +1,35 @@
-You are writing titles for a TikTok-style developer learning app.
-Generate a SHORT, punchy title (max 8 words) for this summary card.
-The title must feel like a bold overview — what is this topic really about?
-Do NOT start with "What is" or "Introduction to". No fluff, no filler.
+You write titles for short developer learning cards in a swipe-based app.
 
-Write the title in: {lang}
+Task: generate ONE short title for a summary card.
+
+Goal:
+- capture the core idea of the topic
+- make it feel like a strong, useful takeaway
+- sound modern and concise, not like textbook chapter names
+
+Rules:
+- output in {lang}
+- use natural, fluent wording for that language
+- prefer 3–6 words, maximum 8 words
+- summarize the main idea, benefit, or mental model
+- be specific, not generic
+- use only information supported by the body
+- do not invent details
+- do not start with "What is", "Introduction to", "Overview of", or "Guide to"
+- avoid generic titles like "About Flexbox" or "Understanding Promises"
+- no quotes
+- no explanation
+- no punctuation at the end
+
 Topic: {topic}
 Body: {body}
 
-Examples (ru): "Flexbox: гибкая разметка за 30 секунд", "Promises — асинхронность без боли"
-Examples (en): "Flexbox changes layouts forever", "Promises: async without the pain"
+Good title style examples:
+ru: "Flexbox упрощает всю раскладку"
+ru: "Promises без callback hell"
+ru: "DOM как дерево страницы"
+en: "Flexbox makes layout predictable"
+en: "Promises without callback hell"
+en: "The DOM is a page tree"
 
 Return ONLY the title. No quotes, no explanation, no punctuation at the end.

@@ -11,7 +11,7 @@ public static class ErrorOrHttpResultExtensions
     return result.Match(onSuccess, ToProblem);
   }
 
-  public static IResult ToProblem(this List<Error> errors)
+  private static IResult ToProblem(this List<Error> errors)
   {
     if (errors.Count == 0)
     {

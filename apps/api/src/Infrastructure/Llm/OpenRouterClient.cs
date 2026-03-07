@@ -16,11 +16,18 @@ public sealed class OpenRouterClient(HttpClient http)
             MaxTokens: maxTokens,
             Messages: [new ChatMessage(Role: "user", Content: userMessage)]);
 
-        using var response = await http.PostAsJsonAsync("chat/completions", request, ct);
-        response.EnsureSuccessStatusCode();
+        try
+        {
+          using var response = await http.PostAsJsonAsync("chat/completions", request, ct);
 
-        var result = await response.Content.ReadFromJsonAsync<ChatResponse>(cancellationToken: ct);
-        return result?.Choices?.FirstOrDefault()?.Message?.Content?.Trim();
+          var result = await response.Content.ReadFromJsonAsync<ChatResponse>(cancellationToken: ct);
+          return result?.Choices?.FirstOrDefault()?.Message?.Content?.Trim();
+        }
+        catch (Exception e)
+        {
+          Console.WriteLine(e);
+          throw;
+        }
     }
 
     private sealed record ChatRequest(

@@ -29,23 +29,9 @@ public static class InfrastructureServiceRegistration
     this IServiceCollection services,
     IConfiguration configuration)
   {
-    services
-      .AddOptions<GitHubOptions>()
-      .BindConfiguration("GitHub")
-      .ValidateDataAnnotations()
-      .ValidateOnStart();
-
-    services
-      .AddOptions<OpenRouterOptions>()
-      .BindConfiguration("OpenRouter")
-      .ValidateDataAnnotations()
-      .ValidateOnStart();
-
-    services
-      .AddOptions<TitleGeneratorOptions>()
-      .BindConfiguration("OpenRouter:TitleGenerator")
-      .ValidateDataAnnotations()
-      .ValidateOnStart();
+    services.AddValidatedOptions<GitHubOptions>("GitHub");
+    services.AddValidatedOptions<OpenRouterOptions>("OpenRouter");
+    services.AddValidatedOptions<TitleGeneratorOptions>("OpenRouter:TitleGenerator");
 
     var connStr = configuration.GetConnectionString("Default")
                   ?? throw new InvalidOperationException("ConnectionStrings:Default missing");
@@ -127,5 +113,21 @@ public static class InfrastructureServiceRegistration
     services.AddHostedService<JobRunnerBackgroundService>();
 
     return services;
+  }
+}
+
+public static class OptionsExtension
+{
+  public static IServiceCollection AddValidatedOptions<T>(
+    this IServiceCollection services,
+    string sectionPath)
+    where T : class
+  {
+    return services
+      .AddOptions<T>()
+      .BindConfiguration(sectionPath)
+      .ValidateDataAnnotations()
+      .ValidateOnStart()
+      .Services;
   }
 }

@@ -7,5 +7,5 @@ public sealed class TitleGeneratorOptions
   [Required]
   public string Model { get; init; } = default!;
 
-  public int MaxTokens { get; init; } = 60;
+  public int MaxTokens { get; init; } = 1000;
 }
