@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Api.Auth;
 using Api.Errors;
+using Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
@@ -84,6 +85,7 @@ public static class WebServiceRegistration
     });
 
     services.AddValidation();
+
     services.AddProblemDetails(options =>
     {
       options.CustomizeProblemDetails = context =>
@@ -96,13 +98,10 @@ public static class WebServiceRegistration
         context.ProblemDetails.Instance ??= context.HttpContext.Request.Path;
       };
     });
+
     services.AddExceptionHandler<ApiExceptionHandler>();
 
-    services
-      .AddOptions<SupabaseJwtOptions>()
-      .BindConfiguration("Supabase")
-      .ValidateDataAnnotations()
-      .ValidateOnStart();
+    services.AddValidatedOptions<SupabaseJwtOptions>("Supabase");
 
     var supabaseJwtOptions = configuration.GetSection("Supabase").Get<SupabaseJwtOptions>()
                              ?? throw new InvalidOperationException("Supabase config missing");

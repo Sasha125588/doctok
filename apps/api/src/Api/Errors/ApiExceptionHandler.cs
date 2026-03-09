@@ -16,17 +16,12 @@ public sealed class ApiExceptionHandler(
   {
     var status = exception switch
     {
-      ArgumentException => StatusCodes.Status400BadRequest,
-      FormatException => StatusCodes.Status400BadRequest,
+      ApplicationException =>  StatusCodes.Status500InternalServerError,
+      ArgumentException or FormatException => StatusCodes.Status400BadRequest,
       KeyNotFoundException => StatusCodes.Status404NotFound,
       UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
-      _ => 0,
+      _ => StatusCodes.Status500InternalServerError,
     };
-
-    if (status == 0)
-    {
-      return false;
-    }
 
     logger.LogWarning(exception, "Handled API exception with status code {StatusCode}", status);
 

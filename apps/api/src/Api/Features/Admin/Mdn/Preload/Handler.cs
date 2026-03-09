@@ -32,9 +32,9 @@ public sealed class Handler(MdnTreeIndex index, JobsRepository jobs) : IHandler
         jobType: JobTypes.FetchRaw,
         jobKey: key,
         payload: new { provider = SourceCodes.Mdn, lang, externalRef },
-        ct: ct);
+        ct);
     }
 
-    return new PreloadMdnResponse(chosen);
+    return new PreloadMdnResponse(chosen.Select(slug => SourceCodes.Mdn + "/" + slug).ToArray());
   }
 }

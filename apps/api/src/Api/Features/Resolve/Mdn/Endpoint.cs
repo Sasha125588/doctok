@@ -16,7 +16,7 @@ public sealed class Endpoint : IEndpoint
             var q = new Query(externalRef ?? string.Empty, query.Lang ?? "en");
             var result = await handler.Handle(q, ct);
 
-            return result.ToResponse(value => Results.Ok(value));
+            return result.ToResponse(Results.Ok);
         })
         .WithTags("Resolve")
         .WithSummary("Resolves an MDN external path to a DocTok topic")

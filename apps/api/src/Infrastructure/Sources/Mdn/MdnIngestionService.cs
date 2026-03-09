@@ -1,5 +1,4 @@
 using Domain.Common;
-using Domain.Rules;
 using Infrastructure.Persistence.Repos.Jobs;
 using Infrastructure.Persistence.Repos.Raw;
 using Infrastructure.Persistence.Repos.Sources;
@@ -23,18 +22,10 @@ public sealed class MdnIngestionService(
         lang = LanguageHelpers.NormalizeLang(lang);
         externalRef = NormalizeExternalRef(externalRef);
 
-        MdnApiDoc doc;
-        try
-        {
-            doc = await apiClient.FetchAsync(lang, externalRef, ct);
-        }
-        catch (HttpRequestException) when (lang != "en")
-        {
-            doc = await apiClient.FetchAsync("en", externalRef, ct);
-            lang = "en";
-        }
+        MdnApiDoc doc = await apiClient.FetchAsync(lang, externalRef, ct);
 
         var (text, links) = converter.Convert(doc);
+
         var canonicalExternalRef = NormalizeExternalRef(doc.Slug);
 
         var sourceId = await sources.GetSourceIdByCode(SourceCodes.Mdn, ct);
@@ -51,7 +42,8 @@ public sealed class MdnIngestionService(
             otherLocales: doc.OtherLocales.Count > 0 ? [.. doc.OtherLocales] : null,
             ct: ct);
 
-        var topicSlug = TextRules.TopicSlugFromExternalRef(SourceCodes.Mdn, canonicalExternalRef);
+        // var topicSlug = TextRules.TopicSlugFromExternalRef(SourceCodes.Mdn, canonicalExternalRef);
+        var topicSlug = SourceCodes.Mdn + "/" + canonicalExternalRef;
         var topicTitle = doc.Title ?? canonicalExternalRef;
 
         var topicId = await topics.EnsureTopic(topicSlug, topicTitle, ct);

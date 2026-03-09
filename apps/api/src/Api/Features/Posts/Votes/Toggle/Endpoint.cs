@@ -20,7 +20,7 @@ public sealed class Endpoint : IEndpoint
         var userId = CurrentUser.GetUserIdOrThrow(user);
         var result = await handler.Handle(new Command(postId, userId, req.Value), ct);
 
-        return result.ToResponse(value => Results.Ok(value));
+        return result.ToResponse(Results.Ok);
       })
       .RequireAuthorization()
       .WithTags("Votes")

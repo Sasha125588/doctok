@@ -19,6 +19,7 @@ public sealed class JobsRepository(IDbConnectionFactory dbf)
                                  attempts = 0,
                                  next_attempt_at = now(),
                                  updated_at = now()
+                           where public.jobs.status <> 'running'
                            returning id
                            """;
 

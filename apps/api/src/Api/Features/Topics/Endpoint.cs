@@ -9,19 +9,19 @@ public sealed class Endpoint : IEndpoint
 {
   public void Map(IEndpointRouteBuilder app)
   {
-    app.MapGet("/topics/{slug}", async (
+    app.MapGet("/topics/{*slug}", async (
       string slug,
       [AsParameters] TopicsGetPostsQueryParams query,
       ClaimsPrincipal user,
       Handler handler,
       CancellationToken ct) =>
     {
-      Guid? userId = null;
-      if (user.Identity?.IsAuthenticated == true)
-        userId = CurrentUser.GetUserIdOrThrow(user);
+      var userId = CurrentUser.GetUserIdOrNull(user);
 
-      var result = await handler.Handle(new Query(slug, query.Lang, userId), ct);
-      return result.ToResponse(value => Results.Ok(value));
+      var q = new Query(slug, query.Lang, userId);
+      var result = await handler.Handle(q, ct);
+
+      return result.ToResponse(Results.Ok);
     })
     .WithTags("Topics")
     .WithSummary("Returns posts for a topic")

@@ -36,14 +36,14 @@ public sealed class MdnTreeIndex(GitHubTreeClient treeClient) : IDisposable
     private async Task<Dictionary<string, List<string>>> GetOrBuildAsync(CancellationToken ct)
     {
         var task = _buildTask;
-        if (task != null && !task.IsFaulted && !task.IsCanceled && DateTimeOffset.UtcNow - _builtAt < CacheTtl)
+        if (task is { IsFaulted: false, IsCanceled: false } && DateTimeOffset.UtcNow - _builtAt < CacheTtl)
             return await task.WaitAsync(ct);
 
         await _lock.WaitAsync(ct);
         try
         {
             task = _buildTask;
-            if (task != null && !task.IsFaulted && !task.IsCanceled && DateTimeOffset.UtcNow - _builtAt < CacheTtl)
+            if (task is { IsFaulted: false, IsCanceled: false } && DateTimeOffset.UtcNow - _builtAt < CacheTtl)
                 return await task.WaitAsync(ct);
 
             _buildTask = BuildIndexAsync(CancellationToken.None);
