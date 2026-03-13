@@ -16,6 +16,7 @@ export default defineNuxtConfig({
     '@nuxt/icon',
     'nuxt-svgo',
     '@peterbud/nuxt-query',
+    '@nuxtjs/mdc',
   ],
 
   experimental: {
@@ -51,6 +52,23 @@ export default defineNuxtConfig({
     localApiEndpoint: '/_nuxt_icon',
     clientBundle: {
       includeCustomCollections: true,
+    },
+  },
+
+  app: {
+    head: {
+      link: [
+        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+        {
+          rel: 'preconnect',
+          href: 'https://fonts.gstatic.com',
+          crossorigin: '',
+        },
+        {
+          rel: 'stylesheet',
+          href: 'https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap',
+        },
+      ],
     },
   },
 })
