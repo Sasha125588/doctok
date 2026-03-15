@@ -14,6 +14,8 @@ import {
   vCommentsRepliesListResponse,
   vFeedListData,
   vFeedListResponse,
+  vFeedTopicsListData,
+  vFeedTopicsListResponse,
   vPostsCommentsCreateData,
   vPostsCommentsCreateResponse,
   vPostsCommentsListData,
@@ -51,6 +53,9 @@ import type {
   FeedListData,
   FeedListErrors,
   FeedListResponses,
+  FeedTopicsListData,
+  FeedTopicsListErrors,
+  FeedTopicsListResponses,
   PostsCommentsCreateData,
   PostsCommentsCreateErrors,
   PostsCommentsCreateResponses,
@@ -123,7 +128,7 @@ export const topicsGetPosts = <ThrowOnError extends boolean = false>(
   (options.client ?? client).get<TopicsGetPostsResponses, TopicsGetPostsErrors, ThrowOnError>({
     requestValidator: async (data) => await v.parseAsync(vTopicsGetPostsData, data),
     responseValidator: async (data) => await v.parseAsync(vTopicsGetPostsResponse, data),
-    url: '/api/topics/{slug}',
+    url: '/api/topics',
     ...options,
   })
 
@@ -136,7 +141,7 @@ export const topicsGetLinks = <ThrowOnError extends boolean = false>(
   (options.client ?? client).get<TopicsGetLinksResponses, TopicsGetLinksErrors, ThrowOnError>({
     requestValidator: async (data) => await v.parseAsync(vTopicsGetLinksData, data),
     responseValidator: async (data) => await v.parseAsync(vTopicsGetLinksResponse, data),
-    url: '/api/topics/{slug}/links',
+    url: '/api/topics/links',
     ...options,
   })
 
@@ -226,6 +231,19 @@ export const feedList = <ThrowOnError extends boolean = false>(
     requestValidator: async (data) => await v.parseAsync(vFeedListData, data),
     responseValidator: async (data) => await v.parseAsync(vFeedListResponse, data),
     url: '/api/feed',
+    ...options,
+  })
+
+/**
+ * Returns paginated topics for the vertical swipe feed
+ */
+export const feedTopicsList = <ThrowOnError extends boolean = false>(
+  options?: Options<FeedTopicsListData, ThrowOnError>
+) =>
+  (options?.client ?? client).get<FeedTopicsListResponses, FeedTopicsListErrors, ThrowOnError>({
+    requestValidator: async (data) => await v.parseAsync(vFeedTopicsListData, data),
+    responseValidator: async (data) => await v.parseAsync(vFeedTopicsListResponse, data),
+    url: '/api/feed/topics',
     ...options,
   })
 

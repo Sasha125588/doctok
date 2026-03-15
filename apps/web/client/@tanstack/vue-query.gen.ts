@@ -16,6 +16,7 @@ import {
   commentsRepliesCreate,
   commentsRepliesList,
   feedList,
+  feedTopicsList,
   postsCommentsCreate,
   postsCommentsList,
   postsVotesToggle,
@@ -43,6 +44,9 @@ import type {
   FeedListData,
   FeedListError,
   FeedListResponse,
+  FeedTopicsListData,
+  FeedTopicsListError,
+  FeedTopicsListResponse,
   PostsCommentsCreateData,
   PostsCommentsCreateError,
   PostsCommentsCreateResponse,
@@ -415,6 +419,74 @@ export const feedListInfiniteOptions = (options?: Options<FeedListData>) =>
         return data
       },
       queryKey: feedListInfiniteQueryKey(options),
+    }
+  )
+
+export const feedTopicsListQueryKey = (options?: Options<FeedTopicsListData>) =>
+  createQueryKey('feedTopicsList', options)
+
+/**
+ * Returns paginated topics for the vertical swipe feed
+ */
+export const feedTopicsListOptions = (options?: Options<FeedTopicsListData>) =>
+  queryOptions<
+    FeedTopicsListResponse,
+    FeedTopicsListError,
+    FeedTopicsListResponse,
+    ReturnType<typeof feedTopicsListQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await feedTopicsList({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      })
+      return data
+    },
+    queryKey: feedTopicsListQueryKey(options),
+  })
+
+export const feedTopicsListInfiniteQueryKey = (
+  options?: Options<FeedTopicsListData>
+): QueryKey<Options<FeedTopicsListData>> => createQueryKey('feedTopicsList', options, true)
+
+/**
+ * Returns paginated topics for the vertical swipe feed
+ */
+export const feedTopicsListInfiniteOptions = (options?: Options<FeedTopicsListData>) =>
+  infiniteQueryOptions<
+    FeedTopicsListResponse,
+    FeedTopicsListError,
+    InfiniteData<FeedTopicsListResponse>,
+    QueryKey<Options<FeedTopicsListData>>,
+    string | Pick<QueryKey<Options<FeedTopicsListData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<FeedTopicsListData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  cursor: pageParam,
+                },
+              }
+        const params = createInfiniteParams(queryKey, page)
+        const { data } = await feedTopicsList({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        })
+        return data
+      },
+      queryKey: feedTopicsListInfiniteQueryKey(options),
     }
   )
 

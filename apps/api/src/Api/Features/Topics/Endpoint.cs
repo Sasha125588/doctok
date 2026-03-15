@@ -9,8 +9,7 @@ public sealed class Endpoint : IEndpoint
 {
   public void Map(IEndpointRouteBuilder app)
   {
-    app.MapGet("/topics/{*slug}", async (
-      string slug,
+    app.MapGet("/topics", async (
       [AsParameters] TopicsGetPostsQueryParams query,
       ClaimsPrincipal user,
       Handler handler,
@@ -18,7 +17,7 @@ public sealed class Endpoint : IEndpoint
     {
       var userId = CurrentUser.GetUserIdOrNull(user);
 
-      var q = new Query(slug, query.Lang, userId);
+      var q = new Query(query.Slug ?? string.Empty, query.Lang, userId);
       var result = await handler.Handle(q, ct);
 
       return result.ToResponse(Results.Ok);

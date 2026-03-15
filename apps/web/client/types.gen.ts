@@ -92,6 +92,26 @@ export type TogglePostVoteRequest = {
   value: VoteValue
 }
 
+export type TopicFeedItem = {
+  slug: string
+  title: string
+  lang: string
+  postCount: number | string
+  preview: TopicFeedPreview
+}
+
+export type TopicFeedPreview = {
+  postId: number | string
+  kind: string
+  title: null | string
+  body: string
+}
+
+export type TopicFeedResponse = {
+  items: Array<TopicFeedItem>
+  nextCursor: null | string
+}
+
 export type TopicLink = {
   slug: string
   title: string
@@ -144,13 +164,12 @@ export type AdminMdnPreloadResponse = AdminMdnPreloadResponses[keyof AdminMdnPre
 
 export type TopicsGetPostsData = {
   body?: never
-  path: {
+  path?: never
+  query: {
     slug: string
-  }
-  query?: {
     lang?: string
   }
-  url: '/api/topics/{slug}'
+  url: '/api/topics'
 }
 
 export type TopicsGetPostsErrors = {
@@ -177,13 +196,12 @@ export type TopicsGetPostsResponse = TopicsGetPostsResponses[keyof TopicsGetPost
 
 export type TopicsGetLinksData = {
   body?: never
-  path: {
+  path?: never
+  query: {
     slug: string
-  }
-  query?: {
     lang?: string
   }
-  url: '/api/topics/{slug}/links'
+  url: '/api/topics/links'
 }
 
 export type TopicsGetLinksErrors = {
@@ -374,6 +392,35 @@ export type FeedListResponses = {
 }
 
 export type FeedListResponse = FeedListResponses[keyof FeedListResponses]
+
+export type FeedTopicsListData = {
+  body?: never
+  path?: never
+  query?: {
+    cursor?: string
+    limit?: number | string
+    lang?: string
+  }
+  url: '/api/feed/topics'
+}
+
+export type FeedTopicsListErrors = {
+  /**
+   * Bad Request
+   */
+  400: HttpValidationProblemDetails
+}
+
+export type FeedTopicsListError = FeedTopicsListErrors[keyof FeedTopicsListErrors]
+
+export type FeedTopicsListResponses = {
+  /**
+   * OK
+   */
+  200: TopicFeedResponse
+}
+
+export type FeedTopicsListResponse = FeedTopicsListResponses[keyof FeedTopicsListResponses]
 
 export type CommentsRepliesListData = {
   body?: never

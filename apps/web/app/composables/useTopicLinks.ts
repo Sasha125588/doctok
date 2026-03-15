@@ -1,19 +1,24 @@
 import { useQuery } from '@tanstack/vue-query'
 
+import { topicsGetLinks } from '../../client/sdk.gen'
+
 import type { TopicLink } from '../../client/types.gen'
 
 export function useTopicLinks(slug: Ref<string>, lang: Ref<string>, enabled: Ref<boolean>) {
-  const config = useRuntimeConfig()
-
   const query = useQuery({
     queryKey: ['topic-links', slug, lang],
     enabled,
     queryFn: async ({ signal }) => {
-      return await $fetch<TopicLink[]>(`/api/topics/${slug.value}/links`, {
-        baseURL: config.public.apiBaseUrl,
-        query: { lang: lang.value },
+      const { data } = await topicsGetLinks({
+        query: {
+          slug: slug.value,
+          lang: lang.value,
+        },
         signal,
+        throwOnError: true,
       })
+
+      return data
     },
   })
 

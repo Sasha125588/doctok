@@ -9,12 +9,12 @@ public sealed class Endpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapGet("/topics/{slug}/links", async (
-            string slug,
+        app.MapGet("/topics/links", async (
             [AsParameters] TopicsGetLinksQueryParams query,
             TopicLinksRepository topicLinksRepo,
             CancellationToken ct) =>
         {
+            var slug = (query.Slug ?? string.Empty).Trim().Trim('/');
             var resolvedLang = LanguageHelpers.NormalizeLang(query.Lang ?? "en");
             var links = await topicLinksRepo.GetLinkedTopics(slug, resolvedLang, ct);
             return Results.Ok(links);

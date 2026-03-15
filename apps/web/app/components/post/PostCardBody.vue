@@ -6,10 +6,6 @@ function normalizeTopicHref(href: string) {
     return href
   }
 
-  if (href.startsWith('mdn:')) {
-    return `/topic/${href.slice(4)}`
-  }
-
   if (href.startsWith('mdn/')) {
     return `/topic/${href}`
   }

@@ -286,6 +286,59 @@ export const vSystemHealthResponse = v.object({
   ok: v.boolean(),
 })
 
+export const vTopicFeedPreview = v.object({
+  postId: v.union([
+    v.pipe(
+      v.union([v.number(), v.string(), v.bigint()]),
+      v.transform((x) => BigInt(x)),
+      v.minValue(
+        BigInt('-9223372036854775808'),
+        'Invalid value: Expected int64 to be >= -9223372036854775808'
+      ),
+      v.maxValue(
+        BigInt('9223372036854775807'),
+        'Invalid value: Expected int64 to be <= 9223372036854775807'
+      )
+    ),
+    v.pipe(
+      v.union([v.number(), v.string(), v.bigint()]),
+      v.transform((x) => BigInt(x)),
+      v.minValue(
+        BigInt('-9223372036854775808'),
+        'Invalid value: Expected int64 to be >= -9223372036854775808'
+      ),
+      v.maxValue(
+        BigInt('9223372036854775807'),
+        'Invalid value: Expected int64 to be <= 9223372036854775807'
+      )
+    ),
+  ]),
+  kind: v.string(),
+  title: v.nullable(v.string()),
+  body: v.string(),
+})
+
+export const vTopicFeedItem = v.object({
+  slug: v.string(),
+  title: v.string(),
+  lang: v.string(),
+  postCount: v.union([
+    v.pipe(
+      v.number(),
+      v.integer(),
+      v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'),
+      v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')
+    ),
+    v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
+  ]),
+  preview: vTopicFeedPreview,
+})
+
+export const vTopicFeedResponse = v.object({
+  items: v.array(vTopicFeedItem),
+  nextCursor: v.nullable(v.string()),
+})
+
 export const vTopicLink = v.object({
   slug: v.string(),
   title: v.string(),
@@ -336,14 +389,11 @@ export const vAdminMdnPreloadResponse = vPreloadMdnResponse
 
 export const vTopicsGetPostsData = v.object({
   body: v.optional(v.never()),
-  path: v.object({
-    slug: v.string(),
+  path: v.optional(v.never()),
+  query: v.object({
+    slug: v.pipe(v.string(), v.minLength(0), v.maxLength(512)),
+    lang: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(10)), 'en'),
   }),
-  query: v.optional(
-    v.object({
-      lang: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(10)), 'en'),
-    })
-  ),
 })
 
 /**
@@ -353,14 +403,11 @@ export const vTopicsGetPostsResponse = vTopicPostsResponse
 
 export const vTopicsGetLinksData = v.object({
   body: v.optional(v.never()),
-  path: v.object({
-    slug: v.string(),
+  path: v.optional(v.never()),
+  query: v.object({
+    slug: v.pipe(v.string(), v.minLength(0), v.maxLength(512)),
+    lang: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(10)), 'en'),
   }),
-  query: v.optional(
-    v.object({
-      lang: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(10)), 'en'),
-    })
-  ),
 })
 
 /**
@@ -464,6 +511,29 @@ export const vFeedListData = v.object({
  * OK
  */
 export const vFeedListResponse = vFeedResponse
+
+export const vFeedTopicsListData = v.object({
+  body: v.optional(v.never()),
+  path: v.optional(v.never()),
+  query: v.optional(
+    v.object({
+      cursor: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(512))),
+      limit: v.optional(
+        v.union([
+          v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(50)),
+          v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
+        ]),
+        20
+      ),
+      lang: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(10)), 'en'),
+    })
+  ),
+})
+
+/**
+ * OK
+ */
+export const vFeedTopicsListResponse = vTopicFeedResponse
 
 export const vCommentsRepliesListData = v.object({
   body: v.optional(v.never()),
