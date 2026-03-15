@@ -10,10 +10,46 @@ const props = defineProps<{
   initialIndex?: number
 }>()
 
+const emit = defineEmits<{
+  activePostChange: [post: PostItem]
+}>()
+
 const currentIndex = ref(props.initialIndex ?? 0)
+
+watch(
+  () => props.initialIndex,
+  (value) => {
+    currentIndex.value = value ?? 0
+  },
+  { immediate: true }
+)
+
+watch(
+  () => props.posts,
+  (posts) => {
+    if (!posts.length) {
+      return
+    }
+
+    const nextIndex = Math.max(0, Math.min(currentIndex.value, posts.length - 1))
+    const activePost = posts[nextIndex]
+
+    currentIndex.value = nextIndex
+
+    if (activePost) {
+      emit('activePostChange', activePost)
+    }
+  },
+  { immediate: true }
+)
 
 function onSlideChange(swiper: { activeIndex: number }) {
   currentIndex.value = swiper.activeIndex
+
+  const post = props.posts[swiper.activeIndex]
+  if (post) {
+    emit('activePostChange', post)
+  }
 }
 </script>
 
@@ -23,6 +59,7 @@ function onSlideChange(swiper: { activeIndex: number }) {
     :slides-per-view="1"
     :initial-slide="initialIndex ?? 0"
     :touch-release-on-edges="true"
+    :nested="true"
     class="h-full w-full"
     @slide-change="onSlideChange"
   >

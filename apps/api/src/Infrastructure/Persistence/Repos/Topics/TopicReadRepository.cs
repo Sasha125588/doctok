@@ -34,7 +34,15 @@ public sealed class TopicReadRepository(IDbConnectionFactory dbf)
                             and v.user_id = @userId
                          where t.slug = @slug
                            and p.lang = @lang
-                         order by p.position
+                         order by
+                           case p.kind
+                             when 'summary' then 0
+                             when 'example' then 1
+                             when 'fact' then 2
+                             else 3
+                           end,
+                           p.position,
+                           p.id
                          """;
 
     using var db = dbf.Create();

@@ -1,12 +1,43 @@
 <script setup lang="ts">
 const props = defineProps<{ body: string }>()
 
+function normalizeTopicHref(href: string) {
+  if (href.startsWith('/topic/')) {
+    return href
+  }
+
+  if (href.startsWith('mdn:')) {
+    return `/topic/${href.slice(4)}`
+  }
+
+  if (href.startsWith('mdn/')) {
+    return `/topic/${href}`
+  }
+
+  return href
+}
+
+function normalizeTopicLinks(body: string) {
+  return body
+    .replace(/\]\((mdn:[^)]+)\)/g, (_, href: string) => `](${normalizeTopicHref(href)})`)
+    .replace(/\]\((mdn\/[^)]+)\)/g, (_, href: string) => `](${normalizeTopicHref(href)})`)
+    .replace(/href=(['"])(mdn:[^'"]+)\1/g, (_, quote: string, href: string) => {
+      return `href=${quote}${normalizeTopicHref(href)}${quote}`
+    })
+    .replace(/href=(['"])(mdn\/[^'"]+)\1/g, (_, quote: string, href: string) => {
+      return `href=${quote}${normalizeTopicHref(href)}${quote}`
+    })
+}
+
 const renderedBody = computed(() => {
   const trimmed = props.body.trim()
-
   const isCodeBlock = trimmed.startsWith('<') && /<\/?[a-z][\s\S]*>/i.test(trimmed)
 
-  return isCodeBlock ? `\`\`\`html\n${trimmed}\n\`\`\`` : trimmed
+  if (isCodeBlock) {
+    return `\`\`\`html\n${trimmed}\n\`\`\``
+  }
+
+  return normalizeTopicLinks(trimmed)
 })
 
 function handleClick(e: MouseEvent) {
@@ -17,12 +48,13 @@ function handleClick(e: MouseEvent) {
   const href = anchor.getAttribute('href')
   if (!href) return
 
-  if (href.startsWith('mdn:')) {
-    e.preventDefault()
-    const ref = href.slice(4)
-    const topicSlug = `mdn:${ref.replace(/\//g, '-')}`
-    navigateTo(`/topic/${topicSlug}`)
+  const targetHref = normalizeTopicHref(href)
+  if (targetHref === href) {
+    return
   }
+
+  e.preventDefault()
+  navigateTo(targetHref)
 }
 </script>
 

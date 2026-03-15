@@ -1,22 +1,37 @@
 import { useInfiniteQuery } from '@tanstack/vue-query'
 
-import { feedListInfiniteOptions } from '../../client/@tanstack/vue-query.gen'
+import type { TopicFeedItem, TopicFeedResponse } from '~/lib/topic-feed'
 
-import type { PostItem } from '../../client/types.gen'
+const feedPageSize = 6
 
 export function useFeed(lang: Ref<string>) {
+  const config = useRuntimeConfig()
+
   const query = useInfiniteQuery({
-    ...feedListInfiniteOptions({
-      query: { lang: lang.value, limit: 2 },
-    }),
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
-    initialPageParam: '',
+    queryKey: ['feed-topics', lang],
+    initialPageParam: null as null | string,
+    queryFn: async ({ pageParam, signal }) => {
+      const cursor = typeof pageParam === 'string' && pageParam.length > 0 ? pageParam : undefined
+
+      return await $fetch<TopicFeedResponse>('/api/feed/topics', {
+        baseURL: config.public.apiBaseUrl,
+        query: {
+          lang: lang.value,
+          limit: feedPageSize,
+          cursor,
+        },
+        signal,
+      })
+    },
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   })
 
-  const posts = computed<PostItem[]>(() => query.data.value?.pages.flatMap((p) => p.items) ?? [])
+  const topics = computed<TopicFeedItem[]>(
+    () => query.data.value?.pages.flatMap((page) => page.items) ?? []
+  )
 
   return {
-    posts,
+    topics,
     fetchNextPage: query.fetchNextPage,
     hasNextPage: query.hasNextPage,
     isLoading: query.isLoading,

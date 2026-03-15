@@ -8,11 +8,12 @@ const route = useRoute()
 const slug = computed(() => (route.params as { slug: string[] }).slug.join('/'))
 const { lang } = useLang()
 const { posts, isLoading } = useTopicPosts(slug, lang)
+const topicTitle = computed(() => posts.value[0]?.topicTitle ?? slug.value)
+const swiperKey = computed(() => `${slug.value}:${lang.value}`)
 </script>
 
 <template>
   <div class="bg-background relative h-dvh w-full">
-    <!-- Top bar -->
     <div class="topbar">
       <NuxtLink
         to="/"
@@ -23,13 +24,14 @@ const { posts, isLoading } = useTopicPosts(slug, lang)
       <div
         class="max-w-[50%] truncate rounded-[20px] border border-[rgba(255,255,255,0.15)] px-2.5 py-1 font-mono text-[0.68rem] text-[var(--text-secondary)]"
       >
-        {{ slug }}
+        {{ topicTitle }}
       </div>
       <LangSwitcher />
     </div>
 
     <TopicSwiper
       v-if="posts.length"
+      :key="swiperKey"
       :posts="posts"
       :initial-index="0"
     />

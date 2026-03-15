@@ -15,6 +15,14 @@ const props = defineProps<{
 
 const kindConfig = usePostKind(() => props.post.kind)
 
+const resolvedTitle = computed(() => {
+  if (typeof props.post.title === 'string' && props.post.title.trim().length > 0) {
+    return props.post.title
+  }
+
+  return props.post.topicTitle
+})
+
 const cardBg = computed(
   () =>
     `radial-gradient(ellipse 80% 60% at 70% 20%, rgba(${kindConfig.value.cssColorRgb},0.18) 0%, rgba(8,12,16,0) 70%)`
@@ -43,7 +51,7 @@ const cardBg = computed(
       <h1
         class="font-display text-foreground mt-4 text-[clamp(1.5rem,5vw,2.1rem)] leading-[1.15] font-extrabold tracking-tight"
       >
-        {{ post.title }}
+        {{ resolvedTitle }}
       </h1>
 
       <PostCardBody

@@ -7,55 +7,80 @@ import LangSwitcher from '~/components/lang/LangSwitcher.vue'
 import { useFeed } from '~/composables/useFeed'
 import { useLang } from '~/composables/useLang'
 import { usePostKind } from '~/composables/usePostKind'
+import { toPreviewPost } from '~/lib/topic-feed'
 import 'swiper/css'
+import type { PostItem } from '../../../client/types.gen'
 
 const { lang } = useLang()
-const { posts, fetchNextPage, hasNextPage, isLoading } = useFeed(lang)
+const { topics, fetchNextPage, hasNextPage, isLoading, isFetchingNextPage } = useFeed(lang)
 
 const activeIndex = ref(0)
-const activePost = computed(() => posts.value[activeIndex.value])
-const activeKind = usePostKind(() => activePost.value?.kind ?? 'summary')
+const activeTopic = computed(() => topics.value[activeIndex.value])
+const activePost = ref<PostItem | null>(null)
+const activeKind = usePostKind(
+  () => activePost.value?.kind ?? activeTopic.value?.preview.kind ?? 'summary'
+)
+
+watch(lang, () => {
+  activeIndex.value = 0
+})
+
+watch(
+  activeTopic,
+  (topic) => {
+    activePost.value = topic ? toPreviewPost(topic) : null
+  },
+  { immediate: true }
+)
 
 function onSlideChange(swiper: { activeIndex: number }) {
   activeIndex.value = swiper.activeIndex
 }
 
 function onReachEnd() {
-  if (hasNextPage.value) {
+  if (hasNextPage.value && !isFetchingNextPage.value) {
     fetchNextPage()
   }
+}
+
+function onActivePostChange(post: PostItem) {
+  activePost.value = post
 }
 </script>
 
 <template>
   <div class="bg-background relative h-dvh w-full">
-    <!-- Top bar -->
     <div class="topbar">
       <div class="font-display text-foreground text-[1.1rem] font-extrabold tracking-tight">
         doc<span :style="{ color: activeKind.cssColor }">tok</span>
       </div>
       <div
-        v-if="activePost"
-        class="max-w-[50%] truncate rounded-[20px] border px-2.5 py-1 font-mono text-[0.68rem] transition-colors duration-300"
+        v-if="activeTopic"
+        class="max-w-[58%] truncate rounded-[20px] border px-2.5 py-1 font-mono text-[0.68rem] transition-colors duration-300"
         :style="{
           color: activeKind.cssColor,
           borderColor: activeKind.cssColor + '44',
         }"
       >
-        {{ activePost.topicTitle }}
+        {{ activeTopic.title }}
       </div>
       <LangSwitcher />
     </div>
 
-    <!-- Loading state -->
     <div
-      v-if="isLoading && !posts.length"
+      v-if="isLoading && !topics.length"
       class="flex h-full items-center justify-center"
     >
-      <div class="font-mono text-sm text-[var(--text-secondary)]">loading...</div>
+      <div class="font-mono text-sm text-[var(--text-secondary)]">loading topics...</div>
     </div>
 
-    <!-- Feed -->
+    <div
+      v-else-if="!topics.length"
+      class="flex h-full items-center justify-center"
+    >
+      <div class="font-mono text-sm text-[var(--text-secondary)]">no topics yet</div>
+    </div>
+
     <Swiper
       v-else
       direction="vertical"
@@ -68,15 +93,23 @@ function onReachEnd() {
       @reach-end="onReachEnd"
     >
       <SwiperSlide
-        v-for="(post, index) in posts"
-        :key="post.id"
+        v-for="(topic, index) in topics"
+        :key="topic.slug"
       >
         <FeedSlide
-          :post="post"
+          :topic="topic"
           :active="index === activeIndex"
+          @active-post-change="onActivePostChange"
         />
       </SwiperSlide>
     </Swiper>
+
+    <div
+      v-if="isFetchingNextPage"
+      class="pointer-events-none absolute right-5 bottom-6 rounded-full border border-white/10 bg-black/30 px-3 py-1 font-mono text-[0.65rem] text-[var(--text-secondary)] backdrop-blur-sm"
+    >
+      loading more…
+    </div>
   </div>
 </template>
 

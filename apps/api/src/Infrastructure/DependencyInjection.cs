@@ -50,6 +50,7 @@ public static class InfrastructureServiceRegistration
     services.AddSingleton<JobsRepository>();
     services.AddSingleton<PostsRepository>();
     services.AddSingleton<FeedRepository>();
+    services.AddSingleton<TopicFeedRepository>();
     services.AddSingleton<TopicReadRepository>();
     services.AddSingleton<TopicLinksRepository>();
     services.AddSingleton<VotesRepository>();

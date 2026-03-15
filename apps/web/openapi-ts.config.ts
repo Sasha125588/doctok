@@ -12,7 +12,7 @@ export default defineConfig({
   plugins: [
     {
       name: '@hey-api/client-ofetch',
-      runtimeConfigPath: '../hey-api.ts',
+      runtimeConfigPath: '../hey-api',
     },
     '@tanstack/vue-query',
     'valibot',
