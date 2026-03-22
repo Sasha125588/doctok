@@ -10,9 +10,9 @@ public sealed class TitleGenerator(
     IOptions<TitleGeneratorOptions> options,
     ILogger<TitleGenerator> logger) : ITitleGenerator
 {
-    private static readonly string[] KnownKinds = ["summary", "fact", "example"];
+    private static readonly string[] _knownKinds = ["summary", "fact", "example"];
 
-    private static readonly IReadOnlyDictionary<string, string> Prompts = LoadPrompts();
+    private static readonly IReadOnlyDictionary<string, string> _prompts = LoadPrompts();
 
     public async Task<string?> GenerateTitleAsync(
         string kind,
@@ -50,13 +50,13 @@ public sealed class TitleGenerator(
                 kind,
                 topicTitle,
                 lang);
-            return null; // FastPostGenerationService falls back to original title
+            return null;
         }
     }
 
     private static string BuildPrompt(string kind, string topicTitle, string body, string lang)
     {
-        var normalizedKind = KnownKinds.Contains(kind, StringComparer.OrdinalIgnoreCase)
+        var normalizedKind = _knownKinds.Contains(kind, StringComparer.OrdinalIgnoreCase)
             ? kind.ToLowerInvariant()
             : "summary";
 
@@ -67,7 +67,7 @@ public sealed class TitleGenerator(
             _ => lang
         };
 
-        return Prompts[normalizedKind]
+        return _prompts[normalizedKind]
             .Replace("{lang}",  langName)
             .Replace("{topic}", topicTitle)
             .Replace("{body}",  TrimBody(body));
@@ -81,7 +81,7 @@ public sealed class TitleGenerator(
         var assembly = Assembly.GetExecutingAssembly();
         var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var kind in KnownKinds)
+        foreach (var kind in _knownKinds)
         {
             var resourceName = $"{assembly.GetName().Name}.Llm.Prompts.title_{kind}.md";
             using var stream = assembly.GetManifestResourceStream(resourceName)

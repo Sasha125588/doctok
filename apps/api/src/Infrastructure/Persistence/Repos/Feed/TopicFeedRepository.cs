@@ -76,7 +76,6 @@ public sealed class TopicFeedRepository(IDbConnectionFactory dbf)
                              when 'summary' then 0
                              when 'example' then 1
                              when 'fact' then 2
-                             when 'definition' then 3
                              else 4
                            end,
                            p.position,

@@ -50,4 +50,21 @@ public sealed class TopicReadRepository(IDbConnectionFactory dbf)
     return (await db.QueryAsync<PostItem>(
       new CommandDefinition(query, new { slug, lang, userId }, cancellationToken: ct))).ToList();
   }
+
+  public async Task<bool> PostsExistForTopic(string slug, string lang, CancellationToken ct)
+  {
+    const string query = """
+                         select exists(
+                          select 1
+                          from posts p
+                          join topics t on t.id = p.topic_id
+                          where t.slug = @slug
+                          and p.lang = @lang
+                         )
+                         """;
+
+    using var db = dbf.Create();
+
+    return await db.ExecuteScalarAsync<bool>(new CommandDefinition(query, new { slug, lang }, cancellationToken: ct));
+  }
 }

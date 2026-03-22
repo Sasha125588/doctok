@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using Domain.Common;
+using Infrastructure.Events;
 using Infrastructure.GitHub;
 using Infrastructure.Jobs;
 using Infrastructure.Llm;
@@ -112,6 +113,9 @@ public static class InfrastructureServiceRegistration
     // Background jobs
     services.AddSingleton<JobProcessor>();
     services.AddHostedService<JobRunnerBackgroundService>();
+
+    // Events
+    services.AddSingleton<TopicGenerationEvents>();
 
     return services;
   }
