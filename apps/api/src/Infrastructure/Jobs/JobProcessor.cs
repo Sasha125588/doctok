@@ -22,6 +22,9 @@ public sealed class JobProcessor(IServiceProvider serviceProvider, TopicGenerati
     var sourceHandler = serviceProvider.GetKeyedService<ISourceJobHandler>(provider)
                         ?? throw new NotSupportedException($"provider '{provider}' is not supported");
 
+    var normalizedSlug = provider + "/" +
+                         externalRef.Trim().TrimStart('/').ToLowerInvariant();
+
     switch (job.JobType)
     {
       case JobTypes.FetchRaw:
@@ -31,7 +34,7 @@ public sealed class JobProcessor(IServiceProvider serviceProvider, TopicGenerati
         }
         catch (Exception e)
         {
-          events.NotifyFailed(provider + '/' + externalRef, lang, e.Message);
+          events.NotifyFailed(normalizedSlug, lang, e.Message);
           throw;
         }
 
@@ -42,12 +45,12 @@ public sealed class JobProcessor(IServiceProvider serviceProvider, TopicGenerati
         {
           await sourceHandler.GenerateFastPostsAsync(lang, externalRef, ct);
 
-          events.NotifyReady(provider + '/' + externalRef, lang);
+          events.NotifyReady(normalizedSlug, lang);
           return;
         }
         catch (Exception e)
         {
-          events.NotifyFailed(provider + '/' + externalRef, lang, e.Message);
+          events.NotifyFailed(normalizedSlug, lang, e.Message);
           throw;
         }
 

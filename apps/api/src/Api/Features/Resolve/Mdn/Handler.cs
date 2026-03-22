@@ -10,7 +10,7 @@ public sealed class Handler(ResolveRepository resolve, JobsRepository jobs) : IH
 {
   public async Task<ErrorOr<ResolveMdnResponse>> Handle(Query q, CancellationToken ct)
   {
-    var externalRef = q.ExternalRef.Trim().TrimStart('/');
+    var externalRef = q.ExternalRef.Trim().TrimStart('/').ToLowerInvariant();
     if (string.IsNullOrWhiteSpace(externalRef))
     {
       return Error.Validation(
@@ -20,7 +20,7 @@ public sealed class Handler(ResolveRepository resolve, JobsRepository jobs) : IH
 
     var lang = LanguageHelpers.NormalizeLang(q.Lang);
 
-    var slug = await resolve.FindTopicSlugForDocument(SourseIds.Mdn, lang, externalRef, ct);
+    var slug = await resolve.FindTopicSlugForDocument(SourceIds.Mdn, lang, externalRef, ct);
     if (slug is null)
     {
       var jobKey = $"{JobTypes.FetchRaw}:{SourceCodes.Mdn}:{lang}:{externalRef}";
