@@ -2,7 +2,7 @@ using System.Net.ServerSentEvents;
 using System.Runtime.CompilerServices;
 using Api.Extensions;
 using Domain.Common;
-using Domain.EventsArgs;
+using Domain.Events.Topic;
 using Infrastructure.Events;
 using Infrastructure.Persistence.Repos.Topics;
 
@@ -15,32 +15,38 @@ public sealed class Endpoint : IEndpoint
   public void Map(IEndpointRouteBuilder app)
   {
     app.MapGet("/topics/stream", (
-      TopicGenerationEvents events,
-      TopicReadRepository topicRepo,
-      [AsParameters] TopicsStreamQueryParams query,
-      CancellationToken ct) =>
-    {
-      var slug = query.Slug!.Trim().Trim('/').ToLowerInvariant();
-      var lang = LanguageHelpers.NormalizeLang(query.Lang ?? "en");
+        TopicGenerationNotifier notifier,
+        TopicReadRepository topicRepo,
+        [AsParameters] TopicsStreamQueryParams query,
+        CancellationToken ct) =>
+      {
+        var slug = ExternalRefHelpers.Normalize(query.Slug);
+        var lang = LanguageHelpers.NormalizeLang(query.Lang ?? "en");
 
-      return Results.ServerSentEvents(StreamAsync(events, topicRepo, slug, lang, ct));
-    });
+        return Results.ServerSentEvents(StreamAsync(notifier, topicRepo, slug, lang, ct));
+      })
+      .WithTags("Topics")
+      .WithSummary("Streams topic generation status")
+      .WithDescription("Returns a Server-Sent Events stream with topic-ready, topic-failed, and topic-timeout events.")
+      .WithName("TopicsStream")
+      .Produces(StatusCodes.Status200OK, contentType: "text/event-stream")
+      .ProducesValidationProblem(StatusCodes.Status400BadRequest);
   }
 
-  private static async IAsyncEnumerable<SseItem<TopicGenerationEventArgs>> StreamAsync(
-    TopicGenerationEvents events,
+  private static async IAsyncEnumerable<SseItem<TopicGenerationEvent>> StreamAsync(
+    TopicGenerationNotifier notifier,
     TopicReadRepository topicRepo,
     string slug,
     string lang,
     [EnumeratorCancellation] CancellationToken ct)
   {
-    var result = await WaitForTopicAsync(events, topicRepo, slug, lang, ct);
+    var result = await WaitForTopicAsync(notifier, topicRepo, slug, lang, ct);
 
     yield return result;
   }
 
-  private static async Task<SseItem<TopicGenerationEventArgs>> WaitForTopicAsync(
-    TopicGenerationEvents events,
+  private static async Task<SseItem<TopicGenerationEvent>> WaitForTopicAsync(
+    TopicGenerationNotifier notifier,
     TopicReadRepository topicRepo,
     string slug,
     string lang,
@@ -49,21 +55,21 @@ public sealed class Endpoint : IEndpoint
     if (await topicRepo.PostsExistForTopic(slug, lang, ct))
       return SseReady(slug, lang);
 
-    var tcs = new TaskCompletionSource<TopicGenerationEventArgs>(
+    var tcs = new TaskCompletionSource<TopicGenerationEvent>(
       TaskCreationOptions.RunContinuationsAsynchronously);
 
-    void Handler(object? _, TopicGenerationEventArgs args)
+    void Handler(TopicGenerationEvent message)
     {
-      if (args.Slug == slug && args.Lang == lang)
-        tcs.TrySetResult(args);
+      if (message.Slug == slug && message.Lang == lang)
+        tcs.TrySetResult(message);
     }
 
-    events.GenerationEvent += Handler;
+    notifier.GenerationEvent += Handler;
 
     try
     {
       if (await topicRepo.PostsExistForTopic(slug, lang, ct))
-        tcs.TrySetResult(new TopicGenerationEventArgs(slug, lang, TopicGenerationStatus.Ready));
+        tcs.TrySetResult(new TopicGenerationEvent(slug, lang, TopicGenerationStatus.Ready));
 
       using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
       cts.CancelAfter(Timeout);
@@ -74,20 +80,20 @@ public sealed class Endpoint : IEndpoint
         ? "topic-ready"
         : "topic-failed";
 
-      return new SseItem<TopicGenerationEventArgs>(message, eventName);
+      return new SseItem<TopicGenerationEvent>(message, eventName);
     }
     catch (OperationCanceledException) when (!ct.IsCancellationRequested)
     {
-      return new SseItem<TopicGenerationEventArgs>(
-        new TopicGenerationEventArgs(slug, lang, TopicGenerationStatus.Failed, "timeout"),
+      return new SseItem<TopicGenerationEvent>(
+        new TopicGenerationEvent(slug, lang, TopicGenerationStatus.Failed, "timeout"),
         "topic-timeout");
     }
     finally
     {
-      events.GenerationEvent -= Handler;
+      notifier.GenerationEvent -= Handler;
     }
   }
 
-  private static SseItem<TopicGenerationEventArgs> SseReady(string slug, string lang) =>
-    new(new TopicGenerationEventArgs(slug, lang, TopicGenerationStatus.Ready), "topic-ready");
+  private static SseItem<TopicGenerationEvent> SseReady(string slug, string lang) =>
+    new(new TopicGenerationEvent(slug, lang, TopicGenerationStatus.Ready), "topic-ready");
 }

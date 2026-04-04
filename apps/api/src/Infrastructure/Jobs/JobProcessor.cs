@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Infrastructure.Jobs;
 
-public sealed class JobProcessor(IServiceProvider serviceProvider, TopicGenerationEvents events)
+public sealed class JobProcessor(IServiceProvider serviceProvider, TopicGenerationNotifier notifier)
 {
   public async Task Process(JobEnvelope job, CancellationToken ct)
   {
@@ -22,8 +22,7 @@ public sealed class JobProcessor(IServiceProvider serviceProvider, TopicGenerati
     var sourceHandler = serviceProvider.GetKeyedService<ISourceJobHandler>(provider)
                         ?? throw new NotSupportedException($"provider '{provider}' is not supported");
 
-    var normalizedSlug = provider + "/" +
-                         externalRef.Trim().TrimStart('/').ToLowerInvariant();
+    var normalizedSlug = provider + "/" + ExternalRefHelpers.Normalize(externalRef);
 
     switch (job.JobType)
     {
@@ -34,7 +33,7 @@ public sealed class JobProcessor(IServiceProvider serviceProvider, TopicGenerati
         }
         catch (Exception e)
         {
-          events.NotifyFailed(normalizedSlug, lang, e.Message);
+          notifier.NotifyFailed(normalizedSlug, lang, e.Message);
           throw;
         }
 
@@ -44,15 +43,15 @@ public sealed class JobProcessor(IServiceProvider serviceProvider, TopicGenerati
         try
         {
           await sourceHandler.GenerateFastPostsAsync(lang, externalRef, ct);
-
-          events.NotifyReady(normalizedSlug, lang);
-          return;
+          notifier.NotifyReady(normalizedSlug, lang);
         }
         catch (Exception e)
         {
-          events.NotifyFailed(normalizedSlug, lang, e.Message);
+          notifier.NotifyFailed(normalizedSlug, lang, e.Message);
           throw;
         }
+
+        return;
 
       default:
         throw new NotSupportedException($"Unknown job_type: {job.JobType}");
