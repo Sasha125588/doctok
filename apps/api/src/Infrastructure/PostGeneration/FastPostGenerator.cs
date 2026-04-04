@@ -6,17 +6,85 @@ namespace Infrastructure.PostGeneration;
 
 public sealed class FastPostGenerator
 {
+    private const int MinTextLength = 30;
+    private const int MinCodeLength = 20;
+
     private static readonly Regex MdnMacro =
-        new (@"\{\{[^}]*\}\}", RegexOptions.Compiled);
+        new(@"\{\{[^}]*\}\}", RegexOptions.Compiled);
 
-    private static readonly Regex SectionSplit =
-        new (@"^## .+$", RegexOptions.Multiline | RegexOptions.Compiled);
+    private static readonly Regex SectionH2 =
+        new(@"^## .+$", RegexOptions.Multiline | RegexOptions.Compiled);
 
-    private static readonly Regex SubSectionSplit =
-        new (@"^### .+$", RegexOptions.Multiline | RegexOptions.Compiled);
+    private static readonly Regex SectionH3 =
+        new(@"^### .+$", RegexOptions.Multiline | RegexOptions.Compiled);
 
-    private static readonly Regex CodeFence =
-        new (@"```[a-z]*\n(?<code>[\s\S]*?)```", RegexOptions.Compiled);
+    private static readonly Regex CodeFenceBlock =
+        new(@"```(?<lang>[a-z]*)\n(?<code>[\s\S]*?)```", RegexOptions.Compiled);
+
+    private static readonly Regex NumberedListItem =
+        new(@"^\d+\.\s", RegexOptions.Compiled);
+
+    private static readonly Regex MarkdownFormatting =
+        new(@"\[([^\]]+)\]\([^)]+\)|[*`_\[\]()]", RegexOptions.Compiled);
+
+    private static readonly HashSet<string> SkipExact = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "see also",
+        "browser compatibility",
+        "specifications",
+        "смотрите также",
+        "см. также",
+        "совместимость с браузерами",
+        "спецификации",
+        "関連情報",
+        "ブラウザーの互換性",
+        "仕様書",
+        "같이 보기",
+        "브라우저 호환성",
+        "명세서",
+        "参见",
+        "浏览器兼容性",
+        "规范",
+        "參見",
+        "瀏覽器相容性",
+        "規範",
+        "voir aussi",
+        "compatibilité des navigateurs",
+        "spécifications",
+        "siehe auch",
+        "browser-kompatibilität",
+        "spezifikationen",
+        "véase también",
+        "compatibilidad con navegadores",
+        "especificaciones",
+        "veja também",
+        "compatibilidade com navegadores",
+        "especificações",
+    };
+
+    private static readonly string[] SkipContains =
+    {
+        "browser compat",
+        "совместимость",
+        "ブラウザー互換",
+        "브라우저 호환",
+        "浏览器兼容",
+        "瀏覽器相容",
+    };
+
+    private static readonly string[] ExampleKeywords =
+    {
+        "example",
+        "пример",
+        "примеры",
+        "例",
+        "示例",
+        "사용 예",
+        "exemple",
+        "beispiel",
+        "ejemplo",
+        "exemplo",
+    };
 
     public IReadOnlyList<FastPost> Generate(string markdown)
     {
@@ -26,66 +94,54 @@ public sealed class FastPostGenerator
         var posts = new List<FastPost>();
         var pos = 0;
 
-        var sections = SplitIntoSections(markdown);
+        var sections = SplitBySections(markdown, SectionH2, 3);
 
-        // Preamble (before first ## heading) → summary post
         if (sections.Count > 0 && sections[0].Title is null)
         {
-            var first = sections[0].Body
-                .Split("\n\n", StringSplitOptions.RemoveEmptyEntries)
-                .FirstOrDefault();
-
-            if (!string.IsNullOrWhiteSpace(first))
-            {
-              posts.Add(new FastPost(PostKinds.Summary, null, Clean(first), pos++));
-            }
+            var first = ExtractFirstParagraph(sections[0].Body);
+            if (first is not null && first.Length >= MinTextLength)
+                posts.Add(new FastPost(PostKinds.Summary, null, first, pos++));
         }
 
         foreach (var section in sections)
         {
-            if (section.Title is null)
-            {
-                continue;
-            }
+            if (section.Title is null) continue;
 
             switch (ClassifySection(section.Title))
             {
+                case SectionType.Skip:
+                    break;
+
                 case SectionType.Examples:
-                    pos = AddExamplePosts(posts, section.Body, pos);
+                    pos = AddExamplePosts(posts, section, pos);
                     break;
 
-                case SectionType.Description:
-                    pos = AddSummaryPosts(posts, section.Body, pos);
+                default:
+                    pos = AddContentPosts(posts, section, pos);
                     break;
-
-                // SkipList and Other: ignore
             }
         }
 
         return posts;
     }
 
-    private static IReadOnlyList<Section> SplitIntoSections(string markdown)
+    private static IReadOnlyList<Section> SplitBySections(
+        string text, Regex splitter, int prefixLen)
     {
         var result = new List<Section>();
-        var matches = SectionSplit.Matches(markdown);
+        var matches = splitter.Matches(text);
 
-        // Text before first heading
-        var preamble = matches.Count > 0
-            ? markdown[..matches[0].Index]
-            : markdown;
-
+        var preamble = matches.Count > 0 ? text[..matches[0].Index] : text;
         if (!string.IsNullOrWhiteSpace(preamble))
-        {
             result.Add(new Section(null, preamble.Trim()));
-        }
 
         for (var i = 0; i < matches.Count; i++)
         {
-            var title = matches[i].Value[3..].Trim(); // strip "## "
+            var title = matches[i].Value[prefixLen..].Trim();
             var start = matches[i].Index + matches[i].Length;
-            var end = i + 1 < matches.Count ? matches[i + 1].Index : markdown.Length;
-            result.Add(new Section(title, markdown[start..end].Trim()));
+            var end = i + 1 < matches.Count ? matches[i + 1].Index : text.Length;
+            var body = text[start..end].Trim();
+            result.Add(new Section(title, body));
         }
 
         return result;
@@ -93,134 +149,272 @@ public sealed class FastPostGenerator
 
     private static SectionType ClassifySection(string title)
     {
-        var t = title.ToLowerInvariant();
+        if (SkipExact.Contains(title))
+            return SectionType.Skip;
 
-        if (t.Contains("example") || t.Contains("пример"))
-        {
+        var lower = title.ToLowerInvariant();
+
+        if (SkipContains.Any(k => lower.Contains(k, StringComparison.OrdinalIgnoreCase)))
+            return SectionType.Skip;
+
+        if (ExampleKeywords.Any(k => lower.Contains(k, StringComparison.OrdinalIgnoreCase)))
             return SectionType.Examples;
-        }
 
-        if (t.Contains("description") || t.Contains("описание"))
-        {
-            return SectionType.Description;
-        }
-
-        // Reference lists: "Interfaces based on X", "Events", "See also", etc.
-        if (t.Contains("interface") || t.Contains("интерфейс") ||
-            t is "see also" or "смотрите также" or "browser compatibility" ||
-            (t.Contains("event") && t.Length < 25) ||
-            (t.Contains("событ") && t.Length < 25))
-        {
-            return SectionType.SkipList;
-        }
-
-        return SectionType.Other;
+        return SectionType.Content;
     }
 
-    private static int AddExamplePosts(List<FastPost> posts, string body, int pos)
+    private static int AddExamplePosts(List<FastPost> posts, Section section, int pos)
     {
-        var subMatches = SubSectionSplit.Matches(body);
+        var subs = SplitBySections(section.Body, SectionH3, 4);
 
-        if (subMatches.Count == 0)
+        if (subs.Count == 0 || (subs.Count == 1 && subs[0].Title is null))
+            return ExtractBlocks(posts, section.Title, section.Body, pos, codeOnly: true);
+
+        foreach (var sub in subs)
         {
-            // No sub-headings — emit bare code blocks
-            foreach (Match m in CodeFence.Matches(body))
+            var heading = sub.Title ?? section.Title;
+            pos = ExtractBlocks(posts, heading, sub.Body, pos, codeOnly: true);
+        }
+
+        return pos;
+    }
+
+    private static int AddContentPosts(List<FastPost> posts, Section section, int pos)
+    {
+        var subs = SplitBySections(section.Body, SectionH3, 4);
+
+        if (subs.Count == 0 || (subs.Count == 1 && subs[0].Title is null))
+            return ExtractBlocks(posts, section.Title, section.Body, pos, codeOnly: false);
+
+        foreach (var sub in subs)
+        {
+            var heading = sub.Title ?? section.Title;
+            pos = ExtractBlocks(posts, heading, sub.Body, pos, codeOnly: false);
+        }
+
+        return pos;
+    }
+
+    /// <summary>
+    /// Splits <paramref name="body"/> into text/code segments and emits posts.
+    /// When <paramref name="codeOnly"/> is true, only code-fence segments produce
+    /// posts (Example); otherwise text segments also produce Facts.
+    /// </summary>
+    private static int ExtractBlocks(
+        List<FastPost> posts,
+        string? title,
+        string body,
+        int pos,
+        bool codeOnly)
+    {
+        var segments = SplitPreservingCodeFences(body);
+        var consumed = new HashSet<int>();
+
+        for (var i = 0; i < segments.Count; i++)
+        {
+            if (!IsCodeFence(segments[i])) continue;
+
+            var (lang, code) = ParseCodeFence(segments[i]);
+            if (code.Length < MinCodeLength) continue;
+
+            consumed.Add(i);
+
+            string? desc = null;
+            if (i > 0
+                && !consumed.Contains(i - 1)
+                && !IsCodeFence(segments[i - 1])
+                && !IsListBlock(segments[i - 1]))
             {
-                var code = m.Groups["code"].Value.Trim();
-                if (code.Length > 20)
+                var prev = segments[i - 1].Trim();
+                if (prev.Length is > 0 and < 400)
                 {
-                  posts.Add(new FastPost(PostKinds.Example, null, code, pos++));
+                    desc = prev;
+                    consumed.Add(i - 1);
                 }
             }
 
+            var formatted = desc is not null
+                ? $"{desc}\n\n{FormatCodeFence(lang, code)}"
+                : FormatCodeFence(lang, code);
+
+            posts.Add(new FastPost(PostKinds.Example, title, formatted, pos++));
+        }
+
+        if (codeOnly)
             return pos;
-        }
 
-        for (var i = 0; i < subMatches.Count; i++)
+        for (var i = 0; i < segments.Count; i++)
         {
-            var heading = subMatches[i].Value[4..].Trim(); // strip "### "
-            var start = subMatches[i].Index + subMatches[i].Length;
-            var end = i + 1 < subMatches.Count ? subMatches[i + 1].Index : body.Length;
-            var chunk = body[start..end].Trim();
-
-            // Extract code block from chunk
-            var codeMatch = CodeFence.Match(chunk);
-            if (!codeMatch.Success)
-            {
+            if (consumed.Contains(i) || IsCodeFence(segments[i]))
                 continue;
-            }
 
-            var code = codeMatch.Groups["code"].Value.Trim();
-            if (code.Length <= 20)
-            {
+            var trimmed = segments[i].Trim();
+            if (string.IsNullOrWhiteSpace(trimmed))
                 continue;
-            }
 
-            // Description = text before the code fence
-            var desc = chunk[..codeMatch.Index].Trim();
-
-            var sb = new StringBuilder();
-            if (!string.IsNullOrWhiteSpace(desc))
+            if (IsListBlock(trimmed))
             {
-                sb.AppendLine(desc);
-                sb.AppendLine();
+                foreach (var item in ExtractListItems(trimmed))
+                {
+                    if (item.Length >= MinTextLength && !IsBareReference(item))
+                        posts.Add(new FastPost(PostKinds.Fact, title, item, pos++));
+                }
             }
-
-            sb.AppendLine("```");
-            sb.Append(code);
-            sb.AppendLine();
-            sb.Append("```");
-
-            posts.Add(new FastPost(PostKinds.Example, heading, sb.ToString().Trim(), pos++));
+            else if (trimmed.Length >= MinTextLength && !IsBareReference(trimmed))
+            {
+                posts.Add(new FastPost(PostKinds.Fact, title, trimmed, pos++));
+            }
         }
 
         return pos;
     }
 
-    private static int AddSummaryPosts(List<FastPost> posts, string body, int pos)
+    private static string? ExtractFirstParagraph(string text)
     {
-        foreach (var line in body.Split('\n'))
+        foreach (var block in text.Split("\n\n", StringSplitOptions.RemoveEmptyEntries))
         {
-            var t = line.Trim();
-            if (!t.StartsWith("- ") && !t.StartsWith("* "))
-            {
-                continue;
-            }
-
-            var text = Clean(t[2..]);
-
-            if (text.Length < 15)
-            {
-                continue;
-            }
-
-            if (IsBareTypeName(text))
-            {
-                continue;
-            }
-
-            posts.Add(new FastPost(PostKinds.Fact, null, text, pos++));
+            var t = block.Trim();
+            if (!string.IsNullOrWhiteSpace(t) && !IsCodeFence(t) && !IsListBlock(t))
+                return t;
         }
 
-        return pos;
+        return null;
     }
 
-    // Returns true for tokens like "WheelEvent", "AbortController", "DOMException"
-    private static bool IsBareTypeName(string s) =>
-        !s.Contains(' ') && s.Length > 0 && char.IsUpper(s[0]);
+    /// <summary>
+    /// Splits text by blank lines but keeps code-fence blocks intact
+    /// (they may contain blank lines internally).
+    /// </summary>
+    private static List<string> SplitPreservingCodeFences(string text)
+    {
+        var segments = new List<string>();
+        var current = new StringBuilder();
+        var inCodeFence = false;
 
-    private static string Clean(string s) =>
-        s.Replace("`", string.Empty, StringComparison.Ordinal).Trim();
+        foreach (var line in text.Split('\n'))
+        {
+            if (line.TrimStart().StartsWith("```", StringComparison.Ordinal))
+            {
+                if (!inCodeFence)
+                {
+                    Flush(current, segments);
+                    inCodeFence = true;
+                    current.AppendLine(line);
+                }
+                else
+                {
+                    current.AppendLine(line);
+                    segments.Add(current.ToString().Trim());
+                    current.Clear();
+                    inCodeFence = false;
+                }
+
+                continue;
+            }
+
+            if (inCodeFence)
+            {
+                current.AppendLine(line);
+                continue;
+            }
+
+            if (string.IsNullOrWhiteSpace(line))
+                Flush(current, segments);
+            else
+                current.AppendLine(line);
+        }
+
+        Flush(current, segments);
+        return segments;
+    }
+
+    private static void Flush(StringBuilder sb, List<string> target)
+    {
+        if (sb.Length == 0) return;
+        var t = sb.ToString().Trim();
+        if (t.Length > 0)
+            target.Add(t);
+        sb.Clear();
+    }
+
+    private static bool IsListBlock(string s)
+    {
+        var f = s.TrimStart();
+        return f.StartsWith("- ", StringComparison.Ordinal)
+               || f.StartsWith("* ", StringComparison.Ordinal)
+               || NumberedListItem.IsMatch(f);
+    }
+
+    private static IEnumerable<string> ExtractListItems(string block)
+    {
+        var items = new List<string>();
+        var current = new StringBuilder();
+
+        foreach (var line in block.Split('\n'))
+        {
+            var trimmed = line.TrimStart();
+
+            if (trimmed.StartsWith("- ", StringComparison.Ordinal)
+                || trimmed.StartsWith("* ", StringComparison.Ordinal))
+            {
+                FlushItem(current, items);
+                current.Append(trimmed[2..]);
+            }
+            else if (NumberedListItem.IsMatch(trimmed))
+            {
+                FlushItem(current, items);
+                current.Append(NumberedListItem.Replace(trimmed, "", 1));
+            }
+            else if (current.Length > 0 && !string.IsNullOrWhiteSpace(trimmed))
+            {
+                current.Append(' ').Append(trimmed);
+            }
+        }
+
+        FlushItem(current, items);
+        return items;
+    }
+
+    private static void FlushItem(StringBuilder sb, List<string> items)
+    {
+        if (sb.Length == 0) return;
+        items.Add(sb.ToString().Trim());
+        sb.Clear();
+    }
+
+    private static bool IsCodeFence(string s)
+        => s.TrimStart().StartsWith("```", StringComparison.Ordinal);
+
+    private static (string Lang, string Code) ParseCodeFence(string segment)
+    {
+        var m = CodeFenceBlock.Match(segment);
+        return m.Success
+            ? (m.Groups["lang"].Value, m.Groups["code"].Value.Trim())
+            : ("", segment);
+    }
+
+    private static string FormatCodeFence(string lang, string code)
+    {
+        var prefix = string.IsNullOrEmpty(lang) ? "```" : $"```{lang}";
+        return $"{prefix}\n{code}\n```";
+    }
+
+    /// <summary>
+    /// Returns true for content that is just a bare reference and not
+    /// meaningful text (e.g. a single type name "AbortController" or
+    /// a lone markdown link "[Fetch](mdn/...)").
+    /// </summary>
+    private static bool IsBareReference(string s)
+    {
+        var plain = MarkdownFormatting.Replace(s, "$1").Trim();
+        return plain.Length > 0
+               && !plain.Contains(' ')
+               && char.IsUpper(plain[0]);
+    }
 
     private sealed record Section(string? Title, string Body);
 
-    private enum SectionType
-    {
-        Examples,
-        Description,
-        SkipList,
-        Other,
-    }
+    private enum SectionType { Content, Examples, Skip }
 }
 
 public sealed record FastPost(string Kind, string? Title, string Body, int Position);
