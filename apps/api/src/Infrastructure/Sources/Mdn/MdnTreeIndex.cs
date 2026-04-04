@@ -96,12 +96,7 @@ public sealed class MdnTreeIndex(GitHubTreeClient treeClient) : IDisposable
         if (parts.Length < 2 || !string.Equals(parts[0], "files", StringComparison.OrdinalIgnoreCase))
             return "en";
 
-        var rawLang = parts[1].ToLowerInvariant();
-        return rawLang switch
-        {
-            "en-us" => "en",
-            _ => rawLang
-        };
+        return LanguageHelpers.NormalizeLang(parts[1]);
     }
 
     private static string? PathToSlug(string path)

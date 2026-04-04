@@ -96,7 +96,7 @@ public static class InfrastructureServiceRegistration
         client.DefaultRequestHeaders.TryAddWithoutValidation("X-Title", opts.AppName);
         client.DefaultRequestHeaders.UserAgent.ParseAdd("DocTok/1.0");
 
-        client.Timeout = TimeSpan.FromSeconds(20);
+        client.Timeout = TimeSpan.FromSeconds(60);
       });
 
     // Source handlers (keyed by source code for JobProcessor lookup)
@@ -115,7 +115,7 @@ public static class InfrastructureServiceRegistration
     services.AddHostedService<JobRunnerBackgroundService>();
 
     // Events
-    services.AddSingleton<TopicGenerationEvents>();
+    services.AddSingleton<TopicGenerationNotifier>();
 
     return services;
   }
