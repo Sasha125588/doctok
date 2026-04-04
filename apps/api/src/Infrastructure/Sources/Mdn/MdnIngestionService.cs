@@ -3,6 +3,7 @@ using Infrastructure.Persistence.Repos.Jobs;
 using Infrastructure.Persistence.Repos.Raw;
 using Infrastructure.Persistence.Repos.Sources;
 using Infrastructure.Persistence.Repos.Topics;
+using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Sources.Mdn;
 
@@ -14,19 +15,22 @@ public sealed class MdnIngestionService(
     RawLinksRepository rawLinks,
     TopicsRepository topics,
     TopicDocumentsRepository topicDocs,
-    JobsRepository jobs
+    JobsRepository jobs,
+    ILogger<MdnIngestionService> logger
 )
 {
     public async Task FetchRawAsync(string lang, string externalRef, CancellationToken ct)
     {
         lang = LanguageHelpers.NormalizeLang(lang);
-        externalRef = NormalizeExternalRef(externalRef);
+        externalRef = ExternalRefHelpers.Normalize(externalRef);
+
+        logger.LogInformation(
+            "Ingesting MDN doc lang={Lang} ref={ExternalRef}", lang, externalRef);
 
         MdnApiDoc doc = await apiClient.FetchAsync(lang, externalRef, ct);
-
         var (text, links) = converter.Convert(doc);
 
-        var canonicalExternalRef = NormalizeExternalRef(doc.Slug);
+        var canonicalExternalRef = ExternalRefHelpers.Normalize(doc.Slug);
 
         var sourceId = await sources.GetSourceIdByCode(SourceCodes.Mdn, ct);
 
@@ -42,7 +46,6 @@ public sealed class MdnIngestionService(
             otherLocales: doc.OtherLocales.Count > 0 ? [.. doc.OtherLocales] : null,
             ct: ct);
 
-        // var topicSlug = TextRules.TopicSlugFromExternalRef(SourceCodes.Mdn, canonicalExternalRef);
         var topicSlug = SourceCodes.Mdn + "/" + canonicalExternalRef;
         var topicTitle = doc.Title ?? canonicalExternalRef;
 
@@ -51,7 +54,10 @@ public sealed class MdnIngestionService(
 
         var internalLinks = links
             .Where(x => x is { Kind: "internal", TargetLang: not null, TargetExternalRef: not null })
-            .Select(x => (targetLang: LanguageHelpers.NormalizeLang(x.TargetLang!), targetExternalRef: NormalizeExternalRef(x.TargetExternalRef!), label: x.Label))
+            .Select(x => (
+                targetLang: LanguageHelpers.NormalizeLang(x.TargetLang!),
+                targetExternalRef: ExternalRefHelpers.Normalize(x.TargetExternalRef!),
+                label: x.Label))
             .ToList();
 
         if (internalLinks.Count > 0)
@@ -79,12 +85,12 @@ public sealed class MdnIngestionService(
             jobKey: jobKey,
             payload: new { provider = SourceCodes.Mdn, lang, externalRef = canonicalExternalRef },
             ct: ct);
-    }
 
-    private static string NormalizeExternalRef(string? externalRef)
-        => (externalRef ?? string.Empty)
-            .Trim()
-            .TrimStart('/')
-            .Replace('\\', '/')
-            .ToLowerInvariant();
+        logger.LogInformation(
+            "Ingestion complete: rawId={RawId} topicSlug={TopicSlug} internalLinks={InternalLinks} externalLinks={ExternalLinks}",
+            rawId,
+            topicSlug,
+            internalLinks.Count,
+            externalLinks.Count);
+    }
 }
