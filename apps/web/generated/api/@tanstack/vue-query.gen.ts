@@ -26,6 +26,7 @@ import {
   systemHealth,
   topicsGetLinks,
   topicsGetPosts,
+  topicsStream,
 } from '../sdk.gen'
 
 import type {
@@ -73,6 +74,8 @@ import type {
   TopicsGetPostsData,
   TopicsGetPostsError,
   TopicsGetPostsResponse,
+  TopicsStreamData,
+  TopicsStreamError,
 } from '../types.gen'
 
 /**
@@ -189,6 +192,28 @@ export const topicsGetLinksOptions = (options: Options<TopicsGetLinksData>) =>
       return data
     },
     queryKey: topicsGetLinksQueryKey(options),
+  })
+
+export const topicsStreamQueryKey = (options: Options<TopicsStreamData>) =>
+  createQueryKey('topicsStream', options)
+
+/**
+ * Streams topic generation status
+ *
+ * Returns a Server-Sent Events stream with topic-ready, topic-failed, and topic-timeout events.
+ */
+export const topicsStreamOptions = (options: Options<TopicsStreamData>) =>
+  queryOptions<unknown, TopicsStreamError, unknown, ReturnType<typeof topicsStreamQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await topicsStream({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      })
+      return data
+    },
+    queryKey: topicsStreamQueryKey(options),
   })
 
 export const systemHealthQueryKey = (options?: Options<SystemHealthData>) =>
@@ -486,6 +511,7 @@ export const feedTopicsListInfiniteOptions = (options?: Options<FeedTopicsListDa
         })
         return data
       },
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
       queryKey: feedTopicsListInfiniteQueryKey(options),
     }
   )

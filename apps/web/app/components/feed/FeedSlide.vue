@@ -5,8 +5,7 @@ import { useLang } from '~/composables/useLang'
 import { useTopicPosts } from '~/composables/useTopicPosts'
 import { toPreviewPost } from '~/lib/topic-feed'
 
-import type { PostItem } from '../../../client/types.gen'
-import type { TopicFeedItem } from '~/lib/topic-feed'
+import type { PostItem, TopicFeedItem } from '#api/types.gen'
 
 const props = defineProps<{
   topic: TopicFeedItem
@@ -20,7 +19,10 @@ const emit = defineEmits<{
 const { lang } = useLang()
 const topicSlug = computed(() => props.topic.slug)
 const topicEnabled = computed(() => props.active)
-const { posts: topicPosts, isLoading } = useTopicPosts(topicSlug, lang, topicEnabled)
+
+const { posts: topicPosts, isLoading } = useTopicPosts({
+  query: { slug: topicSlug.value, lang: lang.value },
+})
 
 const previewPost = computed(() => toPreviewPost(props.topic))
 const swiperKey = computed(() => `${props.topic.slug}:${lang.value}`)

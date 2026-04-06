@@ -5,7 +5,7 @@ import PostCardHeader from './PostCardHeader.vue'
 import PostKindBadge from './PostKindBadge.vue'
 import { usePostKind } from '~/composables/usePostKind'
 
-import type { PostItem } from '../../../client/types.gen'
+import type { PostItem } from '#api/types.gen'
 
 const props = defineProps<{
   post: PostItem

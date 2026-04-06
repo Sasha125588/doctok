@@ -3,7 +3,7 @@ import { defineConfig } from '@hey-api/openapi-ts'
 export default defineConfig({
   input: 'http://localhost:5005/openapi/v1.json',
   output: {
-    path: 'client',
+    path: 'generated/api',
     fileName: {
       suffix: '.gen',
     },
@@ -12,7 +12,7 @@ export default defineConfig({
   plugins: [
     {
       name: '@hey-api/client-ofetch',
-      runtimeConfigPath: '../hey-api',
+      runtimeConfigPath: '../../hey-api',
     },
     '@tanstack/vue-query',
     'valibot',

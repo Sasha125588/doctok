@@ -4,11 +4,8 @@ import type { Auth } from '../core/auth.gen'
 import type { ServerSentEventsOptions, ServerSentEventsResult } from '../core/serverSentEvents.gen'
 import type { Client as CoreClient, Config as CoreConfig } from '../core/types.gen'
 import type { Middleware } from './utils.gen'
-import type {
-  FetchOptions as OfetchOptions,
-  ResponseType as OfetchResponseType,
-  ofetch,
-} from 'ofetch'
+import type { FetchOptions as OfetchOptions, ResponseType as OfetchResponseType } from 'ofetch'
+import type { ofetch } from 'ofetch'
 
 export type ResponseStyle = 'data' | 'fields'
 

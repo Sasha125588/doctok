@@ -3,7 +3,7 @@ import { Swiper, SwiperSlide } from 'swiper/vue'
 
 import PostCard from '~/components/post/PostCard.vue'
 
-import type { PostItem } from '../../../client/types.gen'
+import type { PostItem } from '#api/types.gen'
 
 const props = defineProps<{
   posts: PostItem[]

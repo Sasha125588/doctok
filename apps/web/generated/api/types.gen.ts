@@ -222,6 +222,32 @@ export type TopicsGetLinksResponses = {
 
 export type TopicsGetLinksResponse = TopicsGetLinksResponses[keyof TopicsGetLinksResponses]
 
+export type TopicsStreamData = {
+  body?: never
+  path?: never
+  query: {
+    slug: string
+    lang?: string
+  }
+  url: '/api/topics/stream'
+}
+
+export type TopicsStreamErrors = {
+  /**
+   * Bad Request
+   */
+  400: HttpValidationProblemDetails
+}
+
+export type TopicsStreamError = TopicsStreamErrors[keyof TopicsStreamErrors]
+
+export type TopicsStreamResponses = {
+  /**
+   * OK
+   */
+  200: unknown
+}
+
 export type SystemHealthData = {
   body?: never
   path?: never
@@ -298,13 +324,12 @@ export type SessionMeGetResponse = SessionMeGetResponses[keyof SessionMeGetRespo
 
 export type ResolveMdnData = {
   body?: never
-  path: {
+  path?: never
+  query: {
     externalRef: string
-  }
-  query?: {
     lang?: string
   }
-  url: '/api/resolve/mdn/{externalRef}'
+  url: '/api/resolve/mdn'
 }
 
 export type ResolveMdnErrors = {

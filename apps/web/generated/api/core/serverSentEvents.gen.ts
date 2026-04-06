@@ -96,7 +96,7 @@ export const createSseClient = <TData = unknown>({
 
   const sleep = sseSleepFn ?? ((ms: number) => new Promise((resolve) => setTimeout(resolve, ms)))
 
-  async function* createStream() {
+  const createStream = async function* () {
     let retryDelay: number = sseDefaultRetryDelay ?? 3000
     let attempt = 0
     const signal = options.signal ?? new AbortController().signal

@@ -1,5 +1,15 @@
+import path from 'node:path'
+
+function resolve(filePath: string) {
+  return path.resolve(__dirname, filePath)
+}
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  alias: {
+    '#api': resolve('./generated/api'),
+  },
+
   compatibilityDate: '2025-07-15',
   devtools: {
     enabled: true,

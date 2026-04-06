@@ -17,6 +17,7 @@ export {
   systemHealth,
   topicsGetLinks,
   topicsGetPosts,
+  topicsStream,
 } from './sdk.gen'
 export type {
   AdminMdnPreloadData,
@@ -111,6 +112,10 @@ export type {
   TopicsGetPostsErrors,
   TopicsGetPostsResponse,
   TopicsGetPostsResponses,
+  TopicsStreamData,
+  TopicsStreamError,
+  TopicsStreamErrors,
+  TopicsStreamResponses,
   VoteResult,
   VoteValue,
 } from './types.gen'

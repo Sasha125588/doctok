@@ -34,6 +34,7 @@ import {
   vTopicsGetLinksResponse,
   vTopicsGetPostsData,
   vTopicsGetPostsResponse,
+  vTopicsStreamData,
 } from './valibot.gen'
 
 import type { Client, Options as Options2, TDataShape } from './client'
@@ -82,6 +83,9 @@ import type {
   TopicsGetPostsData,
   TopicsGetPostsErrors,
   TopicsGetPostsResponses,
+  TopicsStreamData,
+  TopicsStreamErrors,
+  TopicsStreamResponses,
 } from './types.gen'
 
 export type Options<
@@ -146,6 +150,20 @@ export const topicsGetLinks = <ThrowOnError extends boolean = false>(
   })
 
 /**
+ * Streams topic generation status
+ *
+ * Returns a Server-Sent Events stream with topic-ready, topic-failed, and topic-timeout events.
+ */
+export const topicsStream = <ThrowOnError extends boolean = false>(
+  options: Options<TopicsStreamData, ThrowOnError>
+) =>
+  (options.client ?? client).get<TopicsStreamResponses, TopicsStreamErrors, ThrowOnError>({
+    requestValidator: async (data) => await v.parseAsync(vTopicsStreamData, data),
+    url: '/api/topics/stream',
+    ...options,
+  })
+
+/**
  * Health check
  */
 export const systemHealth = <ThrowOnError extends boolean = false>(
@@ -195,7 +213,7 @@ export const resolveMdn = <ThrowOnError extends boolean = false>(
   (options.client ?? client).get<ResolveMdnResponses, ResolveMdnErrors, ThrowOnError>({
     requestValidator: async (data) => await v.parseAsync(vResolveMdnData, data),
     responseValidator: async (data) => await v.parseAsync(vResolveMdnResponse2, data),
-    url: '/api/resolve/mdn/{externalRef}',
+    url: '/api/resolve/mdn',
     ...options,
   })
 

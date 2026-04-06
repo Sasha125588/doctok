@@ -9,7 +9,7 @@ import { useLang } from '~/composables/useLang'
 import { usePostKind } from '~/composables/usePostKind'
 import { toPreviewPost } from '~/lib/topic-feed'
 import 'swiper/css'
-import type { PostItem } from '../../../client/types.gen'
+import type { PostItem } from '#api/types.gen'
 
 const { lang } = useLang()
 const { topics, fetchNextPage, hasNextPage, isLoading, isFetchingNextPage } = useFeed(lang)

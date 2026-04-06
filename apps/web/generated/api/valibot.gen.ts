@@ -415,6 +415,18 @@ export const vTopicsGetLinksData = v.object({
  */
 export const vTopicsGetLinksResponse = v.array(vTopicLink)
 
+export const vTopicsStreamData = v.object({
+  body: v.optional(v.never()),
+  path: v.optional(v.never()),
+  query: v.object({
+    slug: v.optional(
+      v.pipe(v.string(), v.minLength(0), v.maxLength(512)),
+      'mdn/web/api/element/scrollheight'
+    ),
+    lang: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(10)), 'en'),
+  }),
+})
+
 export const vSystemHealthData = v.object({
   body: v.optional(v.never()),
   path: v.optional(v.never()),
@@ -450,14 +462,11 @@ export const vSessionMeGetResponse = vSessionMeResponse
 
 export const vResolveMdnData = v.object({
   body: v.optional(v.never()),
-  path: v.object({
-    externalRef: v.string(),
+  path: v.optional(v.never()),
+  query: v.object({
+    externalRef: v.pipe(v.string(), v.minLength(0), v.maxLength(512)),
+    lang: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(10)), 'en'),
   }),
-  query: v.optional(
-    v.object({
-      lang: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(10)), 'en'),
-    })
-  ),
 })
 
 /**
