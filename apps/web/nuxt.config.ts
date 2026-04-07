@@ -10,6 +10,12 @@ export default defineNuxtConfig({
     '#api': resolve('./generated/api'),
   },
 
+  vite: {
+    optimizeDeps: {
+      include: ['swiper/modules', 'swiper/vue', '@tanstack/vue-query', 'valibot'],
+    },
+  },
+
   compatibilityDate: '2025-07-15',
   devtools: {
     enabled: true,

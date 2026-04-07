@@ -1,17 +1,7 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "ignorePatterns": [
-    "generated/*"
-  ],
-  "plugins": [
-    "node",
-    "jsdoc",
-    "import",
-    "unicorn",
-    "vue",
-    "promise",
-    "typescript"
-  ],
+  "ignorePatterns": ["generated/*"],
+  "plugins": ["node", "jsdoc", "import", "unicorn", "vue", "promise", "typescript"],
   "categories": {
     "correctness": "off"
   },
@@ -24,10 +14,7 @@
     "array-callback-return": "error",
     "block-scoped-var": "error",
     "default-case-last": "error",
-    "eqeqeq": [
-      "error",
-      "smart"
-    ],
+    "eqeqeq": ["error", "smart"],
     "new-cap": [
       "error",
       {
@@ -50,10 +37,7 @@
     "no-case-declarations": "error",
     "no-class-assign": "error",
     "no-compare-neg-zero": "error",
-    "no-cond-assign": [
-      "error",
-      "always"
-    ],
+    "no-cond-assign": ["error", "always"],
     "no-console": "off",
     "no-const-assign": "error",
     "no-control-regex": "error",
@@ -175,19 +159,11 @@
         "ignoreCase": false,
         "ignoreDeclarationSort": true,
         "ignoreMemberSort": false,
-        "memberSyntaxSortOrder": [
-          "none",
-          "all",
-          "multiple",
-          "single"
-        ]
+        "memberSyntaxSortOrder": ["none", "all", "multiple", "single"]
       }
     ],
     "symbol-description": "off",
-    "unicode-bom": [
-      "error",
-      "never"
-    ],
+    "unicode-bom": ["error", "never"],
     "use-isnan": [
       "error",
       {
@@ -202,10 +178,7 @@
       }
     ],
     "vars-on-top": "error",
-    "yoda": [
-      "error",
-      "never"
-    ],
+    "yoda": ["error", "never"],
     "node/no-exports-assign": "error",
     "node/no-new-require": "error",
     "jsdoc/check-access": "warn",
@@ -247,10 +220,7 @@
   },
   "overrides": [
     {
-      "files": [
-        "**/*.?([cm])[jt]s?(x)",
-        "**/*.vue"
-      ],
+      "files": ["**/*.?([cm])[jt]s?(x)", "**/*.vue"],
       "rules": {
         "no-const-assign": "off",
         "no-dupe-keys": "off",
@@ -294,47 +264,33 @@
         "@typescript-eslint/prefer-as-const": "error",
         "@typescript-eslint/prefer-literal-enum-member": "error",
         "@typescript-eslint/triple-slash-reference": "off",
-        "@typescript-eslint/consistent-type-definitions": [
-          "error",
-          "interface"
-        ],
+        "@typescript-eslint/consistent-type-definitions": ["error", "interface"],
         "@typescript-eslint/consistent-type-imports": "error",
         "@typescript-eslint/no-import-type-side-effects": "error",
         "@typescript-eslint/no-require-imports": "error",
         "@typescript-eslint/prefer-ts-expect-error": "error"
       },
-      "plugins": [
-        "typescript"
-      ]
+      "plugins": ["typescript"]
     },
     {
-      "files": [
-        "**/*.d.ts"
-      ],
+      "files": ["**/*.d.ts"],
       "rules": {
         "import/no-duplicates": "off"
       }
     },
     {
-      "files": [
-        "**/*.{test,spec}.ts?(x)"
-      ],
+      "files": ["**/*.{test,spec}.ts?(x)"],
       "rules": {
         "no-unused-expressions": "off"
       }
     },
     {
-      "files": [
-        "**/*.js",
-        "**/*.cjs"
-      ],
+      "files": ["**/*.js", "**/*.cjs"],
       "rules": {
         "@typescript-eslint/no-require-imports": "off",
         "@typescript-eslint/no-var-requires": "off"
       },
-      "plugins": [
-        "typescript"
-      ]
+      "plugins": ["typescript"]
     },
     {
       "files": [
@@ -357,14 +313,10 @@
         "vitest/prefer-hooks-in-order": "error",
         "vitest/prefer-lowercase-title": "error"
       },
-      "plugins": [
-        "vitest"
-      ]
+      "plugins": ["vitest"]
     },
     {
-      "files": [
-        "**/*.vue"
-      ],
+      "files": ["**/*.vue"],
       "rules": {
         "vue/no-export-in-script-setup": "error",
         "vue/prefer-import-from-vue": "error",
@@ -372,9 +324,7 @@
         "vue/valid-define-props": "error",
         "vue/no-multiple-slot-args": "warn"
       },
-      "plugins": [
-        "vue"
-      ]
+      "plugins": ["vue"]
     }
   ]
 }
