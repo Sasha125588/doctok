@@ -12,10 +12,12 @@ import 'swiper/css'
 import type { PostItem } from '#api/types.gen'
 
 const { lang } = useLang()
-const { topics, fetchNextPage, hasNextPage, isLoading, isFetchingNextPage } = useFeed(lang)
+const { state, functions } = useFeed(lang)
+
+// const { topics, fetchNextPage, hasNextPage, isLoading, isFetchingN extPage } = useFeed(lang)
 
 const activeIndex = ref(0)
-const activeTopic = computed(() => topics.value[activeIndex.value])
+const activeTopic = computed(() => state.topics.value[activeIndex.value])
 const activePost = ref<PostItem | null>(null)
 const activeKind = usePostKind(
   () => activePost.value?.kind ?? activeTopic.value?.preview.kind ?? 'summary'
@@ -38,8 +40,8 @@ function onSlideChange(swiper: { activeIndex: number }) {
 }
 
 function onReachEnd() {
-  if (hasNextPage.value && !isFetchingNextPage.value) {
-    fetchNextPage()
+  if (state.hasNextPage.value && !state.isFetchingNextPage.value) {
+    functions.fetchNextPage()
   }
 }
 
@@ -68,14 +70,14 @@ function onActivePostChange(post: PostItem) {
     </div>
 
     <div
-      v-if="isLoading && !topics.length"
+      v-if="state.isLoading && !state.topics.value.length"
       class="flex h-full items-center justify-center"
     >
       <div class="font-mono text-sm text-[var(--text-secondary)]">loading topics...</div>
     </div>
 
     <div
-      v-else-if="!topics.length"
+      v-else-if="!state.topics.value.length"
       class="flex h-full items-center justify-center"
     >
       <div class="font-mono text-sm text-[var(--text-secondary)]">no topics yet</div>
@@ -93,7 +95,7 @@ function onActivePostChange(post: PostItem) {
       @reach-end="onReachEnd"
     >
       <SwiperSlide
-        v-for="(topic, index) in topics"
+        v-for="(topic, index) in state.topics.value"
         :key="topic.slug"
       >
         <FeedSlide
@@ -105,7 +107,7 @@ function onActivePostChange(post: PostItem) {
     </Swiper>
 
     <div
-      v-if="isFetchingNextPage"
+      v-if="state.isFetchingNextPage"
       class="pointer-events-none absolute right-5 bottom-6 rounded-full border border-white/10 bg-black/30 px-3 py-1 font-mono text-[0.65rem] text-[var(--text-secondary)] backdrop-blur-sm"
     >
       loading more…

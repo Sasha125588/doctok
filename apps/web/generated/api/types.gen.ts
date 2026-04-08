@@ -35,7 +35,7 @@ export type HttpValidationProblemDetails = {
 }
 
 export type PostItem = {
-  id: number | string
+  id: number
   kind: string
   title: string
   body: string

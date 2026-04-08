@@ -5,5 +5,5 @@ export function useLang() {
     lang.value = value
   }
 
-  return { lang: lang as Ref<string>, setLang }
+  return { lang, setLang }
 }

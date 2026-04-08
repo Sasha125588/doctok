@@ -18,7 +18,7 @@ const emit = defineEmits<{
 
 const { lang } = useLang()
 const topicSlug = computed(() => props.topic.slug)
-const topicEnabled = computed(() => props.active)
+// const topicEnabled = computed(() => props.active)
 
 const { posts: topicPosts, isLoading } = useTopicPosts({
   query: { slug: topicSlug.value, lang: lang.value },

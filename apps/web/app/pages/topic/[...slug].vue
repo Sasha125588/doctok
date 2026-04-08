@@ -7,7 +7,7 @@ import { useTopicPosts } from '~/composables/useTopicPosts'
 const route = useRoute()
 const slug = computed(() => (route.params as { slug: string[] }).slug.join('/'))
 const { lang } = useLang()
-const { posts, isLoading } = useTopicPosts(slug, lang)
+const { posts, isLoading } = useTopicPosts({ query: { slug: slug.value, lang: lang.value } })
 const topicTitle = computed(() => posts.value[0]?.topicTitle ?? slug.value)
 const swiperKey = computed(() => `${slug.value}:${lang.value}`)
 </script>

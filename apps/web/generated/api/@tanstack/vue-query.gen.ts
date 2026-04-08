@@ -175,7 +175,7 @@ export const topicsGetLinksQueryKey = (options: Options<TopicsGetLinksData>) =>
 /**
  * Returns linked topics for a topic
  */
-export const topicsGetLinksOptions = (options: Options<TopicsGetLinksData>) =>
+export const topicsGetLinksOptions = (options: Options<TopicsGetLinksData>, enabled: boolean) =>
   queryOptions<
     TopicsGetLinksResponse,
     TopicsGetLinksError,
@@ -192,6 +192,7 @@ export const topicsGetLinksOptions = (options: Options<TopicsGetLinksData>) =>
       return data
     },
     queryKey: topicsGetLinksQueryKey(options),
+    enabled,
   })
 
 export const topicsStreamQueryKey = (options: Options<TopicsStreamData>) =>

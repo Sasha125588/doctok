@@ -1,11 +1,14 @@
 <script setup lang="ts">
+import { postsVotesToggleMutation, topicsGetPostsQueryKey } from '#api/@tanstack/vue-query.gen'
+import { useMutation, useQueryClient } from '@tanstack/vue-query'
+
 import PostCardActions from './PostCardActions.vue'
 import PostCardBody from './PostCardBody.vue'
 import PostCardHeader from './PostCardHeader.vue'
 import PostKindBadge from './PostKindBadge.vue'
 import { usePostKind } from '~/composables/usePostKind'
 
-import type { PostItem } from '#api/types.gen'
+import type { PostItem, TopicsGetPostsResponse, VoteValue } from '#api/types.gen'
 
 const props = defineProps<{
   post: PostItem
@@ -14,6 +17,19 @@ const props = defineProps<{
 }>()
 
 const kindConfig = usePostKind(() => props.post.kind)
+
+const localVote = ref(props.post.myVote)
+const localLikeCount = ref(props.post.likeCount)
+const localDislikeCount = ref(props.post.dislikeCount)
+
+watch(
+  () => props.post,
+  (post) => {
+    localVote.value = post.myVote
+    localLikeCount.value = post.likeCount
+    localDislikeCount.value = post.dislikeCount
+  }
+)
 
 const resolvedTitle = computed(() => {
   if (typeof props.post.title === 'string' && props.post.title.trim().length > 0) {
@@ -27,6 +43,56 @@ const cardBg = computed(
   () =>
     `radial-gradient(ellipse 80% 60% at 70% 20%, rgba(${kindConfig.value.cssColorRgb},0.18) 0%, rgba(8,12,16,0) 70%)`
 )
+
+const { lang } = useLang()
+
+const queryClient = useQueryClient()
+
+const voteMutation = useMutation(postsVotesToggleMutation())
+
+const onVote = (value: VoteValue) =>
+  voteMutation.mutate(
+    {
+      path: { postId: props.post.id },
+      body: { value },
+    },
+    {
+      onSuccess(data) {
+        localVote.value = data.myVote
+        localLikeCount.value = data.likeCount
+        localDislikeCount.value = data.dislikeCount
+
+        queryClient.setQueryData(
+          topicsGetPostsQueryKey({
+            query: {
+              slug: props.post.topicSlug,
+              lang: lang.value,
+            },
+          }),
+          (oldData: TopicsGetPostsResponse | undefined) => {
+            if (!oldData) return oldData
+            const targetId = props.post.id
+
+            const changes = {
+              likeCount: data.likeCount,
+              dislikeCount: data.dislikeCount,
+              myVote: data.myVote,
+            }
+
+            return {
+              ...oldData,
+              items: oldData.items.map((post) =>
+                post.id === targetId ? { ...post, ...changes } : post
+              ),
+            }
+          }
+        )
+      },
+      onError(error) {
+        console.error(`${value} Error:`, error)
+      },
+    }
+  )
 </script>
 
 <template>
@@ -60,8 +126,10 @@ const cardBg = computed(
       />
 
       <PostCardActions
-        :like-count="post.likeCount"
-        :dislike-count="post.dislikeCount"
+        @on-vote="onVote"
+        :my-vote="localVote"
+        :like-count="localLikeCount"
+        :dislike-count="localDislikeCount"
         :comment-count="post.commentCount"
         class="mt-5"
       />

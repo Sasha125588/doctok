@@ -1,8 +1,6 @@
 import { feedTopicsListInfiniteOptions } from '#api/@tanstack/vue-query.gen'
 import { useInfiniteQuery } from '@tanstack/vue-query'
 
-import type { TopicFeedItem } from '#api/types.gen'
-
 const feedPageSize = 3
 
 export function useFeed(lang: Ref<string>) {
@@ -15,15 +13,17 @@ export function useFeed(lang: Ref<string>) {
     })
   )
 
-  const topics = computed<TopicFeedItem[]>(
-    () => query.data.value?.pages.flatMap((page) => page.items) ?? []
-  )
+  const topics = computed(() => query.data.value?.pages.flatMap((page) => page.items) ?? [])
 
   return {
-    topics,
-    fetchNextPage: query.fetchNextPage,
-    hasNextPage: query.hasNextPage,
-    isLoading: query.isLoading,
-    isFetchingNextPage: query.isFetchingNextPage,
+    state: {
+      topics: topics,
+      hasNextPage: query.hasNextPage,
+      isLoading: query.isLoading,
+      isFetchingNextPage: query.isFetchingNextPage,
+    },
+    functions: {
+      fetchNextPage: query.fetchNextPage,
+    },
   }
 }

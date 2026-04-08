@@ -10,7 +10,7 @@ const props = defineProps<{ slug: string }>()
 const open = ref(false)
 const { lang } = useLang()
 const slugRef = computed(() => props.slug)
-const { links, isLoading } = useTopicLinks(slugRef, lang, open)
+const { state } = useTopicLinks({ query: { slug: slugRef.value, lang: lang.value } }, open.value)
 </script>
 
 <template>
@@ -36,16 +36,16 @@ const { links, isLoading } = useTopicLinks(slugRef, lang, open)
         <SheetTitle>Related Topics</SheetTitle>
       </SheetHeader>
       <div class="mt-4 space-y-2 overflow-y-auto">
-        <template v-if="isLoading">
+        <template v-if="state.isLoading">
           <Skeleton
             v-for="i in 3"
             :key="i"
             class="h-10 w-full"
           />
         </template>
-        <template v-else-if="links.length">
+        <template v-else-if="state.links.value.length">
           <button
-            v-for="link in links"
+            v-for="link in state.links.value"
             :key="link.slug"
             class="hover:bg-accent block w-full rounded-lg p-3 text-left text-sm transition-colors"
             @click="
