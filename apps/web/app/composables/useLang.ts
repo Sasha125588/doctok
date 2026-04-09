@@ -1,5 +1,5 @@
 export function useLang() {
-  const lang = useCookie('content_lang', { default: () => 'ru' })
+  const lang = useCookie('content_lang', { default: () => 'en' })
 
   function setLang(value: string) {
     lang.value = value

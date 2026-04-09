@@ -5,10 +5,10 @@ import { useLang } from '~/composables/useLang'
 import { useTopicPosts } from '~/composables/useTopicPosts'
 
 const route = useRoute()
-const slug = computed(() => (route.params as { slug: string[] }).slug.join('/'))
+const slug = computed(() => route.params.slug!.join('/'))
 const { lang } = useLang()
-const { posts, isLoading } = useTopicPosts({ query: { slug: slug.value, lang: lang.value } })
-const topicTitle = computed(() => posts.value[0]?.topicTitle ?? slug.value)
+const { state } = useTopicPosts({ query: { slug: slug.value, lang: lang.value } })
+const topicTitle = computed(() => state.posts.value[0]?.topicTitle ?? slug.value)
 const swiperKey = computed(() => `${slug.value}:${lang.value}`)
 </script>
 
@@ -30,13 +30,13 @@ const swiperKey = computed(() => `${slug.value}:${lang.value}`)
     </div>
 
     <TopicSwiper
-      v-if="posts.length"
+      v-if="state.posts.value.length"
       :key="swiperKey"
-      :posts="posts"
+      :posts="state.posts.value"
       :initial-index="0"
     />
     <div
-      v-else-if="isLoading"
+      v-else-if="state.isLoading"
       class="flex h-full items-center justify-center"
     >
       <div class="font-mono text-sm text-[var(--text-secondary)]">loading...</div>
