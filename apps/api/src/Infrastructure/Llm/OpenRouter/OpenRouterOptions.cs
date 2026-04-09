@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Infrastructure.Llm;
+namespace Infrastructure.Llm.OpenRouter;
 
 public sealed class OpenRouterOptions
 {

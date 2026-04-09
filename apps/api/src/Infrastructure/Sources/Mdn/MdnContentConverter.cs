@@ -22,6 +22,21 @@ public sealed class MdnContentConverter
 {
     private static readonly Regex MultipleNewlines = new(@"\n{3,}", RegexOptions.Compiled);
 
+    // Matches "brush: js" / "brush:js" in MDN's <pre> class attribute.
+    private static readonly Regex BrushLang = new(@"brush:\s*(\w+)", RegexOptions.Compiled);
+
+    // Collapses whitespace sequences containing a newline into a single space.
+    // Used to strip HTML-formatting newlines inside inline elements (e.g. <dt>).
+    private static readonly Regex InlineNewlines = new(@"[ \t]*\n[ \t]*", RegexOptions.Compiled);
+
+    private static readonly HashSet<string> KnownCodeLangs = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "js", "css", "html", "json", "xml", "python",
+        "typescript", "bash", "sh", "wasm", "http", "sql",
+        "jsx", "tsx", "yaml", "toml", "c", "cpp", "csharp",
+        "java", "ruby", "go", "rust", "swift", "kotlin",
+    };
+
     public (string Text, IReadOnlyList<ExtractedLink> Links) Convert(MdnApiDoc doc)
     {
         var links = new List<ExtractedLink>();
@@ -87,6 +102,12 @@ public sealed class MdnContentConverter
         switch (tag)
         {
             case "div":
+                // Skip the MDN "example-header" div — it contains only a decorative
+                // language label (<span class="language-name">js</span>) that would
+                // otherwise leak as plain text before the code fence.
+                // The language is extracted from <pre class="brush: js"> instead.
+                if (HasClass(el, "example-header"))
+                    break;
                 ProcessNode(el, sb, links);
                 break;
 
@@ -123,9 +144,14 @@ public sealed class MdnContentConverter
                 sb.AppendLine();
                 break;
 
-            case "ul" or "dl":
+            case "ul":
                 sb.AppendLine();
                 ProcessNode(el, sb, links);
+                break;
+
+            case "dl":
+                sb.AppendLine();
+                RenderDefinitionList(el, sb, links);
                 break;
 
             case "ol":
@@ -139,6 +165,9 @@ public sealed class MdnContentConverter
                 sb.AppendLine();
                 break;
 
+            // <dt> and <dd> are only reached when nested outside a <dl>
+            // (unusual but possible). In the normal flow they are handled
+            // by RenderDefinitionList which keeps them together without blank lines.
             case "dt":
                 sb.Append("**");
                 ProcessNode(el, sb, links);
@@ -164,7 +193,9 @@ public sealed class MdnContentConverter
                 }
                 else
                 {
-                    sb.AppendLine("```");
+                    // No <code> child — still try to get the lang from the <pre> itself.
+                    var lang = ExtractLangFromPre(el);
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"```{lang}");
                     sb.AppendLine(WebUtility.HtmlDecode(el.InnerText).Trim());
                     sb.AppendLine("```");
                 }
@@ -215,8 +246,16 @@ public sealed class MdnContentConverter
                 break;
             }
 
+            case "span":
+                // <span class="visually-hidden"> exists only for screen readers
+                // (e.g. inside MDN badge icons). Never output it as visible text.
+                if (HasClass(el, "visually-hidden"))
+                    break;
+                ProcessNode(el, sb, links);
+                break;
+
             case "thead" or "tbody" or "tr" or "th" or "td"
-                or "section" or "article" or "span" or "abbr"
+                or "section" or "article" or "abbr"
                 or "blockquote" or "figure" or "figcaption"
                 or "sup" or "sub" or "small" or "mark":
                 ProcessNode(el, sb, links);
@@ -266,6 +305,85 @@ public sealed class MdnContentConverter
         }
 
         sb.Append(')');
+    }
+
+    /// <summary>
+    /// Renders a &lt;dl&gt; by pairing each &lt;dt&gt; with its &lt;dd&gt;.
+    /// Text nodes between elements (HTML-formatting newlines) are skipped so that
+    /// dt and dd are never separated by a blank line — keeping them as a single
+    /// block for <see cref="FastPostGenerator"/>.
+    /// Output format per pair:
+    /// <code>
+    /// **term text**
+    /// : description text
+    /// </code>
+    /// Multiple pairs in the same dl produce one continuous block (no blank lines).
+    /// </summary>
+    private void RenderDefinitionList(HtmlNode dl, StringBuilder sb, List<ExtractedLink> links)
+    {
+        HtmlNode? pendingDt = null;
+
+        foreach (var child in dl.ChildNodes)
+        {
+            // Skip whitespace text nodes between <dt> and <dd>.
+            // These are the root cause of blank-line separation in the output.
+            if (child.NodeType != HtmlNodeType.Element)
+                continue;
+
+            var tag = child.Name.ToLowerInvariant();
+
+            switch (tag)
+            {
+                case "dt":
+                    // A new <dt> with an un-rendered previous <dt> → flush the orphan
+                    if (pendingDt != null)
+                    {
+                        sb.Append("**");
+                        sb.Append(GetInlineContent(pendingDt, links));
+                        sb.AppendLine("**");
+                    }
+
+                    pendingDt = child;
+                    break;
+
+                case "dd":
+                    // Render "**dt**\n: dd\n" — no blank line between them
+                    sb.Append("**");
+                    if (pendingDt != null)
+                    {
+                        sb.Append(GetInlineContent(pendingDt, links));
+                        pendingDt = null;
+                    }
+
+                    sb.AppendLine("**");
+
+                    var ddBody = new StringBuilder();
+                    ProcessNode(child, ddBody, links);
+                    sb.Append(": ");
+                    sb.AppendLine(ddBody.ToString().Trim());
+                    break;
+            }
+        }
+
+        // Flush any trailing <dt> that had no <dd>
+        if (pendingDt != null)
+        {
+            sb.Append("**");
+            sb.Append(GetInlineContent(pendingDt, links));
+            sb.AppendLine("**");
+        }
+    }
+
+    /// <summary>
+    /// Renders <paramref name="node"/> to a plain inline string:
+    /// all HTML-formatting newlines are collapsed to spaces so that
+    /// multi-line source like &lt;dt&gt; becomes a single clean line.
+    /// </summary>
+    private string GetInlineContent(HtmlNode node, List<ExtractedLink> links)
+    {
+        var inner = new StringBuilder();
+        ProcessNode(node, inner, links);
+        return InlineNewlines.Replace(inner.ToString().Trim(), " ").Trim();
     }
 
     private void RenderOrderedList(HtmlNode ol, StringBuilder sb, List<ExtractedLink> links)
@@ -375,26 +493,58 @@ public sealed class MdnContentConverter
             : null;
     }
 
+    /// <summary>
+    /// Extracts the programming language identifier for a code fence.
+    /// Checks the &lt;code&gt; element's class first (e.g. <c>language-js</c>),
+    /// then falls back to the parent &lt;pre&gt;'s <c>brush: js</c> class
+    /// used by MDN's modern code-example format.
+    /// </summary>
     private static string ExtractCodeLang(HtmlNode codeNode)
     {
-        var cls = codeNode.GetAttributeValue("class", "");
-        if (string.IsNullOrEmpty(cls))
-            return "";
+        var lang = LangFromClass(codeNode.GetAttributeValue("class", ""));
+        if (!string.IsNullOrEmpty(lang)) return lang;
 
+        var pre = codeNode.ParentNode;
+        if (pre?.Name.Equals("pre", StringComparison.OrdinalIgnoreCase) == true)
+            return ExtractLangFromPre(pre);
+
+        return "";
+    }
+
+    /// <summary>
+    /// Extracts the language from a &lt;pre class="brush: js …"&gt; element.
+    /// </summary>
+    private static string ExtractLangFromPre(HtmlNode preNode)
+    {
+        var m = BrushLang.Match(preNode.GetAttributeValue("class", ""));
+        return m.Success && KnownCodeLangs.Contains(m.Groups[1].Value)
+            ? m.Groups[1].Value.ToLowerInvariant()
+            : "";
+    }
+
+    /// <summary>
+    /// Scans a CSS class string for a known language token.
+    /// Handles both <c>language-js</c> (Prism convention) and bare tokens like <c>js</c>.
+    /// </summary>
+    private static string LangFromClass(string cls)
+    {
         foreach (var part in cls.Split(' ', StringSplitOptions.RemoveEmptyEntries))
         {
             if (part.StartsWith("language-", StringComparison.OrdinalIgnoreCase))
                 return part["language-".Length..];
 
-            if (part is "js" or "css" or "html" or "json" or "xml" or "python"
-                or "typescript" or "bash" or "sh" or "wasm" or "http" or "sql"
-                or "jsx" or "tsx" or "yaml" or "toml" or "c" or "cpp" or "csharp"
-                or "java" or "ruby" or "go" or "rust" or "swift" or "kotlin")
+            if (KnownCodeLangs.Contains(part))
                 return part;
         }
 
         return "";
     }
+
+    /// <summary>Returns true when the element has the given CSS class.</summary>
+    private static bool HasClass(HtmlNode node, string className)
+        => node.GetAttributeValue("class", "")
+               .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+               .Any(c => c.Equals(className, StringComparison.OrdinalIgnoreCase));
 
     private static string GetPlainText(HtmlNode node)
         => WebUtility.HtmlDecode(node.InnerText).Trim();

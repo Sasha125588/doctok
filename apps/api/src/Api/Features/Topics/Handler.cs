@@ -10,12 +10,6 @@ public sealed class Handler(TopicReadRepository topicRepo) : IHandler
     public async Task<ErrorOr<TopicPostsResponse>> Handle(Query query, CancellationToken ct)
     {
         var slug = query.Slug.Trim().Trim('/');
-        if (string.IsNullOrWhiteSpace(slug))
-        {
-            return Error.Validation(
-                code: "Topics.Slug.Required",
-                description: "slug is required");
-        }
 
         var lang = LanguageHelpers.NormalizeLang(query.Lang ?? "en");
         var items = await topicRepo.GetPosts(slug, lang, query.UserId, ct);

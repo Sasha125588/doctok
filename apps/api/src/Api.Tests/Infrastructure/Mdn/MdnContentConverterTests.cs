@@ -140,6 +140,120 @@ public sealed class MdnContentConverterTests
         Assert.DoesNotContain("\n\n\n", text);
     }
 
+    /// <summary>
+    /// The primary regression for posts #48/#49 in the Text API page.
+    /// A &lt;dt&gt; and its &lt;dd&gt; must end up in the same text block —
+    /// no blank line between them — so FastPostGenerator keeps them as one post.
+    /// </summary>
+    [Fact]
+    public void DtAndDdAreNotSeparatedByBlankLine()
+    {
+        // Realistic MDN HTML: whitespace text nodes between dt and dd
+        var html = """
+            <dl>
+            <dt id="foo"><code>foo()</code></dt>
+            <dd>
+            <p>Does something useful.</p>
+            </dd>
+            </dl>
+            """;
+        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var (text, _) = _converter.Convert(doc);
+
+        Assert.Contains("**`foo()`**", text);
+        Assert.Contains(": Does something useful.", text);
+
+        // The dt and dd must NOT be separated by a blank line
+        var dtIndex = text.IndexOf("**`foo()`**", StringComparison.Ordinal);
+        var ddIndex = text.IndexOf(": Does something useful.", StringComparison.Ordinal);
+        var between = text[dtIndex..ddIndex];
+        Assert.DoesNotContain("\n\n", between);
+    }
+
+    [Fact]
+    public void MultipleDtDdPairsFormOneContiguousBlock()
+    {
+        // All pairs in a <dl> should be one block — no blank lines between pairs
+        var html = """
+            <dl>
+            <dt>Alpha</dt>
+            <dd><p>First definition.</p></dd>
+            <dt>Beta</dt>
+            <dd><p>Second definition.</p></dd>
+            <dt>Gamma</dt>
+            <dd><p>Third definition.</p></dd>
+            </dl>
+            """;
+        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var (text, _) = _converter.Convert(doc);
+
+        Assert.Contains("**Alpha**", text);
+        Assert.Contains("**Beta**", text);
+        Assert.Contains("**Gamma**", text);
+
+        // No blank line anywhere between Alpha and Gamma blocks
+        var start = text.IndexOf("**Alpha**", StringComparison.Ordinal);
+        var end = text.IndexOf(": Third definition.", StringComparison.Ordinal)
+                  + ": Third definition.".Length;
+        var block = text[start..end];
+        Assert.DoesNotContain("\n\n", block);
+    }
+
+    [Fact]
+    public void VisuallyHiddenSpansAreSkipped()
+    {
+        var html = """
+            <dl>
+            <dt>
+              <code>Text()</code>
+              <abbr class="icon icon-experimental" title="Experimental">
+                <span class="visually-hidden">Experimental</span>
+              </abbr>
+            </dt>
+            <dd><p>Creates a Text node.</p></dd>
+            </dl>
+            """;
+        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var (text, _) = _converter.Convert(doc);
+
+        // Screen-reader text must not appear in the output
+        Assert.DoesNotContain("Experimental", text);
+        Assert.DoesNotContain("visually-hidden", text);
+
+        // The term and definition must still be present and together
+        Assert.Contains("**`Text()`**", text);
+        Assert.Contains(": Creates a Text node.", text);
+    }
+
+    [Fact]
+    public void MdnApiStyleDtWithReadOnlyBadge()
+    {
+        // Mirrors the real MDN "Properties" section HTML
+        var html = """
+            <dl>
+            <dt>
+              <a href="/en-US/docs/Web/API/Text/wholeText"><code>Text.wholeText</code></a>
+              <span class="badge inline readonly">Read only </span>
+            </dt>
+            <dd>
+              <p>Returns a string with all adjacent text.</p>
+            </dd>
+            </dl>
+            """;
+        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var (text, _) = _converter.Convert(doc);
+
+        // Badge text IS useful (unlike visually-hidden), so it must appear
+        Assert.Contains("Read only", text);
+        Assert.Contains("[`Text.wholeText`]", text);
+        Assert.Contains(": Returns a string with all adjacent text.", text);
+
+        // No blank line between dt and dd
+        var dtIdx = text.IndexOf("**[`Text.wholeText`]", StringComparison.Ordinal);
+        var ddIdx = text.IndexOf(": Returns a string", StringComparison.Ordinal);
+        Assert.DoesNotContain("\n\n", text[dtIdx..ddIdx]);
+    }
+
     // ─── Code blocks ────────────────────────────────────────────────
 
     [Fact]
@@ -355,5 +469,85 @@ public sealed class MdnContentConverterTests
         var (text, _) = _converter.Convert(doc);
 
         Assert.Contains("Diagram of the API", text);
+    }
+
+    // ─── MDN code-example wrapper (brush: lang) ──────────────────────
+
+    /// <summary>
+    /// MDN wraps code blocks in:
+    ///   &lt;div class="code-example"&gt;
+    ///     &lt;div class="example-header"&gt;&lt;span class="language-name"&gt;js&lt;/span&gt;&lt;/div&gt;
+    ///     &lt;pre class="brush: js notranslate"&gt;&lt;code&gt;…&lt;/code&gt;&lt;/pre&gt;
+    ///   &lt;/div&gt;
+    /// The "example-header" must be silently skipped; the language must come from
+    /// the "brush:" class on &lt;pre&gt;, not leak as plain text before the fence.
+    /// </summary>
+    [Fact]
+    public void MdnCodeExampleWrapperRendersCorrectly()
+    {
+        var html = """
+            <div class="code-example">
+              <div class="example-header"><span class="language-name">js</span></div>
+              <pre class="brush: js notranslate"><code>const x = 1;</code></pre>
+            </div>
+            """;
+        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var (text, _) = _converter.Convert(doc);
+
+        Assert.Contains("```js", text);
+        Assert.Contains("const x = 1;", text);
+
+        // "js" must NOT appear as a bare word before the opening fence
+        Assert.DoesNotContain("js\n```", text);
+        Assert.DoesNotContain("js```", text);
+        Assert.DoesNotContain("language-name", text);
+    }
+
+    [Fact]
+    public void BrushClassOnPreIsUsedForLanguage()
+    {
+        // When <code> has no class, the language must come from <pre class="brush: css …">
+        var html = """<pre class="brush: css notranslate"><code>body { margin: 0; }</code></pre>""";
+        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var (text, _) = _converter.Convert(doc);
+
+        Assert.Contains("```css", text);
+        Assert.Contains("body { margin: 0; }", text);
+    }
+
+    [Fact]
+    public void MultipleConsecutiveMdnCodeBlocksAllRenderCorrectly()
+    {
+        // Regression: previously each example-header leaked "js" which confused
+        // SplitPreservingCodeFences and produced broken / truncated posts.
+        var html = """
+            <p>First example:</p>
+            <div class="code-example">
+              <div class="example-header"><span class="language-name">js</span></div>
+              <pre class="brush: js notranslate"><code>const a = 1;</code></pre>
+            </div>
+            <p>Second example:</p>
+            <div class="code-example">
+              <div class="example-header"><span class="language-name">js</span></div>
+              <pre class="brush: js notranslate"><code>const b = 2;</code></pre>
+            </div>
+            <p>Third example:</p>
+            <div class="code-example">
+              <div class="example-header"><span class="language-name">js</span></div>
+              <pre class="brush: js notranslate"><code>const c = 3;</code></pre>
+            </div>
+            """;
+        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var (text, _) = _converter.Convert(doc);
+
+        // Every block must open with ```js (not js```)
+        var fenceCount = text.Split("```js").Length - 1;
+        Assert.Equal(3, fenceCount);
+
+        Assert.Contains("const a = 1;", text);
+        Assert.Contains("const b = 2;", text);
+        Assert.Contains("const c = 3;", text);
+        Assert.DoesNotContain("js\n```", text);
+        Assert.DoesNotContain("js```", text);
     }
 }

@@ -9,5 +9,6 @@ public abstract class LangQueryParams
   [FromQuery(Name = "lang")]
   [StringLength(10)]
   [DefaultValue("en")]
+  [Required]
   public string? Lang { get; init; }
 }

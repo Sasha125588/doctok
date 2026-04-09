@@ -33,6 +33,8 @@ public sealed class FastPostGenerator
         "browser compatibility",
         "specifications",
         "смотрите также",
+        "смотри(те) также",
+        "смотри также",
         "см. также",
         "совместимость с браузерами",
         "спецификации",
@@ -66,6 +68,7 @@ public sealed class FastPostGenerator
     {
         "browser compat",
         "совместимость",
+        "смотри",           // catches "смотрите также", "смотри(те) также", etc.
         "ブラウザー互換",
         "브라우저 호환",
         "浏览器兼容",
@@ -260,7 +263,7 @@ public sealed class FastPostGenerator
                         posts.Add(new FastPost(PostKinds.Fact, title, item, pos++));
                 }
             }
-            else if (trimmed.Length >= MinTextLength && !IsBareReference(trimmed))
+            else if (trimmed.Length >= MinTextLength && !IsBareReference(trimmed) && !IsFullyItalicPreamble(trimmed))
             {
                 posts.Add(new FastPost(PostKinds.Fact, title, trimmed, pos++));
             }
@@ -410,6 +413,23 @@ public sealed class FastPostGenerator
         return plain.Length > 0
                && !plain.Contains(' ')
                && char.IsUpper(plain[0]);
+    }
+
+    /// <summary>
+    /// Returns true for single-line fully-italic paragraphs that are
+    /// section preambles in MDN reference pages — e.g.:
+    /// <c>*Inherits properties from its parent, CharacterData.*</c>
+    /// These are rendered from <c>&lt;p&gt;&lt;em&gt;…&lt;/em&gt;&lt;/p&gt;</c>
+    /// and carry no standalone value as swipe cards.
+    /// </summary>
+    private static bool IsFullyItalicPreamble(string s)
+    {
+        var t = s.Trim();
+        return t.StartsWith('*')
+               && !t.StartsWith("**", StringComparison.Ordinal)
+               && t.EndsWith('*')
+               && !t.EndsWith("**", StringComparison.Ordinal)
+               && !t.Contains('\n');
     }
 
     private sealed record Section(string? Title, string Body);

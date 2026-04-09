@@ -1,11 +1,14 @@
 ﻿using System.Reflection;
-using Infrastructure.Llm;
+using Infrastructure.Llm.OpenRouter;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Infrastructure.PostGeneration.Title;
 
 public sealed class TitleGenerator(
+
+    // GeminiClient geminiClient,
+
     OpenRouterClient openRouter,
     IOptions<TitleGeneratorOptions> options,
     ILogger<TitleGenerator> logger) : ITitleGenerator
@@ -27,8 +30,8 @@ public sealed class TitleGenerator(
 
             var title = await openRouter.CompleteChatAsync(
                 model:       options.Value.Model,
+                maxTokens: options.Value.MaxTokens,
                 userMessage: prompt,
-                maxTokens:   options.Value.MaxTokens,
                 ct:          ct);
 
             if (string.IsNullOrWhiteSpace(title))

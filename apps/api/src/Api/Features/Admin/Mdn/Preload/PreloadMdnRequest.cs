@@ -1,14 +1,11 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using Api.Features.Common;
 
 namespace Api.Features.Admin.Mdn.Preload;
 
-public sealed class PreloadMdnRequest
+public sealed class PreloadMdnRequest: LangQueryParams
 {
-  [StringLength(10)]
-  [DefaultValue("en")]
-  public string? Lang { get; init; }
-
   [Range(1, 100)]
   [DefaultValue(5)]
   public int? Count { get; init; }

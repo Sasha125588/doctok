@@ -11,12 +11,6 @@ public sealed class Handler(ResolveRepository resolve, JobsRepository jobs) : IH
     public async Task<ErrorOr<ResolveMdnResponse>> Handle(Query q, CancellationToken ct)
     {
         var externalRef = ExternalRefHelpers.Normalize(q.ExternalRef);
-        if (string.IsNullOrWhiteSpace(externalRef))
-        {
-            return Error.Validation(
-                code: "Resolve.ExternalRef.Required",
-                description: "externalRef is required");
-        }
 
         var lang = LanguageHelpers.NormalizeLang(q.Lang);
 

@@ -1,9 +1,11 @@
 using System.Net.Http.Headers;
 using Domain.Common;
+using Google.GenAI;
 using Infrastructure.Events;
 using Infrastructure.GitHub;
 using Infrastructure.Jobs;
-using Infrastructure.Llm;
+using Infrastructure.Llm.Gemini;
+using Infrastructure.Llm.OpenRouter;
 using Infrastructure.Persistence.Db;
 using Infrastructure.Persistence.Repos.Comments;
 using Infrastructure.Persistence.Repos.Feed;
@@ -32,6 +34,7 @@ public static class InfrastructureServiceRegistration
   {
     services.AddValidatedOptions<GitHubOptions>("GitHub");
     services.AddValidatedOptions<OpenRouterOptions>("OpenRouter");
+    services.AddValidatedOptions<GeminiOptions>("Gemini");
     services.AddValidatedOptions<TitleGeneratorOptions>("OpenRouter:TitleGenerator");
 
     var connStr = configuration.GetConnectionString("Default")
@@ -56,6 +59,15 @@ public static class InfrastructureServiceRegistration
     services.AddSingleton<TopicLinksRepository>();
     services.AddSingleton<VotesRepository>();
     services.AddSingleton<CommentsRepository>();
+
+    services.AddSingleton((sp) =>
+    {
+      var opts = sp.GetRequiredService<IOptions<GeminiOptions>>().Value;
+
+      return new Client(apiKey: opts.ApiKey);
+    });
+
+    services.AddSingleton<GeminiClient>();
 
     // HTTP clients
     services.AddHttpClient<MdnApiClient>(client =>
