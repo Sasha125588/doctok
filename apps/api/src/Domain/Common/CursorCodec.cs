@@ -7,36 +7,25 @@ public sealed record FeedCursor(double? Popularity, long Id);
 
 public static class CursorCodec
 {
-    public static string Encode(FeedCursor cursor)
+    public static string Encode<T>(T cursor)
     {
-        var json = JsonSerializer.Serialize(new { p = cursor.Popularity, id = cursor.Id });
+        var json = JsonSerializer.Serialize(cursor);
         return Convert.ToBase64String(Encoding.UTF8.GetBytes(json));
     }
 
-    public static FeedCursor? Decode(string? cursor)
+    public static T? Decode<T>(string? cursor)
     {
-        if (string.IsNullOrWhiteSpace(cursor)) return null;
+        if (string.IsNullOrWhiteSpace(cursor)) return default;
+
         try
         {
-            var json = Encoding.UTF8.GetString(Convert.FromBase64String(cursor));
-            using var doc = JsonDocument.Parse(json);
-            var root = doc.RootElement;
+          var json = Encoding.UTF8.GetString(Convert.FromBase64String(cursor));
 
-            var id = root.GetProperty("id").GetInt64();
-
-            double? popularity = null;
-            if (root.TryGetProperty("p", out var pEl) && pEl.ValueKind == JsonValueKind.Number)
-                popularity = pEl.GetDouble();
-
-            return new FeedCursor(popularity, id);
+          return JsonSerializer.Deserialize<T>(json);
         }
-        catch (FormatException)
+        catch
         {
-            return null;
-        }
-        catch (JsonException)
-        {
-            return null;
+          return default;
         }
     }
 }
