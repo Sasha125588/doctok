@@ -29,7 +29,7 @@ public sealed class TopicReadRepository(IDbConnectionFactory dbf)
                          from topics t
                          join posts p on p.topic_id = t.id
                          join raw_documents rd on rd.id = p.raw_document_id
-                         left join post_votes v
+                         left join post_reactions v
                             on v.post_id = p.id
                             and v.user_id = @userId
                          where t.slug = @slug

@@ -78,11 +78,6 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
       throw new KeyNotFoundException("Parent comment not found");
     }
 
-    if (parent.parent_comment_id is not null)
-    {
-      throw new ArgumentException("Replies to replies are not supported");
-    }
-
     const string bumpSql = """
                            update posts
                            set comment_count = comment_count + 1
@@ -169,7 +164,7 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
 
     const string delSql = """
                           update comments
-                          set deleted_at = now(), body = ''
+                          set deleted_at = now()
                           where id = @commentId
                             and user_id = @userId
                             and deleted_at is null
@@ -211,7 +206,7 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
     PostId: r.PostId,
     UserId: r.UserId,
     ParentCommentId: r.ParentCommentId,
-    Body: r.DeletedAt is null ? r.Body : "",
+    Body: r.Body,
     CreatedAt: new DateTimeOffset(r.CreatedAt),
     IsDeleted: r.DeletedAt is not null
   );

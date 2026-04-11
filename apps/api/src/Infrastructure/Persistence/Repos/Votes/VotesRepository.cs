@@ -17,7 +17,7 @@ public sealed class VotesRepository(IDbConnectionFactory dbf)
     ),
     old as (
       select v.value::text as old_value
-      from post_votes v
+      from post_reactions v
       where v.post_id = @post_id and v.user_id = @user_id
     ),
     decision as (
@@ -31,15 +31,15 @@ public sealed class VotesRepository(IDbConnectionFactory dbf)
         end as op
     ),
     write_insert as (
-      insert into post_votes(post_id, user_id, value)
-      select @post_id, @user_id, d.new_value::t_post_vote_value
+      insert into post_reactions(post_id, user_id, value)
+      select @post_id, @user_id, d.new_value::t_reaction_value
       from decision d
       where d.op = 'insert'
       returning 1
     ),
     write_update as (
-      update post_votes v
-      set value = d.new_value::t_post_vote_value,
+      update post_reactions v
+      set value = d.new_value::t_reaction_value,
           updated_at = now()
       from decision d
       where d.op = 'update'
@@ -47,7 +47,7 @@ public sealed class VotesRepository(IDbConnectionFactory dbf)
       returning 1
     ),
     write_delete as (
-      delete from post_votes v
+      delete from post_reactions v
       using decision d
       where d.op = 'delete'
         and v.post_id = @post_id and v.user_id = @user_id

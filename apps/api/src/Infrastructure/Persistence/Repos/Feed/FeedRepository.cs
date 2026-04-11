@@ -31,7 +31,7 @@ public sealed class FeedRepository(IDbConnectionFactory dbf)
                        from posts p
                        join topics t on t.id = p.topic_id
                        join raw_documents rd on rd.id = p.raw_document_id
-                       left join post_votes v
+                       left join post_reactions v
                          on v.post_id = p.id
                         and v.user_id = @userId
                        where p.lang = @lang
