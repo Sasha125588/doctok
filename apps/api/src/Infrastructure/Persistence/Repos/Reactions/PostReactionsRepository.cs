@@ -1,13 +1,10 @@
-using System.Data.Common;
-using Dapper;
-using Domain.Models;
-using Infrastructure.Persistence.Db;
+﻿using Domain.Models;
 
-namespace Infrastructure.Persistence.Repos.Votes;
+namespace Infrastructure.Persistence.Repos.Reactions;
 
-public sealed class VotesRepository(IDbConnectionFactory dbf)
+public class PostReactionsRepository(BaseReactionsRepository baseReactionsRepo)
 {
-    private const string ToggleSql = """
+      private const string ToggleSql = """
     -- params: @post_id bigint, @user_id uuid, @value text ('like'|'dislike')
 
     with lock_key as (
@@ -90,32 +87,11 @@ public sealed class VotesRepository(IDbConnectionFactory dbf)
     cross join delta d;
     """;
 
-    private sealed record DbRow(int LikeCount, int DislikeCount, string MyVote);
-
-    public async Task<VoteResult?> Toggle(long postId, Guid userId, string value, CancellationToken ct)
-    {
-        await using var conn = (DbConnection)dbf.Create();
-        await conn.OpenAsync(ct);
-        await using var tx = await conn.BeginTransactionAsync(ct);
-
-        var row = await conn.QuerySingleOrDefaultAsync<DbRow>(
-            new CommandDefinition(
-                ToggleSql,
-                new { post_id = postId, user_id = userId, value },
-                transaction: tx,
-                cancellationToken: ct));
-
-        if (row is null)
+      public Task<ReactionResult?> Toggle(long postId, Guid userId, string value, CancellationToken ct)
+        => baseReactionsRepo.Toggle(ToggleSql, new
         {
-          await tx.RollbackAsync(ct);
-          return null;
-        }
-
-        await tx.CommitAsync(ct);
-
-        return new VoteResult(
-            MyVote: row.MyVote,
-            LikeCount: row.LikeCount,
-            DislikeCount: row.DislikeCount);
-    }
+          post_id = postId,
+          user_id = userId,
+          value
+        }, ct);
 }

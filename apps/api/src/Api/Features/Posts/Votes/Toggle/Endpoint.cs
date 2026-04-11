@@ -29,7 +29,7 @@ public sealed class Endpoint : IEndpoint
         "Sets the current user's vote for a post. Allowed values are 'like' and 'dislike'. " +
         "Sending the same value again removes the vote.")
       .WithName("PostsVotesToggle")
-      .Produces<VoteResult>(StatusCodes.Status200OK)
+      .Produces<ReactionResult>(StatusCodes.Status200OK)
       .ProducesProblem(StatusCodes.Status400BadRequest)
       .ProducesProblem(StatusCodes.Status401Unauthorized)
       .ProducesProblem(StatusCodes.Status403Forbidden)

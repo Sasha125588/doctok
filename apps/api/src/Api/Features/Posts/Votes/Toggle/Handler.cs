@@ -2,27 +2,27 @@ using Api.Extensions;
 using Domain.Common;
 using Domain.Models;
 using ErrorOr;
-using Infrastructure.Persistence.Repos.Votes;
+using Infrastructure.Persistence.Repos.Reactions;
 
 namespace Api.Features.Posts.Votes.Toggle;
 
-public sealed class Handler(VotesRepository votesRepo) : IHandler
+public sealed class Handler(PostReactionsRepository postReactionsRepo) : IHandler
 {
-  public async Task<ErrorOr<VoteResult>> Handle(Command command, CancellationToken ct)
+  public async Task<ErrorOr<ReactionResult>> Handle(Command command, CancellationToken ct)
   {
-    var voteResult = await votesRepo.Toggle(
+    var reactionResult = await postReactionsRepo.Toggle(
       command.PostId,
       command.UserId,
       command.Value.ToStorageValue(),
       ct);
 
-    if (voteResult is null)
+    if (reactionResult is null)
     {
       return Error.NotFound(
-        code: "Votes.PostNotFound",
+        code: "Reactions.PostNotFound",
         description: $"Post '{command.PostId}' was not found.");
     }
 
-    return voteResult;
+    return reactionResult;
   }
 }

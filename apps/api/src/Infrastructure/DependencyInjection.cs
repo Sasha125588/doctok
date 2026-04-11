@@ -12,10 +12,10 @@ using Infrastructure.Persistence.Repos.Feed;
 using Infrastructure.Persistence.Repos.Jobs;
 using Infrastructure.Persistence.Repos.Posts;
 using Infrastructure.Persistence.Repos.Raw;
+using Infrastructure.Persistence.Repos.Reactions;
 using Infrastructure.Persistence.Repos.Resolve;
 using Infrastructure.Persistence.Repos.Sources;
 using Infrastructure.Persistence.Repos.Topics;
-using Infrastructure.Persistence.Repos.Votes;
 using Infrastructure.PostGeneration;
 using Infrastructure.PostGeneration.Title;
 using Infrastructure.Sources.Mdn;
@@ -57,7 +57,9 @@ public static class InfrastructureServiceRegistration
     services.AddSingleton<TopicFeedRepository>();
     services.AddSingleton<TopicReadRepository>();
     services.AddSingleton<TopicLinksRepository>();
-    services.AddSingleton<VotesRepository>();
+    services.AddSingleton<BaseReactionsRepository>();
+    services.AddSingleton<PostReactionsRepository>();
+    services.AddSingleton<CommentReactionsRepository>();
     services.AddSingleton<CommentsRepository>();
 
     services.AddSingleton((sp) =>
