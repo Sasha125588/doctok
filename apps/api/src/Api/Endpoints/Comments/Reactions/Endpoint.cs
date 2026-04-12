@@ -1,0 +1,39 @@
+﻿using System.Security.Claims;
+using Api.Auth;
+using Api.Errors;
+using Api.Extensions;
+using Domain.Models;
+
+namespace Api.Endpoints.Comments.Reactions;
+
+public class Endpoint: IEndpoint
+{
+  public void Map(IEndpointRouteBuilder app)
+  {
+    app.MapPatch("/comments/{commentId:long}/reactions", async (
+      long commentId,
+      ToggleCommentReactionRequest req,
+      ClaimsPrincipal user,
+      Handler handler,
+      CancellationToken ct) =>
+    {
+      var userId = CurrentUser.GetUserIdOrThrow(user);
+
+      var result = await handler.Handle(new Command(commentId, userId, req.Value), ct);
+
+      return result.ToResponse(Results.Ok);
+    })
+    .RequireAuthorization()
+    .WithTags("Reactions")
+    .WithSummary("Toggles a like or dislike on a comment")
+    .WithDescription(
+      "Sets the current user's reaction for a comment. Allowed values are 'like' and 'dislike'. " +
+      "Sending the same value again removes the reaction.")
+    .WithName("CommentsReactionsToggle")
+    .Produces<ReactionResult>(StatusCodes.Status200OK)
+    .ProducesProblem(StatusCodes.Status400BadRequest)
+    .ProducesProblem(StatusCodes.Status401Unauthorized)
+    .ProducesProblem(StatusCodes.Status403Forbidden)
+    .ProducesProblem(StatusCodes.Status404NotFound);
+  }
+}

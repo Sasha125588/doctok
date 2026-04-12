@@ -4,7 +4,7 @@ using Domain.Models;
 using ErrorOr;
 using Infrastructure.Persistence.Repositories;
 
-namespace Api.Endpoints.Posts.Votes.Toggle;
+namespace Api.Endpoints.Posts.Reactions;
 
 public sealed class Handler(PostReactionsRepository postReactionsRepo) : IHandler
 {

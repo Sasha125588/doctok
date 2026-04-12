@@ -74,15 +74,15 @@ public class CommentReactionsRepository(BaseReactionsRepository baseReactionsRep
       ),
       update_comment as (
         update comments c
-        set likes_count = greatest(c.likes_count + d.like_delta, 0),
-            dislikes_count = greatest(c.dislikes_count + d.dislike_delta, 0)
+        set like_count = greatest(c.like_count + d.like_delta, 0),
+            dislike_count = greatest(c.dislike_count + d.dislike_delta, 0)
         from delta d
         where c.id = @comment_id
-        returning c.likes_count, c.dislikes_count
+        returning c.like_count, c.dislike_count
       )
       select
-        u.likes_count,
-        u.dislikes_count,
+        u.like_count,
+        u.dislike_count,
         coalesce(d.resulting_vote, 'none') as my_vote
       from update_comment u
       cross join delta d;

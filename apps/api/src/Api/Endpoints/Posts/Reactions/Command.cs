@@ -1,0 +1,5 @@
+using Domain.Common;
+
+namespace Api.Endpoints.Posts.Reactions;
+
+public sealed record Command(long PostId, Guid UserId, ReactionValue Value);

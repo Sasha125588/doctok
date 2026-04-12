@@ -1,5 +1,6 @@
 using System.Data.Common;
 using Dapper;
+using Domain.Models;
 using Infrastructure.Persistence.ConnectionFactory;
 
 namespace Infrastructure.Persistence.Repositories;
@@ -12,6 +13,8 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
     Guid UserId,
     long? ParentCommentId,
     string Body,
+    int LikeCount,
+    int DislikeCount,
     DateTime CreatedAt,
     DateTime? DeletedAt
   );
@@ -118,7 +121,7 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
   public async Task<IReadOnlyList<Domain.Models.Comment>> ListRoots(long postId, int limit, CancellationToken ct)
   {
     const string sql = """
-                       select id, post_id, user_id, parent_comment_id, body, created_at, deleted_at
+                       select id, post_id, user_id, parent_comment_id, body, like_count, dislike_count, created_at, deleted_at
                        from comments
                        where post_id = @postId
                             and parent_comment_id is null
@@ -139,7 +142,7 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
   public async Task<IReadOnlyList<Domain.Models.Comment>> ListReplies(long commentId, int limit, CancellationToken ct)
   {
     const string sql = """
-                       select id, post_id, user_id, parent_comment_id, body, created_at, deleted_at
+                       select id, post_id, user_id, parent_comment_id, body, like_count, dislike_count, created_at, deleted_at
                        from comments
                        where parent_comment_id = @commentId
                        order by created_at asc
@@ -201,12 +204,14 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
     return true;
   }
 
-  private static Domain.Models.Comment ToModel(CommentRow r) => new (
+  private static Comment ToModel(CommentRow r) => new (
     Id: r.Id,
     PostId: r.PostId,
     UserId: r.UserId,
     ParentCommentId: r.ParentCommentId,
     Body: r.Body,
+    LikeCount: r.LikeCount,
+    DislikeCount: r.DislikeCount,
     CreatedAt: new DateTimeOffset(r.CreatedAt),
     IsDeleted: r.DeletedAt is not null
   );

@@ -16,6 +16,7 @@ public static class WebServiceRegistration
     this IServiceCollection services,
     IConfiguration configuration)
   {
+    // -------------------- CORS --------------------
     var corsOrigins = configuration.GetSection("Cors:Origins").Get<string[]>()
                       ?? ["http://localhost:5173"];
 
@@ -31,6 +32,7 @@ public static class WebServiceRegistration
       });
     });
 
+    // -------------------- OpenAPI --------------------
     services.AddOpenApi(options =>
     {
       options.AddDocumentTransformer((document, context, ct) =>
@@ -53,12 +55,14 @@ public static class WebServiceRegistration
             Description = "Enter your JWT token"
           }
         };
+
         return Task.CompletedTask;
       });
 
       options.AddOperationTransformer((operation, context, ct) =>
       {
         var metadata = context.Description.ActionDescriptor.EndpointMetadata;
+
         var allowAnonymous = metadata.OfType<IAllowAnonymous>().Any();
         var requiresAuthorization = metadata.OfType<IAuthorizeData>().Any();
 
@@ -79,33 +83,43 @@ public static class WebServiceRegistration
       });
     });
 
+    // -------------------- JSON --------------------
     services.ConfigureHttpJsonOptions(options =>
     {
-      options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+      options.SerializerOptions.Converters.Add(
+        new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
     });
 
+    // -------------------- Validation --------------------
     services.AddValidation();
 
+    // -------------------- Problem Details --------------------
     services.AddProblemDetails(options =>
     {
       options.CustomizeProblemDetails = context =>
       {
         if (!context.ProblemDetails.Extensions.ContainsKey("traceId"))
         {
-          context.ProblemDetails.Extensions["traceId"] = context.HttpContext.TraceIdentifier;
+          context.ProblemDetails.Extensions["traceId"] =
+            context.HttpContext.TraceIdentifier;
         }
 
-        context.ProblemDetails.Instance ??= context.HttpContext.Request.Path;
+        context.ProblemDetails.Instance ??=
+          context.HttpContext.Request.Path;
       };
     });
 
     services.AddExceptionHandler<ApiExceptionHandler>();
 
+    // -------------------- Options --------------------
     services.AddValidatedOptions<SupabaseJwtOptions>("Supabase");
 
-    var supabaseJwtOptions = configuration.GetSection("Supabase").Get<SupabaseJwtOptions>()
-                             ?? throw new InvalidOperationException("Supabase config missing");
+    var supabaseJwtOptions = configuration
+      .GetSection("Supabase")
+      .Get<SupabaseJwtOptions>()
+      ?? throw new InvalidOperationException("Supabase config missing");
 
+    // -------------------- Authentication --------------------
     services
       .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
       .AddJwtBearer(options =>
@@ -118,15 +132,20 @@ public static class WebServiceRegistration
         {
           ValidateIssuer = true,
           ValidIssuer = supabaseJwtOptions.Issuer,
+
           ValidateAudience = true,
           ValidAudience = supabaseJwtOptions.JwtAudience,
+
           ValidateLifetime = true,
           ClockSkew = TimeSpan.FromMinutes(2),
+
           ValidateIssuerSigningKey = true,
         };
       });
 
-    services.AddAuthorizationBuilder()
+    // -------------------- Authorization --------------------
+    services
+      .AddAuthorizationBuilder()
       .AddPolicy("Admin", policy =>
         policy.RequireClaim("user_role", "admin"));
 

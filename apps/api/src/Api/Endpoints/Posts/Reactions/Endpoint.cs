@@ -4,15 +4,15 @@ using Api.Errors;
 using Api.Extensions;
 using Domain.Models;
 
-namespace Api.Endpoints.Posts.Votes.Toggle;
+namespace Api.Endpoints.Posts.Reactions;
 
 public sealed class Endpoint : IEndpoint
 {
   public void Map(IEndpointRouteBuilder app)
   {
-    app.MapPatch("/posts/{postId:long}/vote", async (
+    app.MapPatch("/posts/{postId:long}/reactions", async (
         long postId,
-        TogglePostVoteRequest req,
+        TogglePostReactionRequest req,
         ClaimsPrincipal user,
         Handler handler,
         CancellationToken ct) =>
@@ -23,12 +23,12 @@ public sealed class Endpoint : IEndpoint
         return result.ToResponse(Results.Ok);
       })
       .RequireAuthorization()
-      .WithTags("Votes")
+      .WithTags("Reactions")
       .WithSummary("Toggles a like or dislike on a post")
       .WithDescription(
-        "Sets the current user's vote for a post. Allowed values are 'like' and 'dislike'. " +
-        "Sending the same value again removes the vote.")
-      .WithName("PostsVotesToggle")
+        "Sets the current user's reaction for a post. Allowed values are 'like' and 'dislike'. " +
+        "Sending the same value again removes the reaction.")
+      .WithName("PostsReactionsToggle")
       .Produces<ReactionResult>(StatusCodes.Status200OK)
       .ProducesProblem(StatusCodes.Status400BadRequest)
       .ProducesProblem(StatusCodes.Status401Unauthorized)

@@ -1,8 +1,5 @@
 namespace Domain.Models;
 
-/// <summary>
-/// A post as it appears in a feed or topic view, with aggregated counts and user vote.
-/// </summary>
 public sealed record PostItem(
     long Id,
     string Kind,
