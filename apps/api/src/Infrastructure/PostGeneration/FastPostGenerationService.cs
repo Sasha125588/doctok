@@ -1,6 +1,4 @@
-using Infrastructure.Persistence.Repos.Posts;
-using Infrastructure.Persistence.Repos.Raw;
-using Infrastructure.Persistence.Repos.Sources;
+using Infrastructure.Persistence.Repositories;
 using Infrastructure.PostGeneration.Title;
 
 namespace Infrastructure.PostGeneration;

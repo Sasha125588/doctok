@@ -16,6 +16,12 @@ builder.Services.AddHandlers(typeof(Program).Assembly);
 builder.Services.AddWebServices(builder.Configuration);
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
+builder.Services.AddHealthChecks()
+  .AddNpgSql(
+    connectionString: builder.Configuration.GetConnectionString("Default")!,
+    name: "postgresql",
+    tags: ["database"]);
+
 var app = builder.Build();
 
 app.MapOpenApi("/openapi/{documentName}.json");
@@ -31,6 +37,8 @@ app.UseHttpsRedirection();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapHealthChecks("/health");
 
 app.MapEndpoints();
 

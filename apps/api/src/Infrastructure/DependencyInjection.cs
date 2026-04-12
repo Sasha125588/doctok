@@ -1,21 +1,14 @@
 using System.Net.Http.Headers;
 using Domain.Common;
+using Domain.Extensions;
 using Google.GenAI;
 using Infrastructure.Events;
 using Infrastructure.GitHub;
 using Infrastructure.Jobs;
 using Infrastructure.Llm.Gemini;
 using Infrastructure.Llm.OpenRouter;
-using Infrastructure.Persistence.Db;
-using Infrastructure.Persistence.Repos.Comments;
-using Infrastructure.Persistence.Repos.Feed;
-using Infrastructure.Persistence.Repos.Jobs;
-using Infrastructure.Persistence.Repos.Posts;
-using Infrastructure.Persistence.Repos.Raw;
-using Infrastructure.Persistence.Repos.Reactions;
-using Infrastructure.Persistence.Repos.Resolve;
-using Infrastructure.Persistence.Repos.Sources;
-using Infrastructure.Persistence.Repos.Topics;
+using Infrastructure.Persistence.ConnectionFactory;
+using Infrastructure.Persistence.Repositories;
 using Infrastructure.PostGeneration;
 using Infrastructure.PostGeneration.Title;
 using Infrastructure.Sources.Mdn;
@@ -81,20 +74,20 @@ public static class InfrastructureServiceRegistration
 
     services.AddHttpClient<GitHubTreeClient>((sp, client) =>
     {
-      var gh = sp.GetRequiredService<IOptions<GitHubOptions>>().Value;
+      var opts = sp.GetRequiredService<IOptions<GitHubOptions>>().Value;
 
-      client.BaseAddress = new Uri(gh.ApiBaseUrl);
+      client.BaseAddress = new Uri(opts.ApiBaseUrl);
 
       client.DefaultRequestHeaders.UserAgent.Clear();
       client.DefaultRequestHeaders.UserAgent.Add(
-        new ProductInfoHeaderValue(gh.UserAgent, "1.0"));
+        new ProductInfoHeaderValue(opts.UserAgent, "1.0"));
 
       client.DefaultRequestHeaders.Accept.Clear();
       client.DefaultRequestHeaders.Accept.Add(
         new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
 
       client.DefaultRequestHeaders.Authorization =
-        new AuthenticationHeaderValue("Bearer", gh.Token);
+        new AuthenticationHeaderValue("Bearer", opts.Token);
     });
 
     services
@@ -132,21 +125,5 @@ public static class InfrastructureServiceRegistration
     services.AddSingleton<TopicGenerationNotifier>();
 
     return services;
-  }
-}
-
-public static class OptionsExtension
-{
-  public static IServiceCollection AddValidatedOptions<T>(
-    this IServiceCollection services,
-    string sectionPath)
-    where T : class
-  {
-    return services
-      .AddOptions<T>()
-      .BindConfiguration(sectionPath)
-      .ValidateDataAnnotations()
-      .ValidateOnStart()
-      .Services;
   }
 }

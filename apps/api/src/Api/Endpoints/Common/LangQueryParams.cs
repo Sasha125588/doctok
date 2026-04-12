@@ -1,0 +1,14 @@
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Api.Endpoints.Common;
+
+public abstract class LangQueryParams
+{
+  [FromQuery(Name = "lang")]
+  [StringLength(10)]
+  [DefaultValue("en")]
+  [Required]
+  public string? Lang { get; init; }
+}

@@ -1,8 +1,5 @@
 using Domain.Common;
-using Infrastructure.Persistence.Repos.Jobs;
-using Infrastructure.Persistence.Repos.Raw;
-using Infrastructure.Persistence.Repos.Sources;
-using Infrastructure.Persistence.Repos.Topics;
+using Infrastructure.Persistence.Repositories;
 using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Sources.Mdn;

@@ -1,4 +1,4 @@
-using Infrastructure.Persistence.Repos.Jobs;
+using Infrastructure.Persistence.Repositories;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 

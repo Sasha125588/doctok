@@ -5,15 +5,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="AspNetCore.HealthChecks.NpgSql" />
     <PackageReference Include="DotNetEnv" />
     <PackageReference Include="ErrorOr" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
     <PackageReference Include="Scalar.AspNetCore" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Features\Admin\Mdn\" />
   </ItemGroup>
 
 </Project>
