@@ -17,7 +17,6 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>
       configurationBuilder.AddInMemoryCollection(new Dictionary<string, string?>
       {
         ["Supabase:ProjectRef"] = "test-project",
-        ["GitHub:Token"] = "test-token",
         ["OpenRouter:ApiKey"] = "test-api-key",
         ["OpenRouter:Referer"] = "http://localhost:5005",
         ["OpenRouter:AppName"] = "DocTok.Tests",

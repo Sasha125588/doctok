@@ -9,9 +9,9 @@ public sealed class Handler(TopicReadRepository topicRepo) : IHandler
 {
     public async Task<ErrorOr<TopicPostsResponse>> Handle(Query query, CancellationToken ct)
     {
-        var slug = query.Slug.Trim().Trim('/');
+        var slug = ExternalRefHelpers.Normalize(query.Slug);
 
-        var lang = LanguageHelpers.NormalizeLang(query.Lang ?? "en");
+        var lang = LanguageHelpers.NormalizeLang(query.Lang);
         var items = await topicRepo.GetPosts(slug, lang, query.UserId, ct);
 
         if (items.Count == 0)

@@ -2,19 +2,26 @@
 
 public static class LanguageHelpers
 {
-  public static string NormalizeLang(string lang)
+  public static string NormalizeLang(string? lang)
   {
     if (string.IsNullOrWhiteSpace(lang))
-    {
       return "en";
-    }
 
     var normalized = lang.Trim().ToLowerInvariant();
+
     return normalized switch
     {
-      "en" or "en-us" => "en",
+      "en-us" => "en",
+      "es" => "es",
+      "fr" => "fr",
+      "ja" => "ja",
+      "ko" => "ko",
+      "pt-br" => "pt-br",
       "ru" => "ru",
-      _ => normalized
+      "zh-cn" => "zh-cn",
+      "zh-tw" => "zh-tw",
+      "de" => "de",
+      _ => "en"
     };
   }
 
@@ -25,10 +32,16 @@ public static class LanguageHelpers
     return normalized switch
     {
       "en" => "en-US",
+      "es" => "es",
+      "fr" => "fr",
+      "ja" => "ja",
+      "ko" => "ko",
+      "pt-br" => "pt-BR",
+      "ru" => "ru",
       "zh-cn" => "zh-CN",
       "zh-tw" => "zh-TW",
-      "pt-br" => "pt-BR",
-      _ => normalized
+      "de" => "de",
+      _ => "en-US"
     };
   }
 }

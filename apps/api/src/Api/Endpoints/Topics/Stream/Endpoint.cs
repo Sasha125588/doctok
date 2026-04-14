@@ -21,7 +21,7 @@ public sealed class Endpoint : IEndpoint
         CancellationToken ct) =>
       {
         var slug = ExternalRefHelpers.Normalize(query.Slug);
-        var lang = LanguageHelpers.NormalizeLang(query.Lang ?? "en");
+        var lang = LanguageHelpers.NormalizeLang(query.Lang);
 
         return Results.ServerSentEvents(StreamAsync(notifier, topicRepo, slug, lang, ct));
       })

@@ -3,7 +3,6 @@ using Domain.Common;
 using Domain.Extensions;
 using Google.GenAI;
 using Infrastructure.Events;
-using Infrastructure.GitHub;
 using Infrastructure.Jobs;
 using Infrastructure.Llm.Gemini;
 using Infrastructure.Llm.OpenRouter;
@@ -25,7 +24,6 @@ public static class InfrastructureServiceRegistration
     this IServiceCollection services,
     IConfiguration configuration)
   {
-    services.AddValidatedOptions<GitHubOptions>("GitHub");
     services.AddValidatedOptions<OpenRouterOptions>("OpenRouter");
     services.AddValidatedOptions<GeminiOptions>("Gemini");
     services.AddValidatedOptions<TitleGeneratorOptions>("OpenRouter:TitleGenerator");
@@ -72,22 +70,10 @@ public static class InfrastructureServiceRegistration
         new MediaTypeWithQualityHeaderValue("application/json"));
     });
 
-    services.AddHttpClient<GitHubTreeClient>((sp, client) =>
+    services.AddHttpClient<MdnSitemapClient>(client =>
     {
-      var opts = sp.GetRequiredService<IOptions<GitHubOptions>>().Value;
-
-      client.BaseAddress = new Uri(opts.ApiBaseUrl);
-
-      client.DefaultRequestHeaders.UserAgent.Clear();
-      client.DefaultRequestHeaders.UserAgent.Add(
-        new ProductInfoHeaderValue(opts.UserAgent, "1.0"));
-
-      client.DefaultRequestHeaders.Accept.Clear();
-      client.DefaultRequestHeaders.Accept.Add(
-        new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
-
-      client.DefaultRequestHeaders.Authorization =
-        new AuthenticationHeaderValue("Bearer", opts.Token);
+      client.BaseAddress = new Uri("https://developer.mozilla.org/");
+      client.Timeout = TimeSpan.FromSeconds(60);
     });
 
     services
@@ -107,7 +93,7 @@ public static class InfrastructureServiceRegistration
       });
 
     // Source handlers (keyed by source code for JobProcessor lookup)
-    services.AddSingleton<MdnTreeIndex>();
+    services.AddSingleton<MdnSitemapIndex>();
     services.AddSingleton<MdnContentConverter>();
     services.AddSingleton<MdnIngestionService>();
     services.AddKeyedSingleton<ISourceJobHandler, MdnSourceJobHandler>(SourceCodes.Mdn);

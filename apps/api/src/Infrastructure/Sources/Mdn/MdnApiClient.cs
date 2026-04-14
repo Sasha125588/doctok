@@ -9,7 +9,7 @@ public sealed class MdnApiClient(HttpClient http, ILogger<MdnApiClient> logger)
   public async Task<MdnApiDoc> FetchAsync(string lang, string slug, CancellationToken ct)
   {
     var mdnLang = LanguageHelpers.ToMdnLang(lang);
-    var url = $"{Constants.BaseUrl}/{mdnLang}/docs/{slug}/index.json";
+    var url = $"{MdnConstants.BaseUrl}/{mdnLang}/docs/{slug}/index.json";
 
     logger.LogDebug("Fetching MDN doc: {Url}", url);
 

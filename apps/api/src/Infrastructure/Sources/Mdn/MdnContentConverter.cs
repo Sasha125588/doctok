@@ -464,7 +464,7 @@ public sealed class MdnContentConverter
         if (string.IsNullOrWhiteSpace(url))
             return null;
 
-        if (url.StartsWith(Constants.BaseUrl, StringComparison.OrdinalIgnoreCase))
+        if (url.StartsWith(MdnConstants.BaseUrl, StringComparison.OrdinalIgnoreCase))
             url = new Uri(url).AbsolutePath;
 
         var docsIdx = url.IndexOf("/docs/", StringComparison.OrdinalIgnoreCase);
@@ -484,7 +484,7 @@ public sealed class MdnContentConverter
         // Relative non-docs URL (e.g. /media/...) — resolve against MDN base
         if (url.StartsWith('/'))
         {
-            var absolute = Constants.BaseUrl + url;
+            var absolute = MdnConstants.BaseUrl + url;
             return new ParsedUrl(false, null, null, absolute);
         }
 

@@ -15,7 +15,7 @@ public sealed class Endpoint : IEndpoint
             CancellationToken ct) =>
         {
             var slug = (query.Slug ?? string.Empty).Trim().Trim('/');
-            var resolvedLang = LanguageHelpers.NormalizeLang(query.Lang ?? "en");
+            var resolvedLang = LanguageHelpers.NormalizeLang(query.Lang);
             var links = await topicLinksRepo.GetLinkedTopics(slug, resolvedLang, ct);
             return Results.Ok(links);
         })

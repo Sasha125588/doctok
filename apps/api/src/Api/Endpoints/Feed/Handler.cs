@@ -9,7 +9,7 @@ public sealed class Handler(FeedRepository feedRepo) : IHandler
     public async Task<FeedResponse> Handle(Query query, CancellationToken ct)
     {
         var take = Math.Clamp(query.Limit ?? 20, 1, 50);
-        var lang = LanguageHelpers.NormalizeLang(query.Lang ?? "en");
+        var lang = LanguageHelpers.NormalizeLang(query.Lang);
         var cursor = CursorCodec.Decode<FeedCursor>(query.Cursor);
 
         var items = await feedRepo.GetPage(cursor, query.UserId, lang, take, ct);

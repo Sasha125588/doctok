@@ -5,15 +5,15 @@ using Infrastructure.Sources.Mdn;
 
 namespace Api.Endpoints.Admin.Mdn.Preload;
 
-public sealed class Handler(MdnTreeIndex index, JobsRepository jobs) : IHandler
+public sealed class Handler(MdnSitemapIndex index, JobsRepository jobs) : IHandler
 {
   public async Task<PreloadMdnResponse> Handle(Command cmd, CancellationToken ct)
   {
-    var lang = LanguageHelpers.NormalizeLang(cmd.Lang ?? "en");
+    var lang = LanguageHelpers.NormalizeLang(cmd.Lang);
     var count = Math.Clamp(cmd.Count ?? 5, 1, 100);
     var seed = cmd.Seed ?? Environment.TickCount;
 
-    var all = await index.GetAllExternalRefsAsync(lang, ct);
+    var all = await index.GetAllSlugsAsync(lang, ct);
 
     IEnumerable<string> filtered = all;
     if (!string.IsNullOrWhiteSpace(cmd.Prefix))
