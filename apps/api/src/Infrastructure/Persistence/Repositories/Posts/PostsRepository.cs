@@ -32,7 +32,7 @@ public sealed class PostsRepository(IDbConnectionFactory dbf)
         {
             var sb = new StringBuilder();
             sb.Append("""
-                      insert into public.posts(topic_id, raw_document_id, lang, kind, title, body, position)
+                      insert into public.posts(topic_id, raw_document_id, lang, kind, title, body, body_html, position, generation_level)
                       values
                       """);
 
@@ -46,11 +46,15 @@ public sealed class PostsRepository(IDbConnectionFactory dbf)
                 if (i > 0)
                     sb.Append(',');
 
-                sb.Append(CultureInfo.InvariantCulture, $" (@topicId, @rawDocumentId, @lang, @k{i}, @t{i}, @b{i}, @p{i})");
-                parameters.Add($"k{i}", postList[i].Kind);
-                parameters.Add($"t{i}", postList[i].Title);
-                parameters.Add($"b{i}", postList[i].Body);
-                parameters.Add($"p{i}", postList[i].Position);
+                sb.Append(CultureInfo.InvariantCulture,
+                    $" (@topicId, @rawDocumentId, @lang, @k{i}, @t{i}, @b{i}, @bh{i}, @p{i}, @gl{i})");
+
+                parameters.Add($"k{i}",  postList[i].Kind);
+                parameters.Add($"t{i}",  postList[i].Title);
+                parameters.Add($"b{i}",  postList[i].Body);
+                parameters.Add($"bh{i}", postList[i].BodyHtml);
+                parameters.Add($"p{i}",  postList[i].Position);
+                parameters.Add($"gl{i}", postList[i].GenerationLevel);
             }
 
             await db.ExecuteAsync(new CommandDefinition(sb.ToString(), parameters, transaction: tx, cancellationToken: ct));
@@ -58,10 +62,26 @@ public sealed class PostsRepository(IDbConnectionFactory dbf)
 
         await tx.CommitAsync(ct);
     }
+
+    public async Task<int> GetMinGenerationLevel(long rawDocumentId, string lang, CancellationToken ct)
+    {
+        const string sql = """
+                           select coalesce(min(generation_level), -1)
+                           from public.posts
+                           where raw_document_id = @rawDocumentId
+                             and lang = @lang
+                           """;
+
+        using var db = dbf.Create();
+        return await db.ExecuteScalarAsync<int>(
+            new CommandDefinition(sql, new { rawDocumentId, lang }, cancellationToken: ct));
+    }
 }
 
 public sealed record PostInsert(
     string Kind,
     string? Title,
     string Body,
-    int Position);
+    string BodyHtml,
+    int Position,
+    int GenerationLevel = 0);

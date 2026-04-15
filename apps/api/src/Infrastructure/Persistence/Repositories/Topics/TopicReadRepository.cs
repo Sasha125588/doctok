@@ -18,6 +18,7 @@ public sealed class TopicReadRepository(IDbConnectionFactory dbf)
                            p.kind,
                            p.title,
                            p.body,
+                           p.body_html,
                            p.position,
                            p.like_count,
                            p.dislike_count,
@@ -37,9 +38,10 @@ public sealed class TopicReadRepository(IDbConnectionFactory dbf)
                          order by
                            case p.kind
                              when 'summary' then 0
-                             when 'example' then 1
-                             when 'fact' then 2
-                             else 3
+                             when 'concept' then 1
+                             when 'example' then 2
+                             when 'tip' then 3
+                             else 4
                            end,
                            p.position,
                            p.id

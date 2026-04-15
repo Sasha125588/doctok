@@ -1,4 +1,5 @@
 using Infrastructure.PostGeneration;
+using Infrastructure.PostGeneration.Fast;
 using Xunit;
 
 namespace Api.Tests.Infrastructure;
@@ -7,7 +8,7 @@ public sealed class FastPostGeneratorTests
 {
     private readonly FastPostGenerator _gen = new();
 
-    // ─── See-also section skip ───────────────────────────────────────────────
+    // ─── See-also / compat section skip ──────────────────────────────────────
 
     [Theory]
     [InlineData("## See also")]
@@ -36,61 +37,6 @@ public sealed class FastPostGeneratorTests
         Assert.DoesNotContain(posts, p => p.Body.Contains("Some link"));
     }
 
-    // ─── Fully-italic preamble filter ────────────────────────────────────────
-
-    [Theory]
-    [InlineData("*Inherits properties from its parent, [`CharacterData`](mdn/characterdata).*")]
-    [InlineData("*Интерфейс `Text` включает следующее свойство, определяемое при смешивании [`Slotable`](mdn/slotable).*")]
-    [InlineData("*Наследует родительские методы, [`CharacterData`](mdn/characterdata).*")]
-    public void FullyItalicSingleLinePreambleIsFiltered(string body)
-    {
-        var md = $"""
-            ## Properties
-
-            {body}
-
-            **[`SomeMethod()`](mdn/somemethod)**
-            : Does something.
-            """;
-
-        var posts = _gen.Generate(md);
-
-        // The preamble must not produce a post
-        Assert.DoesNotContain(posts, p => p.Body == body);
-    }
-
-    [Fact]
-    public void ParagraphWithPartialItalicIsNotFiltered()
-    {
-        // A paragraph that contains italic but is not FULLY italic must pass through
-        const string body = "Use *this* method when you need async behavior.";
-        var md = $"""
-            ## Description
-
-            {body}
-            """;
-
-        var posts = _gen.Generate(md);
-
-        Assert.Contains(posts, p => p.Body.Contains("Use"));
-    }
-
-    [Fact]
-    public void BoldTextIsNotFilteredByItalicCheck()
-    {
-        // **bold** starts with * but is double-asterisk, must NOT be filtered
-        const string body = "**Important:** this method modifies the node in place.";
-        var md = $"""
-            ## Description
-
-            {body}
-            """;
-
-        var posts = _gen.Generate(md);
-
-        Assert.Contains(posts, p => p.Body.Contains("Important"));
-    }
-
     // ─── Summary extraction ──────────────────────────────────────────────────
 
     [Fact]
@@ -110,13 +56,11 @@ public sealed class FastPostGeneratorTests
         Assert.Contains("Fetch API", summary.Body);
     }
 
-    // ─── Definition list style blocks (dt+dd pairs) ──────────────────────────
+    // ─── Concept sections ────────────────────────────────────────────────────
 
     [Fact]
-    public void DtDdBlockBecomesASingleFactPost()
+    public void H2SectionBecomesConceptPost()
     {
-        // After MdnContentConverter's RenderDefinitionList, the format is:
-        // **term**\n: definition   (no blank line between them)
         var md = """
             ## Constructor
 
@@ -126,30 +70,32 @@ public sealed class FastPostGeneratorTests
 
         var posts = _gen.Generate(md);
 
-        var fact = Assert.Single(posts, p => p.Kind == "fact");
-        Assert.Contains("Text()", fact.Body);
-        Assert.Contains("Returns a Text node", fact.Body);
+        var concept = Assert.Single(posts, p => p.Kind == "concept");
+        Assert.Contains("Text()", concept.Body);
+        Assert.Contains("Returns a Text node", concept.Body);
     }
 
     [Fact]
-    public void MultipleDtDdPairsInOneBlockFormOneFactPost()
+    public void H3SubsectionsStayWithParentH2()
     {
-        // All pairs from a single <dl> arrive without blank lines between them
         var md = """
             ## Properties
 
             **[`Text.wholeText`](mdn/web/api/text/wholetext) Read only**
             : Returns a string with all adjacent text.
+
+            ### Deprecated properties
+
             **[`Text.splitText`](mdn/web/api/text/splittext)**
             : Splits the node at the given offset.
             """;
 
         var posts = _gen.Generate(md);
 
-        // Both properties in ONE post, not two
-        var fact = Assert.Single(posts, p => p.Kind == "fact");
-        Assert.Contains("wholeText", fact.Body);
-        Assert.Contains("splitText", fact.Body);
+        // Both H2 content and H3 subsection in ONE post
+        var concept = Assert.Single(posts, p => p.Kind == "concept");
+        Assert.Contains("wholeText", concept.Body);
+        Assert.Contains("splitText", concept.Body);
     }
 
     // ─── Example section ─────────────────────────────────────────────────────
@@ -172,5 +118,26 @@ public sealed class FastPostGeneratorTests
 
         var example = Assert.Single(posts, p => p.Kind == "example");
         Assert.Contains("fetch", example.Body);
+    }
+
+    // ─── Empty / whitespace sections ─────────────────────────────────────────
+
+    [Fact]
+    public void EmptySectionsAreSkipped()
+    {
+        var md = """
+            ## Concepts and usage
+
+
+
+            ## Description
+
+            Something useful here.
+            """;
+
+        var posts = _gen.Generate(md);
+
+        Assert.Single(posts);
+        Assert.Contains("Something useful", posts[0].Body);
     }
 }

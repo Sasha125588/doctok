@@ -2,7 +2,9 @@ namespace Infrastructure.Jobs;
 
 public interface ISourceJobHandler
 {
-  Task FetchRawAsync(string lang, string externalRef, CancellationToken ct);
+    Task FetchRawAsync(string lang, string externalRef, CancellationToken ct);
 
-  Task GenerateFastPostsAsync(string lang, string externalRef, CancellationToken ct);
+    Task GenerateFastPostsAsync(string lang, string externalRef, CancellationToken ct);
+
+    Task GenerateLlmPostsAsync(string lang, string externalRef, CancellationToken ct);
 }

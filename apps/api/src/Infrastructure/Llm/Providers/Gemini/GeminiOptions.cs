@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Infrastructure.Llm.Gemini;
+namespace Infrastructure.Llm.Providers.Gemini;
 
 public sealed class GeminiOptions
 {

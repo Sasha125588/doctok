@@ -53,6 +53,10 @@ public sealed class JobProcessor(IServiceProvider serviceProvider, TopicGenerati
 
         return;
 
+      case JobTypes.GenerateLlm:
+        await sourceHandler.GenerateLlmPostsAsync(lang, externalRef, ct);
+        return;
+
       default:
         throw new NotSupportedException($"Unknown job_type: {job.JobType}");
     }

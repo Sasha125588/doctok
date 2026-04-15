@@ -4,12 +4,17 @@ using Domain.Extensions;
 using Google.GenAI;
 using Infrastructure.Events;
 using Infrastructure.Jobs;
-using Infrastructure.Llm.Gemini;
-using Infrastructure.Llm.OpenRouter;
+using Infrastructure.Llm.Abstractions;
+using Infrastructure.Llm.Configuration;
+using Infrastructure.Llm.Providers.Gemini;
+using Infrastructure.Llm.Providers.Local;
+using Infrastructure.Llm.Providers.OpenRouter;
+using Infrastructure.Llm.Routing;
 using Infrastructure.Persistence.ConnectionFactory;
 using Infrastructure.Persistence.Repositories;
 using Infrastructure.PostGeneration;
-using Infrastructure.PostGeneration.Title;
+using Infrastructure.PostGeneration.Fast;
+using Infrastructure.PostGeneration.Llm;
 using Infrastructure.Sources.Mdn;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,7 +31,8 @@ public static class InfrastructureServiceRegistration
   {
     services.AddValidatedOptions<OpenRouterOptions>("OpenRouter");
     services.AddValidatedOptions<GeminiOptions>("Gemini");
-    services.AddValidatedOptions<TitleGeneratorOptions>("OpenRouter:TitleGenerator");
+    services.AddValidatedOptions<LocalLlmOptions>("LocalLlm");
+    services.AddValidatedOptions<LlmProfilesOptions>("Llm");
 
     var connStr = configuration.GetConnectionString("Default")
                   ?? throw new InvalidOperationException("ConnectionStrings:Default missing");
@@ -76,21 +82,33 @@ public static class InfrastructureServiceRegistration
       client.Timeout = TimeSpan.FromSeconds(60);
     });
 
-    services
-      .AddHttpClient<OpenRouterClient>((sp, client) =>
-      {
-        var opts = sp.GetRequiredService<IOptions<OpenRouterOptions>>().Value;
+    services.AddHttpClient<OpenRouterClient>((sp, client) =>
+    {
+      var opts = sp.GetRequiredService<IOptions<OpenRouterOptions>>().Value;
 
-        client.BaseAddress = new Uri("https://openrouter.ai/api/v1/");
-        client.DefaultRequestHeaders.Authorization =
-          new AuthenticationHeaderValue("Bearer", opts.ApiKey);
+      client.BaseAddress = opts.BaseUrl;
+      client.DefaultRequestHeaders.Authorization =
+        new AuthenticationHeaderValue("Bearer", opts.ApiKey);
 
-        client.DefaultRequestHeaders.TryAddWithoutValidation("HTTP-Referer", opts.Referer);
-        client.DefaultRequestHeaders.TryAddWithoutValidation("X-Title", opts.AppName);
-        client.DefaultRequestHeaders.UserAgent.ParseAdd("DocTok/1.0");
+      client.DefaultRequestHeaders.TryAddWithoutValidation("HTTP-Referer", opts.Referer);
+      client.DefaultRequestHeaders.TryAddWithoutValidation("X-Title", opts.AppName);
+      client.DefaultRequestHeaders.UserAgent.ParseAdd("DocTok/1.0");
 
-        client.Timeout = TimeSpan.FromSeconds(60);
-      });
+      client.Timeout = TimeSpan.FromSeconds(opts.TimeoutSeconds);
+    });
+
+    services.AddHttpClient<LocalLlmClient>((sp, client) =>
+    {
+      var opts = sp.GetRequiredService<IOptions<LocalLlmOptions>>().Value;
+
+      client.BaseAddress = opts.BaseUrl;
+      client.Timeout = TimeSpan.FromSeconds(opts.TimeoutSeconds);
+
+      client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", opts.ApiKey);
+    });
+
+    // LLM abstraction
+    services.AddSingleton<ILlmRouter, LlmRouter>();
 
     // Source handlers (keyed by source code for JobProcessor lookup)
     services.AddSingleton<MdnSitemapIndex>();
@@ -99,9 +117,11 @@ public static class InfrastructureServiceRegistration
     services.AddKeyedSingleton<ISourceJobHandler, MdnSourceJobHandler>(SourceCodes.Mdn);
 
     // Post generation
+    services.AddSingleton<MarkdownHtmlRenderer>();
     services.AddSingleton<FastPostGenerator>();
     services.AddSingleton<FastPostGenerationService>();
-    services.AddSingleton<ITitleGenerator, TitleGenerator>();
+    services.AddSingleton<LlmPostGenerator>();
+    services.AddSingleton<LlmPostGenerationService>();
 
     // Background jobs
     services.AddSingleton<JobProcessor>();
