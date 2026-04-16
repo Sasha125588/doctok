@@ -19,12 +19,13 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
     DateTime? DeletedAt
   );
 
-  public async Task<Domain.Models.Comment> CreateRoot(long postId, Guid userId, string body, CancellationToken ct)
+  public async Task<Comment> CreateRoot(long postId, Guid userId, string body, CancellationToken ct)
   {
     using var db = dbf.Create();
     await ((DbConnection)db).OpenAsync(ct);
     await using var tx = await ((DbConnection)db).BeginTransactionAsync(ct);
 
+    /* language=postgresql */
     const string insertSql = """
                              with post as (
                                update posts

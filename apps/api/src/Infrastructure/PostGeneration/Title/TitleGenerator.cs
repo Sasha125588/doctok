@@ -1,19 +1,24 @@
 ﻿using System.Reflection;
-using Infrastructure.Llm.OpenRouter;
+using Domain.Common;
+using Infrastructure.Llm.Abstractions;
+using Infrastructure.Llm.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Infrastructure.PostGeneration.Title;
 
 public sealed class TitleGenerator(
-
-    // GeminiClient geminiClient,
-
-    OpenRouterClient openRouter,
-    IOptions<TitleGeneratorOptions> options,
-    ILogger<TitleGenerator> logger) : ITitleGenerator
+    ILlmRouter llmRouter,
+    IOptions<LlmProfilesOptions> opts,
+    ILogger<TitleGenerator> logger)
 {
-    private static readonly string[] _knownKinds = ["summary", "fact", "example"];
+    private static readonly HashSet<string> _validKinds = new(StringComparer.OrdinalIgnoreCase)
+    {
+      PostKinds.Summary,
+      PostKinds.Concept,
+      PostKinds.Example,
+      PostKinds.Tip,
+    };
 
     private static readonly IReadOnlyDictionary<string, string> _prompts = LoadPrompts();
 
@@ -26,13 +31,16 @@ public sealed class TitleGenerator(
     {
         try
         {
+            var profile = opts.Value.TitleGeneration;
             var prompt = BuildPrompt(kind, topicTitle, body, lang);
 
-            var title = await openRouter.CompleteChatAsync(
-                model:       options.Value.Model,
-                maxTokens: options.Value.MaxTokens,
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            cts.CancelAfter(TimeSpan.FromSeconds(profile.TimeoutSeconds));
+
+            var title = await llmRouter.CompleteChatAsync(
+                profile,
                 userMessage: prompt,
-                ct:          ct);
+                ct:          cts.Token);
 
             if (string.IsNullOrWhiteSpace(title))
             {
@@ -59,7 +67,7 @@ public sealed class TitleGenerator(
 
     private static string BuildPrompt(string kind, string topicTitle, string body, string lang)
     {
-        var normalizedKind = _knownKinds.Contains(kind, StringComparer.OrdinalIgnoreCase)
+        var normalizedKind = _validKinds.Contains(kind)
             ? kind.ToLowerInvariant()
             : "summary";
 
@@ -84,13 +92,14 @@ public sealed class TitleGenerator(
         var assembly = Assembly.GetExecutingAssembly();
         var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var kind in _knownKinds)
+        foreach (var kind in _validKinds)
         {
-            var resourceName = $"{assembly.GetName().Name}.Llm.Prompts.title_{kind}.md";
+            var resourceName = $"{assembly.GetName().Name}.PostGeneration.Title.Prompts.title_{kind}.md";
             using var stream = assembly.GetManifestResourceStream(resourceName)
                                ?? throw new InvalidOperationException(
                                    $"Embedded prompt not found: {resourceName}. " +
                                    "Make sure the file is marked as EmbeddedResource in .csproj");
+
             using var reader = new StreamReader(stream);
             result[kind] = reader.ReadToEnd();
         }

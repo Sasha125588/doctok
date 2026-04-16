@@ -13,4 +13,5 @@ public sealed record TopicFeedPreview(
   long PostId,
   string Kind,
   string? Title,
-  string Body);
+  string Body,
+  string BodyHtml);

@@ -5,6 +5,7 @@ public sealed record PostItem(
     string Kind,
     string Title,
     string Body,
+    string BodyHtml,
     int Position,
     int LikeCount,
     int DislikeCount,

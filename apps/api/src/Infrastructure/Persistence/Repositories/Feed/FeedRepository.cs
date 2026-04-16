@@ -20,6 +20,7 @@ public sealed class FeedRepository(IDbConnectionFactory dbf)
                          p.kind,
                          p.title,
                          p.body,
+                         p.body_html,
                          p.position,
                          p.like_count,
                          p.dislike_count,

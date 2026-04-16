@@ -1,6 +1,6 @@
 ﻿using Google.GenAI;
 
-namespace Infrastructure.Llm.Gemini;
+namespace Infrastructure.Llm.Providers.Gemini;
 
 public sealed class GeminiClient(Client client)
 {

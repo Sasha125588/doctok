@@ -44,4 +44,20 @@ public static class LanguageHelpers
       _ => "en-US"
     };
   }
+
+  public static string ToLangName(string lang) =>
+    lang.ToLowerInvariant() switch
+    {
+      "en"             => "English",
+      "ru"             => "Russian",
+      "ja"             => "Japanese",
+      "ko"             => "Korean",
+      "zh-cn" or "zh"  => "Chinese (Simplified)",
+      "zh-tw"          => "Chinese (Traditional)",
+      "fr"             => "French",
+      "de"             => "German",
+      "es"             => "Spanish",
+      "pt" or "pt-br"  => "Portuguese",
+      _                => lang,
+    };
 }

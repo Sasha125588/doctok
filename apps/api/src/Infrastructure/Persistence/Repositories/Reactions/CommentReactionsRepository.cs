@@ -4,6 +4,7 @@ namespace Infrastructure.Persistence.Repositories;
 
 public class CommentReactionsRepository(BaseReactionsRepository baseReactionsRepo)
 {
+  /* language=postgresql */
   private const string ToggleSql = """
       -- params: @comment_id bigint, @user_id uuid, @value text ('like'|'dislike')
       

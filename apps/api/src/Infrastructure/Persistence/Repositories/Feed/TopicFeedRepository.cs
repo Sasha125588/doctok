@@ -12,6 +12,7 @@ public sealed class TopicFeedRepository(IDbConnectionFactory dbf)
     int limit,
     CancellationToken ct)
   {
+    /* language=postgresql */
     const string sql = """
                        with topic_candidates as (
                          select
@@ -54,6 +55,7 @@ public sealed class TopicFeedRepository(IDbConnectionFactory dbf)
                          preview.preview_kind,
                          preview.preview_title,
                          preview.preview_body,
+                         preview.preview_body_html,
                          pt.popularity
                        from paged_topics pt
                        join lateral (
@@ -67,15 +69,17 @@ public sealed class TopicFeedRepository(IDbConnectionFactory dbf)
                            p.id as preview_post_id,
                            p.kind as preview_kind,
                            p.title as preview_title,
-                           p.body as preview_body
+                           p.body as preview_body,
+                           p.body_html as preview_body_html
                          from posts p
                          where p.topic_id = pt.id
                            and p.lang = @lang
                          order by
                            case p.kind
                              when 'summary' then 0
-                             when 'example' then 1
-                             when 'fact' then 2
+                             when 'concept' then 1
+                             when 'example' then 2
+                             when 'tip' then 3
                              else 4
                            end,
                            p.position,
@@ -110,4 +114,5 @@ public sealed record TopicFeedPageItem(
   string PreviewKind,
   string? PreviewTitle,
   string PreviewBody,
+  string PreviewBodyHtml,
   double? Popularity);

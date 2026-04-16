@@ -19,7 +19,7 @@ public sealed class Handler(TopicFeedRepository topicFeedRepo) : IHandler
         item.Title,
         item.Lang,
         item.PostCount,
-        new TopicFeedPreview(item.PreviewPostId, item.PreviewKind, item.PreviewTitle, item.PreviewBody)))
+        new TopicFeedPreview(item.PreviewPostId, item.PreviewKind, item.PreviewTitle, item.PreviewBody, item.PreviewBodyHtml)))
       .ToList();
 
     var nextCursor = page.Count == take

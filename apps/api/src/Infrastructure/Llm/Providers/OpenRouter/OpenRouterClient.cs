@@ -1,9 +1,11 @@
 ﻿using System.Net.Http.Json;
 using System.Text.Json.Serialization;
+using Infrastructure.Llm.Abstractions;
+using Microsoft.Extensions.Logging;
 
-namespace Infrastructure.Llm.OpenRouter;
+namespace Infrastructure.Llm.Providers.OpenRouter;
 
-public sealed class OpenRouterClient(HttpClient http)
+public sealed class OpenRouterClient(HttpClient http, ILogger<OpenRouterClient> logger) : ILlmTransportClient
 {
     public async Task<string?> CompleteChatAsync(
         string model,
@@ -17,18 +19,18 @@ public sealed class OpenRouterClient(HttpClient http)
         Messages: [new ChatMessage(Role: "user", Content: userMessage)],
         Reasoning: new ReasoningOptions(false));
 
-      try
-      {
-        using var response = await http.PostAsJsonAsync("chat/completions", request, ct);
+      using var response = await http.PostAsJsonAsync("chat/completions", request, ct);
+      response.EnsureSuccessStatusCode();
 
-        var result = await response.Content.ReadFromJsonAsync<ChatResponse>(cancellationToken: ct);
-        return result?.Choices?.FirstOrDefault()?.Message?.Content?.Trim();
-      }
-      catch (Exception e)
-      {
-        Console.WriteLine(e);
-        throw;
-      }
+      var result = await response.Content.ReadFromJsonAsync<ChatResponse>(cancellationToken: ct);
+      var content = result?.Choices?.FirstOrDefault()?.Message?.Content?.Trim();
+
+      logger.LogDebug(
+        "OpenRouter response received for model={Model}, hasContent={HasContent}",
+        model,
+        !string.IsNullOrWhiteSpace(content));
+
+      return content;
     }
 
     private sealed record ChatRequest(
