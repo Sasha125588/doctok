@@ -101,7 +101,11 @@ public sealed class LlmPostGenerator(
         }
         catch (JsonException ex)
         {
-            logger.LogError(ex, "Failed to parse LLM JSON for doc={Title}. Raw={Raw}", docTitle, raw[..Math.Min(500, raw.Length)]);
+            logger.LogError(
+                ex,
+                "Failed to parse LLM JSON for doc={Title}. ResponseLength={ResponseLength}",
+                docTitle,
+                raw.Length);
             return [];
         }
     }
