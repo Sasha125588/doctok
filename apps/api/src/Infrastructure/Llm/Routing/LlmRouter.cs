@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Llm.Routing;
 
-/// /// <summary>
+/// <summary>
 /// Виконує запити до LLM із підтримкою fallback між кількома провайдерами та моделями.
 /// Повертає першу успішну відповідь або викидає виняток, якщо всі кандидати недоступні.
 /// </summary>
@@ -43,6 +43,11 @@ public sealed class LlmRouter(
                   "LLM candidate returned empty response: provider={Provider}, model={Model}",
                   candidate.Provider,
                   candidate.Model);
+
+                if (i < profile.Candidates.Count - 1)
+                  continue; // якщо повернуло пусту відповідь -> try next candidate
+
+                throw new InvalidOperationException("All LLM candidates returned empty responses.");
               }
 
               return result;

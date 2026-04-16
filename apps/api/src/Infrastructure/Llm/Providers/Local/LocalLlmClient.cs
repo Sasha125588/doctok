@@ -18,7 +18,7 @@ public sealed class LocalLlmClient(HttpClient http, ILogger<LocalLlmClient> logg
         response.EnsureSuccessStatusCode();
 
         var result = await response.Content.ReadFromJsonAsync<ChatResponse>(cancellationToken: ct);
-        var content = result?.Choices?.FirstOrDefault()?.Message?.Content.Trim();
+        var content = result?.Choices?.FirstOrDefault()?.Message?.Content?.Trim();
 
         logger.LogDebug(
           "Local LLM response received for model={Model}, hasContent={HasContent}",

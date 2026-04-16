@@ -23,7 +23,7 @@ public sealed class OpenRouterClient(HttpClient http, ILogger<OpenRouterClient> 
       response.EnsureSuccessStatusCode();
 
       var result = await response.Content.ReadFromJsonAsync<ChatResponse>(cancellationToken: ct);
-      var content = result?.Choices?.FirstOrDefault()?.Message?.Content.Trim();
+      var content = result?.Choices?.FirstOrDefault()?.Message?.Content?.Trim();
 
       logger.LogDebug(
         "OpenRouter response received for model={Model}, hasContent={HasContent}",

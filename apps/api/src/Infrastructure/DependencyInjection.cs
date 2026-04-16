@@ -104,7 +104,10 @@ public static class InfrastructureServiceRegistration
       client.BaseAddress = opts.BaseUrl;
       client.Timeout = TimeSpan.FromSeconds(opts.TimeoutSeconds);
 
-      client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", opts.ApiKey);
+      if (!string.IsNullOrWhiteSpace(opts.ApiKey))
+      {
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", opts.ApiKey);
+      }
     });
 
     // LLM abstraction

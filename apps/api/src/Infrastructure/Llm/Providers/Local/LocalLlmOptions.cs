@@ -7,7 +7,6 @@ public sealed class LocalLlmOptions
   [Required]
   public Uri BaseUrl { get; init; } = default!;
 
-  [Required]
   public string ApiKey { get; init; } = default!;
 
   [Range(1, 600)]

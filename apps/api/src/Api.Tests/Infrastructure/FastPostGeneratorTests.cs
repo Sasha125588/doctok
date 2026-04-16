@@ -1,4 +1,3 @@
-using Infrastructure.PostGeneration;
 using Infrastructure.PostGeneration.Fast;
 using Xunit;
 
