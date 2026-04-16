@@ -9,8 +9,11 @@ public class LlmProfileOptions
   public IReadOnlyList<LlmCandidateOptions> Candidates { get; init; } = [];
 
   [Range(1, 600)]
-  public int TimeoutSeconds { get; init; } = 120;
+  public int TimeoutSeconds { get; init; } = default!;
 
   [Range(1, int.MaxValue)]
-  public int MaxTokens { get; init; } = 4000;
+  public int MaxTokens { get; init; } = default!;
+
+  [Range(1, int.MaxValue)]
+  public int MaxContentLength { get; init; } = default!;
 }

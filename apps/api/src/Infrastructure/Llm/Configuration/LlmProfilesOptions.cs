@@ -8,7 +8,7 @@ public sealed class LlmProfilesOptions
   public LlmProfileOptions Default { get; init; } = default!;
 
   [Required]
-  public LlmPostGenerationProfileOptions PostGeneration { get; init; } = default!;
+  public LlmProfileOptions PostGeneration { get; init; } = default!;
 
   [Required]
   public LlmProfileOptions TitleGeneration { get; init; } = default!;

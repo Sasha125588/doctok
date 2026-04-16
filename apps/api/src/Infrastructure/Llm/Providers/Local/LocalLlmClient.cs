@@ -12,7 +12,8 @@ public sealed class LocalLlmClient(HttpClient http, ILogger<LocalLlmClient> logg
         var request = new ChatRequest(
             Model:     model,
             MaxTokens: maxTokens,
-            Messages:  [new ChatMessage(Role: "user", Content: userMessage)]);
+            Messages:  [new ChatMessage(Role: "user", Content: userMessage)],
+            ReasoningEffort: "low");
 
         using var response = await http.PostAsJsonAsync("chat/completions", request, ct);
         response.EnsureSuccessStatusCode();
@@ -29,9 +30,10 @@ public sealed class LocalLlmClient(HttpClient http, ILogger<LocalLlmClient> logg
     }
 
     private sealed record ChatRequest(
-        [property: JsonPropertyName("model")]      string Model,
-        [property: JsonPropertyName("max_tokens")] int MaxTokens,
-        [property: JsonPropertyName("messages")]   IReadOnlyList<ChatMessage> Messages);
+      [property: JsonPropertyName("model")] string Model,
+      [property: JsonPropertyName("max_tokens")] int MaxTokens,
+      [property: JsonPropertyName("messages")] IReadOnlyList<ChatMessage> Messages,
+      [property: JsonPropertyName("reasoning_effort")] string ReasoningEffort);
 
     private sealed record ChatResponse(
         [property: JsonPropertyName("choices")] IReadOnlyList<ChatChoice>? Choices);

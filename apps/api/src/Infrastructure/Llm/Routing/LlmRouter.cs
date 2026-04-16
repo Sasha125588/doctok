@@ -79,7 +79,9 @@ public sealed class LlmRouter(
         }
 
         throw new InvalidOperationException(
-          "All LLM candidates failed.",
+          lastException is null
+            ? "No LLM candidates configured."
+            : "All LLM candidates failed.",
           lastException);
     }
 
@@ -93,7 +95,6 @@ public sealed class LlmRouter(
 
     private static bool IsRecoverable(Exception ex, CancellationToken ct)
     {
-        // Timeout or cancellation caused by the HTTP client itself (not by our CT).
         if (ex is TaskCanceledException or OperationCanceledException)
         {
             return !ct.IsCancellationRequested;
@@ -101,9 +102,6 @@ public sealed class LlmRouter(
 
         if (ex is HttpRequestException httpEx)
         {
-            // null StatusCode  = connection-level error (refused, DNS, etc.)
-            // 429              = rate-limited
-            // 5xx              = server-side error
             return httpEx.StatusCode is null
                 or HttpStatusCode.TooManyRequests
                 or HttpStatusCode.InternalServerError

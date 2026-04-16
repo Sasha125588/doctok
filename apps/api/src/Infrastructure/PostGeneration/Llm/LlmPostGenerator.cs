@@ -46,7 +46,7 @@ public sealed class LlmPostGenerator(
         CancellationToken ct)
     {
         var profile = opts.Value.PostGeneration;
-        var langName = ToLangName(lang);
+        var langName = LanguageHelpers.ToLangName(lang);
 
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         cts.CancelAfter(TimeSpan.FromSeconds(profile.TimeoutSeconds));
@@ -107,7 +107,7 @@ public sealed class LlmPostGenerator(
     }
 
     /// <summary>
-    /// Strips an optional <c>```json … ```</c> fence that some LLMs add
+    /// Strips an optional <c>```json/markdown … ```</c> fence that some LLMs add
     /// even when asked not to.
     /// </summary>
     private static string ExtractJsonArray(string s)
@@ -116,6 +116,11 @@ public sealed class LlmPostGenerator(
         {
             var end = s.LastIndexOf("```", StringComparison.Ordinal);
             s = end > 7 ? s[7..end].Trim() : s[7..].Trim();
+        }
+        else if (s.StartsWith("```markdown", StringComparison.Ordinal))
+        {
+            var end = s.LastIndexOf("```", StringComparison.Ordinal);
+            s = end > 11 ? s[11..end].Trim() : s[11..].Trim();
         }
         else if (s.StartsWith("```", StringComparison.Ordinal))
         {
@@ -129,22 +134,6 @@ public sealed class LlmPostGenerator(
 
         return s;
     }
-
-    private static string ToLangName(string lang) =>
-        lang.ToLowerInvariant() switch
-        {
-            "en"             => "English",
-            "ru"             => "Russian",
-            "ja"             => "Japanese",
-            "ko"             => "Korean",
-            "zh-cn" or "zh"  => "Chinese (Simplified)",
-            "zh-tw"          => "Chinese (Traditional)",
-            "fr"             => "French",
-            "de"             => "German",
-            "es"             => "Spanish",
-            "pt" or "pt-br"  => "Portuguese",
-            _                => lang,
-        };
 
     private static string LoadPrompt()
     {

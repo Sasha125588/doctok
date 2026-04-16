@@ -32,7 +32,7 @@ public static class InfrastructureServiceRegistration
     services.AddValidatedOptions<OpenRouterOptions>("OpenRouter");
     services.AddValidatedOptions<GeminiOptions>("Gemini");
     services.AddValidatedOptions<LocalLlmOptions>("LocalLlm");
-    services.AddValidatedOptions<LlmProfilesOptions>("Llm");
+    services.AddValidatedOptions<LlmProfilesOptions>("LlmProfiles");
 
     var connStr = configuration.GetConnectionString("Default")
                   ?? throw new InvalidOperationException("ConnectionStrings:Default missing");
@@ -82,6 +82,7 @@ public static class InfrastructureServiceRegistration
       client.Timeout = TimeSpan.FromSeconds(60);
     });
 
+    // TODO: Пофіксити lifetime mismatch між singleton LlmRouter і typed(transient) HttpClient
     services.AddHttpClient<OpenRouterClient>((sp, client) =>
     {
       var opts = sp.GetRequiredService<IOptions<OpenRouterOptions>>().Value;
