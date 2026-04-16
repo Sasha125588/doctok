@@ -52,6 +52,10 @@ public sealed class LlmRouter(
 
               return result;
             }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+              throw;
+            }
             catch (Exception ex) when (IsRecoverable(ex, ct) && i < profile.Candidates.Count - 1)
             {
               lastException = ex;
