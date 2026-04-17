@@ -1,4 +1,6 @@
-using Domain.Common;
+using Domain.Jobs;
+using Domain.Shared;
+using Domain.Sources;
 using Infrastructure.Persistence.Repositories;
 using Microsoft.Extensions.Logging;
 
@@ -38,13 +40,13 @@ public sealed class MdnIngestionService(
             title: doc.Title,
             content: text,
             pageType: doc.PageType,
-            popularity: doc.Popularity,
+            popularity: doc.Popularity ?? 0,
             sourceModifiedAt: doc.SourceModifiedAt,
             otherLocales: doc.OtherLocales.Count > 0 ? [.. doc.OtherLocales] : null,
             ct: ct);
 
         var topicSlug = SourceCodes.Mdn + "/" + canonicalExternalRef;
-        var topicTitle = doc.Title ?? canonicalExternalRef;
+        var topicTitle = doc.Title;
 
         var topicId = await topics.EnsureTopic(topicSlug, topicTitle, ct);
         await topicDocs.Link(topicId, rawId, ct);

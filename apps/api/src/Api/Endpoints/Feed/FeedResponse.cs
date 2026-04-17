@@ -1,5 +1,5 @@
-using Domain.Models;
+using Domain.Posts;
 
 namespace Api.Endpoints.Feed;
 
-public sealed record FeedResponse(IReadOnlyList<PostItem> Items, string? NextCursor);
+public sealed record FeedResponse(IReadOnlyList<TopicPostView> Items, string? NextCursor);

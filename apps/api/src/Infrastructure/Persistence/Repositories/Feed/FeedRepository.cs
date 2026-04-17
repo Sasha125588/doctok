@@ -1,13 +1,13 @@
 using Dapper;
-using Domain.Common;
-using Domain.Models;
+using Domain.Posts;
+using Domain.Shared;
 using Infrastructure.Persistence.ConnectionFactory;
 
 namespace Infrastructure.Persistence.Repositories;
 
 public sealed class FeedRepository(IDbConnectionFactory dbf)
 {
-  public async Task<IReadOnlyList<PostItem>> GetPage(
+  public async Task<IReadOnlyList<TopicPostView>> GetPage(
     FeedCursor? cursor,
     Guid? userId,
     string lang,
@@ -27,22 +27,22 @@ public sealed class FeedRepository(IDbConnectionFactory dbf)
                          p.comment_count,
                          t.slug as topic_slug,
                          t.title as topic_title,
-                         coalesce(v.value::text, 'none') as my_vote,
-                         rd.popularity
+                         v.value as my_vote,
+                         rd.popularity,
+                         p.created_at
                        from posts p
                        join topics t on t.id = p.topic_id
                        join raw_documents rd on rd.id = p.raw_document_id
                        left join post_reactions v
                          on v.post_id = p.id
                         and v.user_id = @userId
-                       where p.lang = @lang
+                       where p.lang = @lang 
                          and (
-                           @cursorPopularity is null
-                           or (rd.popularity < @cursorPopularity)
-                           or (rd.popularity = @cursorPopularity and p.id < @cursorId)
-                           or (rd.popularity is null and @cursorPopularity is null and p.id < @cursorId)
-                         )
-                       order by rd.popularity desc nulls last, p.id desc
+                           @cursorId is null 
+                             or (rd.popularity, p.created_at, p.id) 
+                                < (@cursorPopularity, @cursorCreatedAt, @cursorId)
+                           )
+                       order by rd.popularity desc nulls last, p.created_at desc, p.id desc
                        limit @limit
                        """;
 
@@ -52,12 +52,13 @@ public sealed class FeedRepository(IDbConnectionFactory dbf)
     {
       cursorPopularity = cursor?.Popularity,
       cursorId = cursor?.Id,
+      cursorCreatedAt = cursor?.CreatedAt,
       userId,
       lang,
       limit,
     };
 
-    return (await db.QueryAsync<PostItem>(
+    return (await db.QueryAsync<TopicPostView>(
       new CommandDefinition(sql, parameters, cancellationToken: ct))).ToList();
   }
 }

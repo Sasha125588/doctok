@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using Api.Endpoints.Common;
 using Microsoft.AspNetCore.Mvc;
@@ -10,4 +11,13 @@ public sealed class TopicsGetPostsQueryParams : LangQueryParams
   [StringLength(512)]
   [Required]
   public string? Slug { get; init; }
+
+  [FromQuery(Name = "limit")]
+  [Range(1, 50)]
+  [DefaultValue(20)]
+  public int? Limit { get; init; }
+
+  [FromQuery(Name = "cursor")]
+  [StringLength(512)]
+  public string? Cursor { get; init; }
 }

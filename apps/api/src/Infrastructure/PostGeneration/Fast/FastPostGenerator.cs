@@ -1,6 +1,5 @@
 using System.Text;
-using Domain.Common;
-using Domain.Models;
+using Domain.Posts;
 
 namespace Infrastructure.PostGeneration.Fast;
 
@@ -103,17 +102,17 @@ public sealed class FastPostGenerator
         return SkipContains.Any(k => lower.Contains(k, StringComparison.OrdinalIgnoreCase));
     }
 
-    private static string ClassifySection(string? title, int position)
+    private static PostKind ClassifySection(string? title, int position)
     {
         if (position == 0 || title is null)
-            return PostKinds.Summary;
+            return PostKind.Summary;
 
         var lower = title.ToLowerInvariant();
 
         if (ExampleKeywords.Any(k => lower.Contains(k, StringComparison.OrdinalIgnoreCase)))
-            return PostKinds.Example;
+            return PostKind.Example;
 
-        return PostKinds.Concept;
+        return PostKind.Concept;
     }
 
     /// <summary>

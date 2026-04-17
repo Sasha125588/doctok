@@ -12,10 +12,16 @@ public sealed class LocalLlmClient(HttpClient http, ILogger<LocalLlmClient> logg
         var request = new ChatRequest(
             Model:     model,
             MaxTokens: maxTokens,
-            Messages:  [new ChatMessage(Role: "user", Content: userMessage)],
-            ReasoningEffort: "low");
+            Messages:  [
+              new ChatMessage(Role: "user", Content: userMessage),
+              new ChatMessage(Role: "system", Content: "Return ONLY a valid JSON array — no markdown(```markdown) wrapper, no html wrapper, no json(```json) wrapper nothing else:\n[\n  { \"kind\": \"...\", \"title\": \"...\", \"body\": \"...\" },\n  ...\n]")
+            ],
+            // ReasoningEffort: "low",
+            Temperature: 0.2);
 
         using var response = await http.PostAsJsonAsync("chat/completions", request, ct);
+
+        var body = await response.Content.ReadAsStringAsync(ct);
         response.EnsureSuccessStatusCode();
 
         var result = await response.Content.ReadFromJsonAsync<ChatResponse>(cancellationToken: ct);
@@ -33,7 +39,8 @@ public sealed class LocalLlmClient(HttpClient http, ILogger<LocalLlmClient> logg
       [property: JsonPropertyName("model")] string Model,
       [property: JsonPropertyName("max_tokens")] int MaxTokens,
       [property: JsonPropertyName("messages")] IReadOnlyList<ChatMessage> Messages,
-      [property: JsonPropertyName("reasoning_effort")] string ReasoningEffort);
+      // [property: JsonPropertyName("reasoning_effort")] string ReasoningEffort,
+      [property: JsonPropertyName("temperature")] double Temperature = 0.2);
 
     private sealed record ChatResponse(
         [property: JsonPropertyName("choices")] IReadOnlyList<ChatChoice>? Choices);

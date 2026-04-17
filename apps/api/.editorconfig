@@ -99,6 +99,7 @@ dotnet_diagnostic.SA1101.severity = none
 dotnet_diagnostic.CA1822.severity = none
 dotnet_diagnostic.CA1812.severity = none
 dotnet_diagnostic.CA2234.severity = none
+dotnet_diagnostic.CA1724.severity = none
 
 dotnet_diagnostic.CA1849.severity = none
 dotnet_diagnostic.CA1859.severity = none
@@ -117,6 +118,7 @@ dotnet_diagnostic.SA1116.severity = none
 dotnet_diagnostic.SA1025.severity = none
 dotnet_diagnostic.SA1000.severity = none
 dotnet_diagnostic.SA1601.severity = none
+dotnet_diagnostic.SA1515.severity = none
 
 dotnet_diagnostic.CA1707.severity = none
 dotnet_diagnostic.CA1307.severity = none

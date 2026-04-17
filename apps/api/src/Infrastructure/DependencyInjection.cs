@@ -1,8 +1,8 @@
 using System.Net.Http.Headers;
-using Domain.Common;
-using Domain.Extensions;
+using Domain.Sources;
 using Google.GenAI;
 using Infrastructure.Events;
+using Infrastructure.Extensions;
 using Infrastructure.Jobs;
 using Infrastructure.Llm.Abstractions;
 using Infrastructure.Llm.Configuration;
@@ -52,7 +52,6 @@ public static class InfrastructureServiceRegistration
     services.AddSingleton<PostsRepository>();
     services.AddSingleton<FeedRepository>();
     services.AddSingleton<TopicFeedRepository>();
-    services.AddSingleton<TopicReadRepository>();
     services.AddSingleton<TopicLinksRepository>();
     services.AddSingleton<BaseReactionsRepository>();
     services.AddSingleton<PostReactionsRepository>();

@@ -1,5 +1,6 @@
 using Api.Extensions;
-using Domain.Common;
+using Domain.Posts;
+using Domain.Shared;
 using Infrastructure.Persistence.Repositories;
 
 namespace Api.Endpoints.Feed;
@@ -12,12 +13,18 @@ public sealed class Handler(FeedRepository feedRepo) : IHandler
         var lang = LanguageHelpers.NormalizeLang(query.Lang);
         var cursor = CursorCodec.Decode<FeedCursor>(query.Cursor);
 
-        var items = await feedRepo.GetPage(cursor, query.UserId, lang, take, ct);
+        var page = await feedRepo.GetPage(cursor, query.UserId, lang, take + 1, ct);
 
-        var nextCursor = items.Count == take
-          ? CursorCodec.Encode(new FeedCursor(items[^1].Popularity, items[^1].Id))
+        var hasNextPage = page.Count > take;
+        var items = hasNextPage ? page.Take(take).ToList() : page;
+
+        var nextCursor = hasNextPage
+          ? CursorCodec.Encode(ToCursor(items[^1]))
           : null;
 
         return new FeedResponse(items, nextCursor);
     }
+
+    private static FeedCursor ToCursor(TopicPostView item)
+      => new(item.Popularity, item.Id, item.CreatedAt);
 }

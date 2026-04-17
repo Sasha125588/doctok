@@ -1,8 +1,9 @@
 using System.Net.ServerSentEvents;
 using System.Runtime.CompilerServices;
 using Api.Extensions;
-using Domain.Common;
-using Domain.Events.Topic;
+using Domain.Shared;
+using Domain.Sources;
+using Domain.Topics.Events;
 using Infrastructure.Events;
 using Infrastructure.Persistence.Repositories;
 
@@ -16,7 +17,7 @@ public sealed class Endpoint : IEndpoint
   {
     app.MapGet("/topics/stream", (
         TopicGenerationNotifier notifier,
-        TopicReadRepository topicRepo,
+        TopicsRepository topicRepo,
         [AsParameters] TopicsStreamQueryParams query,
         CancellationToken ct) =>
       {
@@ -35,7 +36,7 @@ public sealed class Endpoint : IEndpoint
 
   private static async IAsyncEnumerable<SseItem<TopicGenerationEvent>> StreamAsync(
     TopicGenerationNotifier notifier,
-    TopicReadRepository topicRepo,
+    TopicsRepository topicRepo,
     string slug,
     string lang,
     [EnumeratorCancellation] CancellationToken ct)
@@ -47,7 +48,7 @@ public sealed class Endpoint : IEndpoint
 
   private static async Task<SseItem<TopicGenerationEvent>> WaitForTopicAsync(
     TopicGenerationNotifier notifier,
-    TopicReadRepository topicRepo,
+    TopicsRepository topicRepo,
     string slug,
     string lang,
     CancellationToken ct)

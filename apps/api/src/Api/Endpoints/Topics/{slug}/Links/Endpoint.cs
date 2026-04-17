@@ -1,6 +1,6 @@
 using Api.Extensions;
-using Domain.Common;
-using Domain.Models;
+using Domain.Shared;
+using Domain.Topics;
 using Infrastructure.Persistence.Repositories;
 
 namespace Api.Endpoints.Topics._slug_.Links;

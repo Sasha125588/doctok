@@ -1,6 +1,5 @@
 using Api.Extensions;
-using Domain.Common;
-using Domain.Models;
+using Domain.Reactions;
 using ErrorOr;
 using Infrastructure.Persistence.Repositories;
 
@@ -8,7 +7,7 @@ namespace Api.Endpoints.Posts.Reactions;
 
 public sealed class Handler(PostReactionsRepository postReactionsRepo) : IHandler
 {
-  public async Task<ErrorOr<ReactionResult>> Handle(Command command, CancellationToken ct)
+  public async Task<ErrorOr<ReactionView>> Handle(Command command, CancellationToken ct)
   {
     var reactionResult = await postReactionsRepo.Toggle(
       command.PostId,

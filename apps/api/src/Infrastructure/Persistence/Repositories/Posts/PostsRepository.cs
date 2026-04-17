@@ -2,6 +2,7 @@ using System.Data.Common;
 using System.Globalization;
 using System.Text;
 using Dapper;
+using Domain.Posts;
 using Infrastructure.Persistence.ConnectionFactory;
 
 namespace Infrastructure.Persistence.Repositories;
@@ -12,23 +13,21 @@ public sealed class PostsRepository(IDbConnectionFactory dbf)
         long rawDocumentId,
         long topicId,
         string lang,
-        IEnumerable<PostInsert> posts,
+        IReadOnlyList<PostInsert> posts,
         CancellationToken ct)
     {
-        var postList = posts as IReadOnlyList<PostInsert> ?? posts.ToList();
-
-        using var db = dbf.Create();
-        await ((DbConnection)db).OpenAsync(ct);
-        await using var tx = await ((DbConnection)db).BeginTransactionAsync(ct);
+        await using var conn = (DbConnection)dbf.Create();
+        await conn.OpenAsync(ct);
+        await using var tx = await conn.BeginTransactionAsync(ct);
 
         const string deleteSql = """
                                  delete from public.posts
                                  where raw_document_id = @rawDocumentId and lang = @lang
                                  """;
 
-        await db.ExecuteAsync(new CommandDefinition(deleteSql, new { rawDocumentId, lang }, transaction: tx, cancellationToken: ct));
+        await conn.ExecuteAsync(new CommandDefinition(deleteSql, new { rawDocumentId, lang }, transaction: tx, cancellationToken: ct));
 
-        if (postList.Count > 0)
+        if (posts.Count > 0)
         {
             var sb = new StringBuilder();
             sb.Append("""
@@ -41,7 +40,7 @@ public sealed class PostsRepository(IDbConnectionFactory dbf)
             parameters.Add("rawDocumentId", rawDocumentId);
             parameters.Add("lang", lang);
 
-            for (var i = 0; i < postList.Count; i++)
+            for (var i = 0; i < posts.Count; i++)
             {
                 if (i > 0)
                     sb.Append(',');
@@ -49,15 +48,23 @@ public sealed class PostsRepository(IDbConnectionFactory dbf)
                 sb.Append(CultureInfo.InvariantCulture,
                     $" (@topicId, @rawDocumentId, @lang, @k{i}, @t{i}, @b{i}, @bh{i}, @p{i}, @gl{i})");
 
-                parameters.Add($"k{i}",  postList[i].Kind);
-                parameters.Add($"t{i}",  postList[i].Title);
-                parameters.Add($"b{i}",  postList[i].Body);
-                parameters.Add($"bh{i}", postList[i].BodyHtml);
-                parameters.Add($"p{i}",  postList[i].Position);
-                parameters.Add($"gl{i}", postList[i].GenerationLevel);
+                parameters.Add($"k{i}",  posts[i].Kind.ToStorageValue());
+                parameters.Add($"t{i}",  posts[i].Title);
+                parameters.Add($"b{i}",  posts[i].Body);
+                parameters.Add($"bh{i}", posts[i].BodyHtml);
+                parameters.Add($"p{i}",  posts[i].Position);
+                parameters.Add($"gl{i}", posts[i].GenerationLevel);
             }
 
-            await db.ExecuteAsync(new CommandDefinition(sb.ToString(), parameters, transaction: tx, cancellationToken: ct));
+            await conn.ExecuteAsync(new CommandDefinition(sb.ToString(), parameters, transaction: tx, cancellationToken: ct));
+
+            const string updateTopicsCountSql = """
+                                                update public.topics
+                                                set post_count = @post_count
+                                                where id = @topicId
+                                                """;
+
+            await conn.ExecuteAsync(new CommandDefinition(updateTopicsCountSql, new { post_count = posts.Count, topicId }, transaction: tx, cancellationToken: ct));
         }
 
         await tx.CommitAsync(ct);
@@ -79,7 +86,7 @@ public sealed class PostsRepository(IDbConnectionFactory dbf)
 }
 
 public sealed record PostInsert(
-    string Kind,
+    PostKind Kind,
     string? Title,
     string Body,
     string BodyHtml,

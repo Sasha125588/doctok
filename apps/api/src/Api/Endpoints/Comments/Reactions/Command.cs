@@ -1,4 +1,4 @@
-using Domain.Common;
+using Domain.Reactions;
 
 namespace Api.Endpoints.Comments.Reactions;
 

@@ -1,29 +1,17 @@
 using System.Data.Common;
 using Dapper;
-using Domain.Models;
+using Domain.Comments;
 using Infrastructure.Persistence.ConnectionFactory;
 
 namespace Infrastructure.Persistence.Repositories;
 
 public sealed class CommentsRepository(IDbConnectionFactory dbf)
 {
-  private sealed record CommentRow(
-    long Id,
-    long PostId,
-    Guid UserId,
-    long? ParentCommentId,
-    string Body,
-    int LikeCount,
-    int DislikeCount,
-    DateTime CreatedAt,
-    DateTime? DeletedAt
-  );
-
   public async Task<Comment> CreateRoot(long postId, Guid userId, string body, CancellationToken ct)
   {
-    using var db = dbf.Create();
-    await ((DbConnection)db).OpenAsync(ct);
-    await using var tx = await ((DbConnection)db).BeginTransactionAsync(ct);
+    await using var conn = (DbConnection)dbf.Create();
+    await conn.OpenAsync(ct);
+    await using var tx = await conn.BeginTransactionAsync(ct);
 
     /* language=postgresql */
     const string insertSql = """
@@ -43,7 +31,7 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
                              from inserted
                              """;
 
-    var row = await db.QuerySingleOrDefaultAsync<CommentRow>(
+    var row = await conn.QuerySingleOrDefaultAsync<Comment>(
       new CommandDefinition(
         insertSql,
         new { postId, userId, body },
@@ -57,14 +45,14 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
     }
 
     await tx.CommitAsync(ct);
-    return ToModel(row);
+    return row;
   }
 
-  public async Task<Domain.Models.Comment> Reply(long parentCommentId, Guid userId, string body, CancellationToken ct)
+  public async Task<Comment> Reply(long parentCommentId, Guid userId, string body, CancellationToken ct)
   {
-    using var db = dbf.Create();
-    await ((DbConnection)db).OpenAsync(ct);
-    await using var tx = await ((DbConnection)db).BeginTransactionAsync(ct);
+    await using var conn = (DbConnection)dbf.Create();
+    await conn.OpenAsync(ct);
+    await using var tx = await conn.BeginTransactionAsync(ct);
 
     const string getParentSql = """
                                 select id, post_id, parent_comment_id
@@ -74,11 +62,12 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
                                 for update
                                 """;
 
-    var parent = await db.QuerySingleOrDefaultAsync<(long id, long post_id, long? parent_comment_id)>(
+    var parent = await conn.QuerySingleOrDefaultAsync<(long id, long post_id, long? parent_comment_id)>(
       new CommandDefinition(getParentSql, new { parentCommentId }, transaction: tx, cancellationToken: ct));
 
     if (parent == default)
     {
+      await tx.RollbackAsync(ct);
       throw new KeyNotFoundException("Parent comment not found");
     }
 
@@ -89,7 +78,7 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
                            returning id
                            """;
 
-    var postId = await db.QuerySingleOrDefaultAsync<long?>(
+    var postId = await conn.QuerySingleOrDefaultAsync<long?>(
       new CommandDefinition(
         bumpSql,
         new { postId = parent.post_id },
@@ -108,7 +97,7 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
                              returning id, post_id, user_id, parent_comment_id, body, created_at, deleted_at
                              """;
 
-    var row = await db.QuerySingleAsync<CommentRow>(
+    var row = await conn.QuerySingleAsync<Comment>(
       new CommandDefinition(
         insertSql,
         new { postId, userId, parentCommentId, body },
@@ -116,10 +105,10 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
         cancellationToken: ct));
 
     await tx.CommitAsync(ct);
-    return ToModel(row);
+    return row;
   }
 
-  public async Task<IReadOnlyList<Domain.Models.Comment>> ListRoots(long postId, int limit, CancellationToken ct)
+  public async Task<IReadOnlyList<Comment>> ListRoots(long postId, int limit, CancellationToken ct)
   {
     const string sql = """
                        select id, post_id, user_id, parent_comment_id, body, like_count, dislike_count, created_at, deleted_at
@@ -131,16 +120,17 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
                        """;
 
     using var db = dbf.Create();
-    var rows = await db.QueryAsync<CommentRow>(
+
+    var rows = await db.QueryAsync<Comment>(
       new CommandDefinition(
         sql,
         new { postId, limit },
         cancellationToken: ct));
 
-    return rows.Select(ToModel).ToList();
+    return rows.ToList();
   }
 
-  public async Task<IReadOnlyList<Domain.Models.Comment>> ListReplies(long commentId, int limit, CancellationToken ct)
+  public async Task<IReadOnlyList<Comment>> ListReplies(long commentId, int limit, CancellationToken ct)
   {
     const string sql = """
                        select id, post_id, user_id, parent_comment_id, body, like_count, dislike_count, created_at, deleted_at
@@ -151,20 +141,20 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
                        """;
 
     using var db = dbf.Create();
-    var rows = await db.QueryAsync<CommentRow>(
+    var rows = await db.QueryAsync<Comment>(
       new CommandDefinition(
         sql,
         new { commentId, limit },
         cancellationToken: ct));
 
-    return rows.Select(ToModel).ToList();
+    return rows.ToList();
   }
 
   public async Task<bool> Delete(long commentId, Guid userId, CancellationToken ct)
   {
-    using var db = dbf.Create();
-    await ((DbConnection)db).OpenAsync(ct);
-    await using var tx = await ((DbConnection)db).BeginTransactionAsync(ct);
+    await using var conn = (DbConnection)dbf.Create();
+    await conn.OpenAsync(ct);
+    await using var tx = await conn.BeginTransactionAsync(ct);
 
     const string delSql = """
                           update comments
@@ -175,7 +165,7 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
                           returning post_id
                           """;
 
-    var postId = await db.QuerySingleOrDefaultAsync<long?>(
+    var postId = await conn.QuerySingleOrDefaultAsync<long?>(
       new CommandDefinition(
         delSql,
         new { commentId, userId },
@@ -194,7 +184,7 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
                           where id = @postId
                           """;
 
-    await db.ExecuteAsync(
+    await conn.ExecuteAsync(
       new CommandDefinition(
         decSql,
         new { postId },
@@ -204,16 +194,4 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
     await tx.CommitAsync(ct);
     return true;
   }
-
-  private static Comment ToModel(CommentRow r) => new (
-    Id: r.Id,
-    PostId: r.PostId,
-    UserId: r.UserId,
-    ParentCommentId: r.ParentCommentId,
-    Body: r.Body,
-    LikeCount: r.LikeCount,
-    DislikeCount: r.DislikeCount,
-    CreatedAt: new DateTimeOffset(r.CreatedAt),
-    IsDeleted: r.DeletedAt is not null
-  );
 }

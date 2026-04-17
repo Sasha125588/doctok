@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Api.Auth;
 using Api.Errors;
 using Api.Extensions;
+using Domain.Comments;
 
 namespace Api.Endpoints.Comments.Replies.Create;
 
@@ -25,7 +26,7 @@ public sealed class Endpoint : IEndpoint
       .WithTags("Comments")
       .WithSummary("Adds a reply to a root comment")
       .WithName("CommentsRepliesCreate")
-      .Produces<Domain.Models.Comment>(StatusCodes.Status201Created)
+      .Produces<Comment>(StatusCodes.Status201Created)
       .ProducesProblem(StatusCodes.Status400BadRequest)
       .ProducesProblem(StatusCodes.Status401Unauthorized)
       .ProducesProblem(StatusCodes.Status403Forbidden)

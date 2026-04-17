@@ -2,7 +2,8 @@
 using Api.Auth;
 using Api.Errors;
 using Api.Extensions;
-using Domain.Models;
+using Domain.Comments;
+using Domain.Reactions;
 
 namespace Api.Endpoints.Comments.Reactions;
 
@@ -30,7 +31,7 @@ public class Endpoint: IEndpoint
       "Sets the current user's reaction for a comment. Allowed values are 'like' and 'dislike'. " +
       "Sending the same value again removes the reaction.")
     .WithName("CommentsReactionsToggle")
-    .Produces<ReactionResult>(StatusCodes.Status200OK)
+    .Produces<ReactionView>(StatusCodes.Status200OK)
     .ProducesProblem(StatusCodes.Status400BadRequest)
     .ProducesProblem(StatusCodes.Status401Unauthorized)
     .ProducesProblem(StatusCodes.Status403Forbidden)

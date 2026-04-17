@@ -1,19 +1,19 @@
 using System.Data.Common;
 using Dapper;
-using Domain.Models;
+using Domain.Reactions;
 using Infrastructure.Persistence.ConnectionFactory;
 
 namespace Infrastructure.Persistence.Repositories;
 
 public sealed class BaseReactionsRepository(IDbConnectionFactory dbf)
 {
-    public async Task<ReactionResult?> Toggle(string sql, object param, CancellationToken ct)
+    public async Task<ReactionView?> Toggle(string sql, object param, CancellationToken ct)
     {
         await using var conn = (DbConnection)dbf.Create();
         await conn.OpenAsync(ct);
         await using var tx = await conn.BeginTransactionAsync(ct);
 
-        var row = await conn.QuerySingleOrDefaultAsync<DbRow>(
+        var row = await conn.QuerySingleOrDefaultAsync<ReactionView>(
             new CommandDefinition(
                 sql,
                 param,
@@ -28,11 +28,6 @@ public sealed class BaseReactionsRepository(IDbConnectionFactory dbf)
 
         await tx.CommitAsync(ct);
 
-        return new ReactionResult(
-            MyVote: row.MyVote,
-            LikeCount: row.LikeCount,
-            DislikeCount: row.DislikeCount);
+        return row;
     }
-
-    private sealed record DbRow(int LikeCount, int DislikeCount, string MyVote);
 }

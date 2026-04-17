@@ -1,4 +1,4 @@
-using Domain.Events.Topic;
+using Domain.Topics.Events;
 
 namespace Infrastructure.Events;
 

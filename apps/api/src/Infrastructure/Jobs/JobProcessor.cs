@@ -1,5 +1,6 @@
 using System.Text.Json;
-using Domain.Common;
+using Domain.Jobs;
+using Domain.Sources;
 using Infrastructure.Events;
 using Infrastructure.Persistence.Repositories;
 using Microsoft.Extensions.DependencyInjection;

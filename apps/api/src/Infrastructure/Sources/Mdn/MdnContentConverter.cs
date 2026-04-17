@@ -2,7 +2,8 @@ using System.Globalization;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
-using Domain.Common;
+using Domain.Shared;
+using Domain.Sources;
 using HtmlAgilityPack;
 
 namespace Infrastructure.Sources.Mdn;

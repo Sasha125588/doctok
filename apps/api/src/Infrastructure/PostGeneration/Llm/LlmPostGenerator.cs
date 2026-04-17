@@ -1,8 +1,8 @@
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Domain.Common;
-using Domain.Models;
+using Domain.Posts;
+using Domain.Shared;
 using Infrastructure.Llm.Abstractions;
 using Infrastructure.Llm.Configuration;
 using Microsoft.Extensions.Logging;
@@ -31,13 +31,10 @@ public sealed class LlmPostGenerator(
         PropertyNameCaseInsensitive = true,
     };
 
-    private static readonly HashSet<string> _validKinds = new(StringComparer.OrdinalIgnoreCase)
-    {
-        PostKinds.Summary,
-        PostKinds.Concept,
-        PostKinds.Example,
-        PostKinds.Tip,
-    };
+    private static readonly HashSet<string> _validKinds =
+      Enum.GetValues<PostKind>()
+        .Select(x => x.ToStorageValue())
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
     public async Task<IReadOnlyList<GeneratedPost>> GenerateAsync(
         string content,
@@ -78,7 +75,9 @@ public sealed class LlmPostGenerator(
     {
         try
         {
-            var json  = ExtractJsonArray(raw.Trim());
+            // var json  = ExtractJsonArray(raw.Trim());
+            var json  = raw.Trim();
+
             var items = JsonSerializer.Deserialize<List<LlmPostItem>>(json, _jsonOptions);
 
             if (items is null or { Count: 0 })
@@ -93,7 +92,7 @@ public sealed class LlmPostGenerator(
                              && !string.IsNullOrWhiteSpace(x.Body)
                              && _validKinds.Contains(x.Kind!))
                 .Select((x, i) => new GeneratedPost(
-                    x.Kind!,
+                    Enum.Parse<PostKind>(x.Kind!, ignoreCase: true),
                     x.Title!.Trim('"').Trim(),
                     x.Body!.Trim(),
                     i))

@@ -1,4 +1,5 @@
 using Api.Extensions;
+using Domain.Comments;
 using Infrastructure.Persistence.Repositories;
 
 namespace Api.Endpoints.Comments.List;
@@ -20,7 +21,7 @@ public sealed class Endpoint : IEndpoint
       .WithTags("Comments")
       .WithSummary("Returns root comments for a post")
       .WithName("PostsCommentsList")
-      .Produces<IReadOnlyList<Domain.Models.Comment>>(StatusCodes.Status200OK)
+      .Produces<IReadOnlyList<Comment>>(StatusCodes.Status200OK)
       .ProducesValidationProblem(StatusCodes.Status400BadRequest);
   }
 }

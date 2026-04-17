@@ -1,4 +1,4 @@
-﻿using Domain.Models;
+﻿using Domain.Reactions;
 
 namespace Infrastructure.Persistence.Repositories;
 
@@ -88,7 +88,7 @@ public class PostReactionsRepository(BaseReactionsRepository baseReactionsRepo)
     cross join delta d;
     """;
 
-      public Task<ReactionResult?> Toggle(long postId, Guid userId, string value, CancellationToken ct)
+      public Task<ReactionView?> Toggle(long postId, Guid userId, string value, CancellationToken ct)
         => baseReactionsRepo.Toggle(ToggleSql, new
         {
           post_id = postId,

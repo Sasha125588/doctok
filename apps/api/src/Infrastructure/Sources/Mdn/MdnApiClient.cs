@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Domain.Common;
+using Domain.Shared;
 using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Sources.Mdn;

@@ -1,5 +1,5 @@
 using Dapper;
-using Domain.Models;
+using Domain.Topics;
 using Infrastructure.Persistence.ConnectionFactory;
 
 namespace Infrastructure.Persistence.Repositories;

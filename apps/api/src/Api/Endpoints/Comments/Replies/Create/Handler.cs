@@ -1,4 +1,5 @@
 using Api.Extensions;
+using Domain.Comments;
 using ErrorOr;
 using Infrastructure.Persistence.Repositories;
 
@@ -6,7 +7,7 @@ namespace Api.Endpoints.Comments.Replies.Create;
 
 public sealed class Handler(CommentsRepository commentsRepo) : IHandler
 {
-  public async Task<ErrorOr<Domain.Models.Comment>> Handle(Command command, CancellationToken ct)
+  public async Task<ErrorOr<Comment>> Handle(Command command, CancellationToken ct)
   {
     try
     {

@@ -1,5 +1,5 @@
 ﻿using System.Reflection;
-using Domain.Common;
+using Domain.Posts;
 using Infrastructure.Llm.Abstractions;
 using Infrastructure.Llm.Configuration;
 using Microsoft.Extensions.Logging;
@@ -12,13 +12,10 @@ public sealed class TitleGenerator(
     IOptions<LlmProfilesOptions> opts,
     ILogger<TitleGenerator> logger)
 {
-    private static readonly HashSet<string> _validKinds = new(StringComparer.OrdinalIgnoreCase)
-    {
-      PostKinds.Summary,
-      PostKinds.Concept,
-      PostKinds.Example,
-      PostKinds.Tip,
-    };
+    private static readonly HashSet<string> _validKinds =
+      Enum.GetValues<PostKind>()
+        .Select(x => x.ToStorageValue())
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
     private static readonly IReadOnlyDictionary<string, string> _prompts = LoadPrompts();
 

@@ -1,5 +1,7 @@
 using Api.Extensions;
-using Domain.Common;
+using Domain.Jobs;
+using Domain.Shared;
+using Domain.Sources;
 using ErrorOr;
 using Infrastructure.Persistence.Repositories;
 

@@ -12,7 +12,7 @@ public sealed class RawDocumentsRepository(IDbConnectionFactory dbf)
         string? title,
         string content,
         string? pageType,
-        double? popularity,
+        double popularity,
         DateTimeOffset? sourceModifiedAt,
         string[]? otherLocales,
         CancellationToken ct)

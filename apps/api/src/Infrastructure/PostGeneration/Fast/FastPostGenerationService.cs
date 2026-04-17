@@ -1,4 +1,4 @@
-using Domain.Common;
+using Domain.Jobs;
 using Infrastructure.Persistence.Repositories;
 
 namespace Infrastructure.PostGeneration.Fast;
