@@ -33,7 +33,7 @@ public sealed class LlmPostGenerator(
 
     private static readonly HashSet<string> _validKinds =
       Enum.GetValues<PostKind>()
-        .Select(x => x.ToStorageValue())
+        .Select(x => x.ToString().ToLowerInvariant())
         .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
     public async Task<IReadOnlyList<GeneratedPost>> GenerateAsync(

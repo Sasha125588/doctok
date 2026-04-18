@@ -14,7 +14,7 @@ public sealed class TitleGenerator(
 {
     private static readonly HashSet<string> _validKinds =
       Enum.GetValues<PostKind>()
-        .Select(x => x.ToStorageValue())
+        .Select(x => x.ToString().ToLowerInvariant())
         .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
     private static readonly IReadOnlyDictionary<string, string> _prompts = LoadPrompts();

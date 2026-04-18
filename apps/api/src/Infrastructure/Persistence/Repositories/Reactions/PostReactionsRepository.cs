@@ -14,17 +14,17 @@ public class PostReactionsRepository(BaseReactionsRepository baseReactionsRepo)
       ) as locked
     ),
     old as (
-      select v.value::text as old_value
+      select v.value::t_reaction_value as old_value
       from post_reactions v
       where v.post_id = @post_id and v.user_id = @user_id
     ),
     decision as (
       select
         (select old_value from old) as old_value,
-        @value::text               as new_value,
+        @value::t_reaction_value               as new_value,
         case
           when (select old_value from old) is null then 'insert'
-          when (select old_value from old) = @value::text then 'delete'
+          when (select old_value from old) = @value::t_reaction_value then 'delete'
           else 'update'
         end as op
     ),
@@ -81,9 +81,9 @@ public class PostReactionsRepository(BaseReactionsRepository baseReactionsRepo)
       returning p.like_count, p.dislike_count
     )
     select
+      d.resulting_vote as my_vote,
       u.like_count,
-      u.dislike_count,
-      coalesce(d.resulting_vote, 'none') as my_vote
+      u.dislike_count
     from update_post u
     cross join delta d;
     """;

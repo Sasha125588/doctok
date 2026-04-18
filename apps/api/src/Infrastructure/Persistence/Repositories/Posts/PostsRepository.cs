@@ -48,7 +48,7 @@ public sealed class PostsRepository(IDbConnectionFactory dbf)
                 sb.Append(CultureInfo.InvariantCulture,
                     $" (@topicId, @rawDocumentId, @lang, @k{i}, @t{i}, @b{i}, @bh{i}, @p{i}, @gl{i})");
 
-                parameters.Add($"k{i}",  posts[i].Kind.ToStorageValue());
+                parameters.Add($"k{i}",  posts[i].Kind.ToString().ToLowerInvariant());
                 parameters.Add($"t{i}",  posts[i].Title);
                 parameters.Add($"b{i}",  posts[i].Body);
                 parameters.Add($"bh{i}", posts[i].BodyHtml);

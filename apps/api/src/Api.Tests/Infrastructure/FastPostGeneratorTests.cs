@@ -52,7 +52,7 @@ public sealed class FastPostGeneratorTests
 
         var posts = _gen.Generate(md);
 
-        var summary = Assert.Single(posts, p => p.Kind.ToStorageValue() == "summary");
+        var summary = Assert.Single(posts, p => p.Kind == PostKind.Summary);
         Assert.Contains("Fetch API", summary.Body);
     }
 
@@ -70,7 +70,7 @@ public sealed class FastPostGeneratorTests
 
         var posts = _gen.Generate(md);
 
-        var concept = Assert.Single(posts, p => p.Kind.ToStorageValue() == "concept");
+        var concept = Assert.Single(posts, p => p.Kind == PostKind.Concept);
         Assert.Contains("Text()", concept.Body);
         Assert.Contains("Returns a Text node", concept.Body);
     }
@@ -93,7 +93,7 @@ public sealed class FastPostGeneratorTests
         var posts = _gen.Generate(md);
 
         // Both H2 content and H3 subsection in ONE post
-        var concept = Assert.Single(posts, p => p.Kind.ToStorageValue() == "concept");
+        var concept = Assert.Single(posts, p => p.Kind == PostKind.Concept);
         Assert.Contains("wholeText", concept.Body);
         Assert.Contains("splitText", concept.Body);
     }
@@ -116,7 +116,7 @@ public sealed class FastPostGeneratorTests
 
         var posts = _gen.Generate(md);
 
-        var example = Assert.Single(posts, p => p.Kind.ToStorageValue() == "example");
+        var example = Assert.Single(posts, p => p.Kind == PostKind.Example);
         Assert.Contains("fetch", example.Body);
     }
 

@@ -82,9 +82,9 @@ public class CommentReactionsRepository(BaseReactionsRepository baseReactionsRep
         returning c.like_count, c.dislike_count
       )
       select
+        d.resulting_vote as my_vote,
         u.like_count,
-        u.dislike_count,
-        coalesce(d.resulting_vote, 'none') as my_vote
+        u.dislike_count
       from update_comment u
       cross join delta d;
       """;
