@@ -1,5 +1,5 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Errors;
@@ -17,7 +17,7 @@ public sealed class ApiExceptionHandler(
     var status = exception switch
     {
       ApplicationException =>  StatusCodes.Status500InternalServerError,
-      ArgumentException or FormatException => StatusCodes.Status400BadRequest,
+      ArgumentException or FormatException or JsonException or BadHttpRequestException => StatusCodes.Status400BadRequest,
       KeyNotFoundException => StatusCodes.Status404NotFound,
       UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
       _ => StatusCodes.Status500InternalServerError,
