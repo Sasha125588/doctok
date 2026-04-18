@@ -4,8 +4,8 @@ import { useQuery } from '@tanstack/vue-query'
 
 import type { TopicLink, TopicsGetLinksData } from '#api/types.gen'
 
-export function useTopicLinks(options: Options<TopicsGetLinksData>, enabled: boolean) {
-  const query = useQuery(topicsGetLinksOptions(options, enabled))
+export function useTopicLinks(options: Options<TopicsGetLinksData>, enabled: Ref<boolean>) {
+  const query = useQuery({ ...topicsGetLinksOptions(options), enabled })
 
   const links = computed<TopicLink[]>(() => query.data.value ?? [])
 

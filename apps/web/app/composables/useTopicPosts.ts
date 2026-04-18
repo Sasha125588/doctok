@@ -2,7 +2,7 @@ import { resolveMdnOptions, topicsGetPostsOptions } from '#api/@tanstack/vue-que
 import { type Options } from '#api/sdk.gen'
 import { useQuery } from '@tanstack/vue-query'
 
-import { isApiProblem } from '~/lib/api/errors/errors'
+import { isApiError } from '~/lib/api/errors/errors'
 
 import type { TopicsGetPostsData } from '#api/types.gen'
 
@@ -36,7 +36,7 @@ export function useTopicPosts(options: Options<TopicsGetPostsData>) {
   })
 
   const isTopicNotFound = computed(
-    () => query.isError.value && isApiProblem(query.error.value) && query.error.value.status === 404
+    () => query.isError.value && isApiError(query.error.value) && query.error.value.status === 404
   )
 
   const shouldResolve = computed(() => {

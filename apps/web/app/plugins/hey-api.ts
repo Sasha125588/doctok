@@ -2,7 +2,7 @@ import { client } from '#api/client.gen'
 
 export default defineNuxtPlugin(() => {
   const runtimeConfig = useRuntimeConfig()
-  const token = useCookie('auth_token')
+  const token = useCookie('doctok_auth_token')
 
   client.setConfig({
     baseUrl: runtimeConfig.public.apiBaseUrl,

@@ -5,13 +5,16 @@ export type ClientOptions = {
 }
 
 export type Comment = {
-  id: number | string
-  postId: number | string
-  userId: string
-  parentCommentId: null | number | string
-  body: string
-  createdAt: string
-  isDeleted: boolean
+  id?: number | string
+  postId?: number | string
+  userId?: string
+  parentCommentId?: null | number | string
+  body?: string
+  createdAt?: string
+  updatedAt?: string
+  deletedAt?: null | string
+  likeCount?: number | string
+  dislikeCount?: number | string
 }
 
 export type CreateCommentRequest = {
@@ -19,7 +22,7 @@ export type CreateCommentRequest = {
 }
 
 export type FeedResponse = {
-  items: Array<PostItem>
+  items: Array<TopicPostView>
   nextCursor: null | string
 }
 
@@ -34,26 +37,11 @@ export type HttpValidationProblemDetails = {
   }
 }
 
-export type PostItem = {
-  id: number
-  kind: string
-  title: string
-  body: string
-  position: number | string
-  likeCount: number | string
-  dislikeCount: number | string
-  commentCount: number | string
-  topicSlug: string
-  topicTitle: string
-  myVote: string
-  popularity: null | number | string
-}
-
 export type PreloadMdnRequest = {
-  lang?: null | string
   count?: null | number | string
   seed?: null | number | string
   prefix?: null | string
+  lang: null | string
 }
 
 export type PreloadMdnResponse = {
@@ -68,6 +56,14 @@ export type ProblemDetails = {
   instance?: null | string
 }
 
+export type ReactionValue = 'none' | 'like' | 'dislike'
+
+export type ReactionView = {
+  myVote: ReactionValue
+  likeCount: number | string
+  dislikeCount: number | string
+}
+
 export type ResolveMdnResponse = {
   status: string
   topicSlug: null | string
@@ -80,35 +76,25 @@ export type SessionMeResponse = {
   email: null | string
 }
 
-export type SystemDbPingResponse = {
-  ok: boolean
+export type ToggleCommentReactionRequest = {
+  value: ReactionValue
 }
 
-export type SystemHealthResponse = {
-  ok: boolean
+export type TogglePostReactionRequest = {
+  value: ReactionValue
 }
 
-export type TogglePostVoteRequest = {
-  value: VoteValue
-}
-
-export type TopicFeedItem = {
+export type TopicFeedPageView = {
+  id: number | string
   slug: string
   title: string
-  lang: string
   postCount: number | string
-  preview: TopicFeedPreview
-}
-
-export type TopicFeedPreview = {
-  postId: number | string
-  kind: string
-  title: null | string
-  body: string
+  popularity: null | number | string
+  createdAt: string
 }
 
 export type TopicFeedResponse = {
-  items: Array<TopicFeedItem>
+  items: Array<TopicFeedPageView>
   nextCursor: null | string
 }
 
@@ -118,16 +104,26 @@ export type TopicLink = {
 }
 
 export type TopicPostsResponse = {
-  items: Array<PostItem>
+  items: Array<TopicPostView>
+  nextCursor: null | string
 }
 
-export type VoteResult = {
-  myVote: string
+export type TopicPostView = {
+  id: number | string
+  kind: string
+  title: string
+  body: string
+  bodyHtml: string
+  position: number | string
   likeCount: number | string
   dislikeCount: number | string
+  commentCount: number | string
+  topicSlug: string
+  topicTitle: string
+  myVote: ReactionValue
+  popularity: null | number | string
+  createdAt: string
 }
-
-export type VoteValue = 'like' | 'dislike'
 
 export type AdminMdnPreloadData = {
   body: PreloadMdnRequest
@@ -167,7 +163,9 @@ export type TopicsGetPostsData = {
   path?: never
   query: {
     slug: string
-    lang?: string
+    limit?: number | string
+    cursor?: string
+    lang: string
   }
   url: '/api/topics'
 }
@@ -199,7 +197,7 @@ export type TopicsGetLinksData = {
   path?: never
   query: {
     slug: string
-    lang?: string
+    lang: string
   }
   url: '/api/topics/links'
 }
@@ -227,7 +225,7 @@ export type TopicsStreamData = {
   path?: never
   query: {
     slug: string
-    lang?: string
+    lang: string
   }
   url: '/api/topics/stream'
 }
@@ -247,51 +245,6 @@ export type TopicsStreamResponses = {
    */
   200: unknown
 }
-
-export type SystemHealthData = {
-  body?: never
-  path?: never
-  query?: never
-  url: '/api/health'
-}
-
-export type SystemHealthResponses = {
-  /**
-   * OK
-   */
-  200: SystemHealthResponse
-}
-
-export type SystemHealthResponse2 = SystemHealthResponses[keyof SystemHealthResponses]
-
-export type SystemDbPingData = {
-  body?: never
-  path?: never
-  query?: never
-  url: '/api/db/ping'
-}
-
-export type SystemDbPingErrors = {
-  /**
-   * Unauthorized
-   */
-  401: ProblemDetails
-  /**
-   * Forbidden
-   */
-  403: ProblemDetails
-}
-
-export type SystemDbPingError = SystemDbPingErrors[keyof SystemDbPingErrors]
-
-export type SystemDbPingResponses = {
-  /**
-   * OK
-   */
-  200: SystemDbPingResponse
-}
-
-export type SystemDbPingResponse2 = SystemDbPingResponses[keyof SystemDbPingResponses]
 
 export type SessionMeGetData = {
   body?: never
@@ -327,7 +280,7 @@ export type ResolveMdnData = {
   path?: never
   query: {
     externalRef: string
-    lang?: string
+    lang: string
   }
   url: '/api/resolve/mdn'
 }
@@ -350,16 +303,16 @@ export type ResolveMdnResponses = {
 
 export type ResolveMdnResponse2 = ResolveMdnResponses[keyof ResolveMdnResponses]
 
-export type PostsVotesToggleData = {
-  body: TogglePostVoteRequest
+export type PostsReactionsToggleData = {
+  body: TogglePostReactionRequest
   path: {
     postId: number
   }
   query?: never
-  url: '/api/posts/{postId}/vote'
+  url: '/api/posts/{postId}/reactions'
 }
 
-export type PostsVotesToggleErrors = {
+export type PostsReactionsToggleErrors = {
   /**
    * Bad Request
    */
@@ -378,24 +331,25 @@ export type PostsVotesToggleErrors = {
   404: ProblemDetails
 }
 
-export type PostsVotesToggleError = PostsVotesToggleErrors[keyof PostsVotesToggleErrors]
+export type PostsReactionsToggleError = PostsReactionsToggleErrors[keyof PostsReactionsToggleErrors]
 
-export type PostsVotesToggleResponses = {
+export type PostsReactionsToggleResponses = {
   /**
    * OK
    */
-  200: VoteResult
+  200: ReactionView
 }
 
-export type PostsVotesToggleResponse = PostsVotesToggleResponses[keyof PostsVotesToggleResponses]
+export type PostsReactionsToggleResponse =
+  PostsReactionsToggleResponses[keyof PostsReactionsToggleResponses]
 
 export type FeedListData = {
   body?: never
   path?: never
-  query?: {
+  query: {
     cursor?: string
     limit?: number | string
-    lang?: string
+    lang: string
   }
   url: '/api/feed'
 }
@@ -421,10 +375,10 @@ export type FeedListResponse = FeedListResponses[keyof FeedListResponses]
 export type FeedTopicsListData = {
   body?: never
   path?: never
-  query?: {
+  query: {
     cursor?: string
     limit?: number | string
-    lang?: string
+    lang: string
   }
   url: '/api/feed/topics'
 }
@@ -517,6 +471,47 @@ export type CommentsRepliesCreateResponses = {
 
 export type CommentsRepliesCreateResponse =
   CommentsRepliesCreateResponses[keyof CommentsRepliesCreateResponses]
+
+export type CommentsReactionsToggleData = {
+  body: ToggleCommentReactionRequest
+  path: {
+    commentId: number
+  }
+  query?: never
+  url: '/api/comments/{commentId}/reactions'
+}
+
+export type CommentsReactionsToggleErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+}
+
+export type CommentsReactionsToggleError =
+  CommentsReactionsToggleErrors[keyof CommentsReactionsToggleErrors]
+
+export type CommentsReactionsToggleResponses = {
+  /**
+   * OK
+   */
+  200: ReactionView
+}
+
+export type CommentsReactionsToggleResponse =
+  CommentsReactionsToggleResponses[keyof CommentsReactionsToggleResponses]
 
 export type PostsCommentsListData = {
   body?: never

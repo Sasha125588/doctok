@@ -4,37 +4,40 @@ import * as v from 'valibot'
 
 import { client } from './client.gen'
 import {
-  vAdminMdnPreloadData,
+  vAdminMdnPreloadBody,
   vAdminMdnPreloadResponse,
-  vCommentsDeleteData,
+  vCommentsDeletePath,
   vCommentsDeleteResponse,
-  vCommentsRepliesCreateData,
+  vCommentsReactionsToggleBody,
+  vCommentsReactionsTogglePath,
+  vCommentsReactionsToggleResponse,
+  vCommentsRepliesCreateBody,
+  vCommentsRepliesCreatePath,
   vCommentsRepliesCreateResponse,
-  vCommentsRepliesListData,
+  vCommentsRepliesListPath,
+  vCommentsRepliesListQuery,
   vCommentsRepliesListResponse,
-  vFeedListData,
+  vFeedListQuery,
   vFeedListResponse,
-  vFeedTopicsListData,
+  vFeedTopicsListQuery,
   vFeedTopicsListResponse,
-  vPostsCommentsCreateData,
+  vPostsCommentsCreateBody,
+  vPostsCommentsCreatePath,
   vPostsCommentsCreateResponse,
-  vPostsCommentsListData,
+  vPostsCommentsListPath,
+  vPostsCommentsListQuery,
   vPostsCommentsListResponse,
-  vPostsVotesToggleData,
-  vPostsVotesToggleResponse,
-  vResolveMdnData,
+  vPostsReactionsToggleBody,
+  vPostsReactionsTogglePath,
+  vPostsReactionsToggleResponse,
+  vResolveMdnQuery,
   vResolveMdnResponse2,
-  vSessionMeGetData,
   vSessionMeGetResponse,
-  vSystemDbPingData,
-  vSystemDbPingResponse2,
-  vSystemHealthData,
-  vSystemHealthResponse2,
-  vTopicsGetLinksData,
+  vTopicsGetLinksQuery,
   vTopicsGetLinksResponse,
-  vTopicsGetPostsData,
+  vTopicsGetPostsQuery,
   vTopicsGetPostsResponse,
-  vTopicsStreamData,
+  vTopicsStreamQuery,
 } from './valibot.gen'
 
 import type { Client, Options as Options2, TDataShape } from './client'
@@ -45,6 +48,9 @@ import type {
   CommentsDeleteData,
   CommentsDeleteErrors,
   CommentsDeleteResponses,
+  CommentsReactionsToggleData,
+  CommentsReactionsToggleErrors,
+  CommentsReactionsToggleResponses,
   CommentsRepliesCreateData,
   CommentsRepliesCreateErrors,
   CommentsRepliesCreateResponses,
@@ -63,20 +69,15 @@ import type {
   PostsCommentsListData,
   PostsCommentsListErrors,
   PostsCommentsListResponses,
-  PostsVotesToggleData,
-  PostsVotesToggleErrors,
-  PostsVotesToggleResponses,
+  PostsReactionsToggleData,
+  PostsReactionsToggleErrors,
+  PostsReactionsToggleResponses,
   ResolveMdnData,
   ResolveMdnErrors,
   ResolveMdnResponses,
   SessionMeGetData,
   SessionMeGetErrors,
   SessionMeGetResponses,
-  SystemDbPingData,
-  SystemDbPingErrors,
-  SystemDbPingResponses,
-  SystemHealthData,
-  SystemHealthResponses,
   TopicsGetLinksData,
   TopicsGetLinksErrors,
   TopicsGetLinksResponses,
@@ -91,7 +92,8 @@ import type {
 export type Options<
   TData extends TDataShape = TDataShape,
   ThrowOnError extends boolean = boolean,
-> = Options2<TData, ThrowOnError> & {
+  TResponse = unknown,
+> = Options2<TData, ThrowOnError, TResponse> & {
   /**
    * You can provide a client instance returned by `createClient()` instead of
    * individual options. This might be also useful if you want to implement a
@@ -112,7 +114,15 @@ export const adminMdnPreload = <ThrowOnError extends boolean = false>(
   options: Options<AdminMdnPreloadData, ThrowOnError>
 ) =>
   (options.client ?? client).post<AdminMdnPreloadResponses, AdminMdnPreloadErrors, ThrowOnError>({
-    requestValidator: async (data) => await v.parseAsync(vAdminMdnPreloadData, data),
+    requestValidator: async (data) =>
+      await v.parseAsync(
+        v.object({
+          body: vAdminMdnPreloadBody,
+          path: v.optional(v.never()),
+          query: v.optional(v.never()),
+        }),
+        data
+      ),
     responseValidator: async (data) => await v.parseAsync(vAdminMdnPreloadResponse, data),
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/admin/mdn/preload',
@@ -130,7 +140,15 @@ export const topicsGetPosts = <ThrowOnError extends boolean = false>(
   options: Options<TopicsGetPostsData, ThrowOnError>
 ) =>
   (options.client ?? client).get<TopicsGetPostsResponses, TopicsGetPostsErrors, ThrowOnError>({
-    requestValidator: async (data) => await v.parseAsync(vTopicsGetPostsData, data),
+    requestValidator: async (data) =>
+      await v.parseAsync(
+        v.object({
+          body: v.optional(v.never()),
+          path: v.optional(v.never()),
+          query: vTopicsGetPostsQuery,
+        }),
+        data
+      ),
     responseValidator: async (data) => await v.parseAsync(vTopicsGetPostsResponse, data),
     url: '/api/topics',
     ...options,
@@ -143,7 +161,15 @@ export const topicsGetLinks = <ThrowOnError extends boolean = false>(
   options: Options<TopicsGetLinksData, ThrowOnError>
 ) =>
   (options.client ?? client).get<TopicsGetLinksResponses, TopicsGetLinksErrors, ThrowOnError>({
-    requestValidator: async (data) => await v.parseAsync(vTopicsGetLinksData, data),
+    requestValidator: async (data) =>
+      await v.parseAsync(
+        v.object({
+          body: v.optional(v.never()),
+          path: v.optional(v.never()),
+          query: vTopicsGetLinksQuery,
+        }),
+        data
+      ),
     responseValidator: async (data) => await v.parseAsync(vTopicsGetLinksResponse, data),
     url: '/api/topics/links',
     ...options,
@@ -158,35 +184,16 @@ export const topicsStream = <ThrowOnError extends boolean = false>(
   options: Options<TopicsStreamData, ThrowOnError>
 ) =>
   (options.client ?? client).get<TopicsStreamResponses, TopicsStreamErrors, ThrowOnError>({
-    requestValidator: async (data) => await v.parseAsync(vTopicsStreamData, data),
+    requestValidator: async (data) =>
+      await v.parseAsync(
+        v.object({
+          body: v.optional(v.never()),
+          path: v.optional(v.never()),
+          query: vTopicsStreamQuery,
+        }),
+        data
+      ),
     url: '/api/topics/stream',
-    ...options,
-  })
-
-/**
- * Health check
- */
-export const systemHealth = <ThrowOnError extends boolean = false>(
-  options?: Options<SystemHealthData, ThrowOnError>
-) =>
-  (options?.client ?? client).get<SystemHealthResponses, unknown, ThrowOnError>({
-    requestValidator: async (data) => await v.parseAsync(vSystemHealthData, data),
-    responseValidator: async (data) => await v.parseAsync(vSystemHealthResponse2, data),
-    url: '/api/health',
-    ...options,
-  })
-
-/**
- * Checks DB connectivity
- */
-export const systemDbPing = <ThrowOnError extends boolean = false>(
-  options?: Options<SystemDbPingData, ThrowOnError>
-) =>
-  (options?.client ?? client).get<SystemDbPingResponses, SystemDbPingErrors, ThrowOnError>({
-    requestValidator: async (data) => await v.parseAsync(vSystemDbPingData, data),
-    responseValidator: async (data) => await v.parseAsync(vSystemDbPingResponse2, data),
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/db/ping',
     ...options,
   })
 
@@ -197,7 +204,15 @@ export const sessionMeGet = <ThrowOnError extends boolean = false>(
   options?: Options<SessionMeGetData, ThrowOnError>
 ) =>
   (options?.client ?? client).get<SessionMeGetResponses, SessionMeGetErrors, ThrowOnError>({
-    requestValidator: async (data) => await v.parseAsync(vSessionMeGetData, data),
+    requestValidator: async (data) =>
+      await v.parseAsync(
+        v.object({
+          body: v.optional(v.never()),
+          path: v.optional(v.never()),
+          query: v.optional(v.never()),
+        }),
+        data
+      ),
     responseValidator: async (data) => await v.parseAsync(vSessionMeGetResponse, data),
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/me',
@@ -211,7 +226,15 @@ export const resolveMdn = <ThrowOnError extends boolean = false>(
   options: Options<ResolveMdnData, ThrowOnError>
 ) =>
   (options.client ?? client).get<ResolveMdnResponses, ResolveMdnErrors, ThrowOnError>({
-    requestValidator: async (data) => await v.parseAsync(vResolveMdnData, data),
+    requestValidator: async (data) =>
+      await v.parseAsync(
+        v.object({
+          body: v.optional(v.never()),
+          path: v.optional(v.never()),
+          query: vResolveMdnQuery,
+        }),
+        data
+      ),
     responseValidator: async (data) => await v.parseAsync(vResolveMdnResponse2, data),
     url: '/api/resolve/mdn',
     ...options,
@@ -220,33 +243,51 @@ export const resolveMdn = <ThrowOnError extends boolean = false>(
 /**
  * Toggles a like or dislike on a post
  *
- * Sets the current user's vote for a post. Allowed values are 'like' and 'dislike'. Sending the same value again removes the vote.
+ * Sets the current user's reaction for a post. Allowed values are 'like' and 'dislike'. Sending the same value again removes the reaction.
  */
-export const postsVotesToggle = <ThrowOnError extends boolean = false>(
-  options: Options<PostsVotesToggleData, ThrowOnError>
+export const postsReactionsToggle = <ThrowOnError extends boolean = false>(
+  options: Options<PostsReactionsToggleData, ThrowOnError>
 ) =>
-  (options.client ?? client).patch<PostsVotesToggleResponses, PostsVotesToggleErrors, ThrowOnError>(
-    {
-      requestValidator: async (data) => await v.parseAsync(vPostsVotesToggleData, data),
-      responseValidator: async (data) => await v.parseAsync(vPostsVotesToggleResponse, data),
-      security: [{ scheme: 'bearer', type: 'http' }],
-      url: '/api/posts/{postId}/vote',
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-    }
-  )
+  (options.client ?? client).patch<
+    PostsReactionsToggleResponses,
+    PostsReactionsToggleErrors,
+    ThrowOnError
+  >({
+    requestValidator: async (data) =>
+      await v.parseAsync(
+        v.object({
+          body: vPostsReactionsToggleBody,
+          path: vPostsReactionsTogglePath,
+          query: v.optional(v.never()),
+        }),
+        data
+      ),
+    responseValidator: async (data) => await v.parseAsync(vPostsReactionsToggleResponse, data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/posts/{postId}/reactions',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  })
 
 /**
  * Returns paginated feed items
  */
 export const feedList = <ThrowOnError extends boolean = false>(
-  options?: Options<FeedListData, ThrowOnError>
+  options: Options<FeedListData, ThrowOnError>
 ) =>
-  (options?.client ?? client).get<FeedListResponses, FeedListErrors, ThrowOnError>({
-    requestValidator: async (data) => await v.parseAsync(vFeedListData, data),
+  (options.client ?? client).get<FeedListResponses, FeedListErrors, ThrowOnError>({
+    requestValidator: async (data) =>
+      await v.parseAsync(
+        v.object({
+          body: v.optional(v.never()),
+          path: v.optional(v.never()),
+          query: vFeedListQuery,
+        }),
+        data
+      ),
     responseValidator: async (data) => await v.parseAsync(vFeedListResponse, data),
     url: '/api/feed',
     ...options,
@@ -256,10 +297,18 @@ export const feedList = <ThrowOnError extends boolean = false>(
  * Returns paginated topics for the vertical swipe feed
  */
 export const feedTopicsList = <ThrowOnError extends boolean = false>(
-  options?: Options<FeedTopicsListData, ThrowOnError>
+  options: Options<FeedTopicsListData, ThrowOnError>
 ) =>
-  (options?.client ?? client).get<FeedTopicsListResponses, FeedTopicsListErrors, ThrowOnError>({
-    requestValidator: async (data) => await v.parseAsync(vFeedTopicsListData, data),
+  (options.client ?? client).get<FeedTopicsListResponses, FeedTopicsListErrors, ThrowOnError>({
+    requestValidator: async (data) =>
+      await v.parseAsync(
+        v.object({
+          body: v.optional(v.never()),
+          path: v.optional(v.never()),
+          query: vFeedTopicsListQuery,
+        }),
+        data
+      ),
     responseValidator: async (data) => await v.parseAsync(vFeedTopicsListResponse, data),
     url: '/api/feed/topics',
     ...options,
@@ -276,7 +325,15 @@ export const commentsRepliesList = <ThrowOnError extends boolean = false>(
     CommentsRepliesListErrors,
     ThrowOnError
   >({
-    requestValidator: async (data) => await v.parseAsync(vCommentsRepliesListData, data),
+    requestValidator: async (data) =>
+      await v.parseAsync(
+        v.object({
+          body: v.optional(v.never()),
+          path: vCommentsRepliesListPath,
+          query: v.optional(vCommentsRepliesListQuery),
+        }),
+        data
+      ),
     responseValidator: async (data) => await v.parseAsync(vCommentsRepliesListResponse, data),
     url: '/api/comments/{commentId}/replies',
     ...options,
@@ -293,10 +350,50 @@ export const commentsRepliesCreate = <ThrowOnError extends boolean = false>(
     CommentsRepliesCreateErrors,
     ThrowOnError
   >({
-    requestValidator: async (data) => await v.parseAsync(vCommentsRepliesCreateData, data),
+    requestValidator: async (data) =>
+      await v.parseAsync(
+        v.object({
+          body: vCommentsRepliesCreateBody,
+          path: vCommentsRepliesCreatePath,
+          query: v.optional(v.never()),
+        }),
+        data
+      ),
     responseValidator: async (data) => await v.parseAsync(vCommentsRepliesCreateResponse, data),
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/comments/{commentId}/replies',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  })
+
+/**
+ * Toggles a like or dislike on a comment
+ *
+ * Sets the current user's reaction for a comment. Allowed values are 'like' and 'dislike'. Sending the same value again removes the reaction.
+ */
+export const commentsReactionsToggle = <ThrowOnError extends boolean = false>(
+  options: Options<CommentsReactionsToggleData, ThrowOnError>
+) =>
+  (options.client ?? client).patch<
+    CommentsReactionsToggleResponses,
+    CommentsReactionsToggleErrors,
+    ThrowOnError
+  >({
+    requestValidator: async (data) =>
+      await v.parseAsync(
+        v.object({
+          body: vCommentsReactionsToggleBody,
+          path: vCommentsReactionsTogglePath,
+          query: v.optional(v.never()),
+        }),
+        data
+      ),
+    responseValidator: async (data) => await v.parseAsync(vCommentsReactionsToggleResponse, data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/comments/{commentId}/reactions',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -312,7 +409,15 @@ export const postsCommentsList = <ThrowOnError extends boolean = false>(
 ) =>
   (options.client ?? client).get<PostsCommentsListResponses, PostsCommentsListErrors, ThrowOnError>(
     {
-      requestValidator: async (data) => await v.parseAsync(vPostsCommentsListData, data),
+      requestValidator: async (data) =>
+        await v.parseAsync(
+          v.object({
+            body: v.optional(v.never()),
+            path: vPostsCommentsListPath,
+            query: v.optional(vPostsCommentsListQuery),
+          }),
+          data
+        ),
       responseValidator: async (data) => await v.parseAsync(vPostsCommentsListResponse, data),
       url: '/api/posts/{postId}/comments',
       ...options,
@@ -330,7 +435,15 @@ export const postsCommentsCreate = <ThrowOnError extends boolean = false>(
     PostsCommentsCreateErrors,
     ThrowOnError
   >({
-    requestValidator: async (data) => await v.parseAsync(vPostsCommentsCreateData, data),
+    requestValidator: async (data) =>
+      await v.parseAsync(
+        v.object({
+          body: vPostsCommentsCreateBody,
+          path: vPostsCommentsCreatePath,
+          query: v.optional(v.never()),
+        }),
+        data
+      ),
     responseValidator: async (data) => await v.parseAsync(vPostsCommentsCreateResponse, data),
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/posts/{postId}/comments',
@@ -348,7 +461,15 @@ export const commentsDelete = <ThrowOnError extends boolean = false>(
   options: Options<CommentsDeleteData, ThrowOnError>
 ) =>
   (options.client ?? client).delete<CommentsDeleteResponses, CommentsDeleteErrors, ThrowOnError>({
-    requestValidator: async (data) => await v.parseAsync(vCommentsDeleteData, data),
+    requestValidator: async (data) =>
+      await v.parseAsync(
+        v.object({
+          body: v.optional(v.never()),
+          path: vCommentsDeletePath,
+          query: v.optional(v.never()),
+        }),
+        data
+      ),
     responseValidator: async (data) => await v.parseAsync(vCommentsDeleteResponse, data),
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/comments/{commentId}',

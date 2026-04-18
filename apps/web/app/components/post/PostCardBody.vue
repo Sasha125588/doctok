@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const props = defineProps<{ body: string }>()
+const props = defineProps<{ bodyHtml: string }>()
 
 function normalizeTopicHref(href: string) {
   if (href.startsWith('/topic/')) {
@@ -12,29 +12,6 @@ function normalizeTopicHref(href: string) {
 
   return href
 }
-
-function normalizeTopicLinks(body: string) {
-  return body
-    .replace(/\]\((mdn:[^)]+)\)/g, (_, href: string) => `](${normalizeTopicHref(href)})`)
-    .replace(/\]\((mdn\/[^)]+)\)/g, (_, href: string) => `](${normalizeTopicHref(href)})`)
-    .replace(/href=(['"])(mdn:[^'"]+)\1/g, (_, quote: string, href: string) => {
-      return `href=${quote}${normalizeTopicHref(href)}${quote}`
-    })
-    .replace(/href=(['"])(mdn\/[^'"]+)\1/g, (_, quote: string, href: string) => {
-      return `href=${quote}${normalizeTopicHref(href)}${quote}`
-    })
-}
-
-const renderedBody = computed(() => {
-  const trimmed = props.body.trim()
-  const isCodeBlock = trimmed.startsWith('<') && /<\/?[a-z][\s\S]*>/i.test(trimmed)
-
-  if (isCodeBlock) {
-    return `\`\`\`html\n${trimmed}\n\`\`\``
-  }
-
-  return normalizeTopicLinks(trimmed)
-})
 
 function handleClick(e: MouseEvent) {
   const target = e.target as HTMLElement
@@ -59,7 +36,8 @@ function handleClick(e: MouseEvent) {
     class="post-body max-h-[38vh] overflow-y-auto font-mono text-[clamp(0.82rem,2.5vw,0.92rem)] leading-[1.72] text-[rgba(240,244,248,0.78)]"
     @click="handleClick"
   >
-    <MDC :value="renderedBody" />
+    <!-- <MDC :value="body" /> -->
+    <div v-html="bodyHtml"></div>
   </div>
 </template>
 

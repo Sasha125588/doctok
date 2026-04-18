@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import LangSwitcher from '~/components/lang/LangSwitcher.vue'
-import TopicSwiper from '~/components/topic/TopicSwiper.vue'
+import PostCarousel from '~/components/topic/PostCarousel.vue'
 import { useLang } from '~/composables/useLang'
 import { useTopicPosts } from '~/composables/useTopicPosts'
 
 const route = useRoute()
 const slug = computed(() => route.params.slug!.join('/'))
+
 const { lang } = useLang()
+
 const { state } = useTopicPosts({ query: { slug: slug.value, lang: lang.value } })
 const topicTitle = computed(() => state.posts.value[0]?.topicTitle ?? slug.value)
+
 const swiperKey = computed(() => `${slug.value}:${lang.value}`)
 </script>
 
@@ -29,7 +32,7 @@ const swiperKey = computed(() => `${slug.value}:${lang.value}`)
       <LangSwitcher />
     </div>
 
-    <TopicSwiper
+    <PostCarousel
       v-if="state.posts.value.length"
       :key="swiperKey"
       :posts="state.posts.value"

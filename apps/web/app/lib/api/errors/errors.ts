@@ -1,4 +1,4 @@
-type ApiProblem = {
+type ApiError = {
   type?: string
   title?: string
   status?: number
@@ -12,6 +12,6 @@ type ApiProblem = {
   }>
 }
 
-export function isApiProblem(error: unknown): error is ApiProblem {
+export function isApiError(error: unknown): error is ApiError {
   return !!error && typeof error === 'object' && 'status' in error
 }

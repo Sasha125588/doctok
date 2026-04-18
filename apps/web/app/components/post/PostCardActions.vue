@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { VoteValue } from '#api/types.gen'
+import type { ReactionValue } from '#api/types.gen'
 
 defineProps<{
   myVote: string
@@ -9,7 +9,7 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-  onVote: [VoteValue]
+  onVote: [ReactionValue]
 }>()
 </script>
 

@@ -18,11 +18,17 @@ const kindMap: Record<string, PostKindConfig> = {
     cssColor: 'var(--kind-example)',
     cssColorRgb: '34,197,94',
   },
-  fact: {
-    label: '! Fact',
+  concept: {
+    label: '! Concept',
+    icon: 'lucide:brain',
+    cssColor: 'var(--kind-concept)',
+    cssColorRgb: '168,85,247',
+  },
+  tip: {
+    label: '* Tip',
     icon: 'lucide:lightbulb',
-    cssColor: 'var(--kind-fact)',
-    cssColorRgb: '249,115,22',
+    cssColor: 'var(--kind-tip)',
+    cssColorRgb: '234,179,8',
   },
 }
 

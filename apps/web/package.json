@@ -12,7 +12,7 @@
     "lint:fix": "oxlint --fix",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
-    "generate:client": "openapi-ts"
+    "generate:api": "openapi-ts"
   },
   "dependencies": {
     "@nuxt/icon": "2.2.1",

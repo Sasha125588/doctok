@@ -10,7 +10,7 @@ const props = defineProps<{ slug: string }>()
 const open = ref(false)
 const { lang } = useLang()
 const slugRef = computed(() => props.slug)
-const { state } = useTopicLinks({ query: { slug: slugRef.value, lang: lang.value } }, open.value)
+const { state } = useTopicLinks({ query: { slug: slugRef.value, lang: lang.value } }, open)
 </script>
 
 <template>

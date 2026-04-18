@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import FeedSwiper from '~/components/feed/FeedSwiper.vue'
+import TopicFeed from '~/components/feed/TopicFeed.vue'
 </script>
 
 <template>
-  <FeedSwiper />
+  <TopicFeed />
 </template>
