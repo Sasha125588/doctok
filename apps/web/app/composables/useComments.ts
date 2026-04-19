@@ -29,12 +29,15 @@ export function useComments(postId: Ref<number | null>) {
     },
   })
 
-  function send(body: string) {
+  function send(body: string, onSuccess?: () => void) {
     if (postId.value == null || !body.trim()) return
-    createMutation.mutate({
-      path: { postId: postId.value },
-      body: { body: body.trim() },
-    })
+    createMutation.mutate(
+      {
+        path: { postId: postId.value },
+        body: { body: body.trim() },
+      },
+      { onSuccess },
+    )
   }
 
   return {

@@ -27,8 +27,9 @@ const isOpen = computed(() => activePanel.value === 'comments')
 
 function submit() {
   if (!draft.value.trim()) return
-  send(draft.value)
-  draft.value = ''
+  send(draft.value, () => {
+    draft.value = ''
+  })
 }
 
 function close() {

@@ -25,7 +25,7 @@ const activePost = computed(() => postsState.posts.value[activePostIndex.value])
 watch(
   () => postsState.posts.value.length,
   (len) => {
-    activeTopicPostCount.value = len
+    if (len > 0) activeTopicPostCount.value = len
   },
   { immediate: true }
 )
