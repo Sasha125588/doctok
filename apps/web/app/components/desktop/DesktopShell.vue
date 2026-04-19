@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import FeedPage from './FeedPage.vue'
 import Rail from './Rail.vue'
 import Sidebar from './Sidebar.vue'
 import Topbar from './Topbar.vue'
@@ -37,9 +38,7 @@ watch(activeTopicSlug, (slug) => {
     <main class="main">
       <Topbar />
       <div class="body">
-        <div class="placeholder">
-          // feed content — наступні задачі
-        </div>
+        <FeedPage />
       </div>
     </main>
   </div>
@@ -65,13 +64,5 @@ watch(activeTopicSlug, (slug) => {
   flex: 1;
   display: flex;
   overflow: hidden;
-}
-.placeholder {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--dt-text-tertiary);
-  font-size: 11px;
 }
 </style>
