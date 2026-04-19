@@ -36,7 +36,7 @@ export function useComments(postId: Ref<number | null>) {
         path: { postId: postId.value },
         body: { body: body.trim() },
       },
-      { onSuccess },
+      { onSuccess }
     )
   }
 
