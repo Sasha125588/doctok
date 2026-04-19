@@ -13,13 +13,12 @@ const { state } = useFeed(lang)
 const { activeTopicSlug } = useFeedView()
 const { addRecent } = useTopicHistory()
 
-// Seed active topic once feed arrives.
+// Seed active topic once feed arrives. addRecent is handled by the recency watcher below.
 watch(
   () => state.topics.value,
   (topics) => {
     if (!activeTopicSlug.value && topics.length) {
       activeTopicSlug.value = topics[0].slug
-      addRecent(topics[0].slug)
     }
   },
   { immediate: true }
