@@ -50,6 +50,10 @@ function openNotes() {
 function openComments() {
   activePanel.value = activePanel.value === 'comments' ? null : 'comments'
 }
+
+onUnmounted(() => {
+  if (toastTimer) clearTimeout(toastTimer)
+})
 </script>
 
 <template>
