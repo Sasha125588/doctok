@@ -10,8 +10,8 @@ import { useLang } from '~/composables/useLang'
 import { useTopicHistory } from '~/composables/useTopicHistory'
 
 const { lang } = useLang()
-const { state } = useFeed(lang)
-const { activeTopicSlug } = useFeedView()
+const { state, functions } = useFeed(lang)
+const { activeTopicSlug, activePostIndex, activePanel, mode: feedMode, activeTopicPostCount } = useFeedView()
 const { addRecent } = useTopicHistory()
 
 // Seed active topic once feed arrives. addRecent is handled by the recency watcher below.
@@ -29,6 +29,59 @@ watch(
 watch(activeTopicSlug, (slug) => {
   if (slug) addRecent(slug)
 })
+
+function nextTopic(direction: 1 | -1) {
+  const topics = state.topics.value
+  const idx = topics.findIndex((t) => t.slug === activeTopicSlug.value)
+  if (idx === -1) return
+  const next = idx + direction
+  if (next >= 0 && next < topics.length) {
+    activeTopicSlug.value = topics[next].slug
+    activePostIndex.value = 0
+    return
+  }
+  if (direction === 1 && state.hasNextPage.value && !state.isFetchingNextPage.value) {
+    const lenBefore = topics.length
+    functions
+      .fetchNextPage()
+      .then(() => {
+        const updated = state.topics.value
+        if (updated.length > lenBefore) {
+          activeTopicSlug.value = updated[lenBefore].slug
+          activePostIndex.value = 0
+        }
+      })
+      .catch(() => {
+        /* swallow — user can retry */
+      })
+  }
+}
+
+function onKeydown(e: KeyboardEvent) {
+  if (feedMode.value !== 'focus') return
+  if (activePanel.value !== null) return
+  const tag = (document.activeElement?.tagName ?? '').toUpperCase()
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return
+
+  const len = activeTopicPostCount.value
+
+  if (e.key === 'ArrowRight') {
+    e.preventDefault()
+    activePostIndex.value = Math.min(activePostIndex.value + 1, Math.max(0, len - 1))
+  } else if (e.key === 'ArrowLeft') {
+    e.preventDefault()
+    activePostIndex.value = Math.max(0, activePostIndex.value - 1)
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    nextTopic(1)
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    nextTopic(-1)
+  }
+}
+
+onMounted(() => window.addEventListener('keydown', onKeydown))
+onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
