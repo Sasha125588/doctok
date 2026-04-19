@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { motion } from 'motion-v'
 
-import { useFeedView, type FeedMode, type ReadMode } from '~/composables/useFeedView'
+import { type FeedMode, type ReadMode, useFeedView } from '~/composables/useFeedView'
 
 const { mode, readMode } = useFeedView()
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { motion, AnimatePresence } from 'motion-v'
+import { AnimatePresence, motion } from 'motion-v'
 
 import { useFeed } from '~/composables/useFeed'
 import { useFeedView } from '~/composables/useFeedView'
