@@ -3,7 +3,6 @@ import FeedPage from './FeedPage.vue'
 import Rail from './Rail.vue'
 import Sidebar from './Sidebar.vue'
 import Topbar from './Topbar.vue'
-
 import { useFeed } from '~/composables/useFeed'
 import { useFeedView } from '~/composables/useFeedView'
 import { useLang } from '~/composables/useLang'
@@ -11,7 +10,13 @@ import { useTopicHistory } from '~/composables/useTopicHistory'
 
 const { lang } = useLang()
 const { state, functions } = useFeed(lang)
-const { activeTopicSlug, activePostIndex, activePanel, mode: feedMode, activeTopicPostCount } = useFeedView()
+const {
+  activeTopicSlug,
+  activePostIndex,
+  activePanel,
+  mode: feedMode,
+  activeTopicPostCount,
+} = useFeedView()
 const { addRecent } = useTopicHistory()
 
 // Seed active topic once feed arrives. addRecent is handled by the recency watcher below.

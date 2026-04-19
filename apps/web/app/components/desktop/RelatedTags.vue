@@ -25,7 +25,10 @@ function go(slug: string) {
 <template>
   <div class="wrap">
     <div class="label">→ related</div>
-    <div v-if="state.links.value.length" class="tags">
+    <div
+      v-if="state.links.value.length"
+      class="tags"
+    >
       <button
         v-for="link in state.links.value"
         :key="link.slug"
@@ -38,7 +41,9 @@ function go(slug: string) {
     <div
       v-else-if="state.isLoading.value"
       class="loading"
-    >…</div>
+    >
+      …
+    </div>
   </div>
 </template>
 

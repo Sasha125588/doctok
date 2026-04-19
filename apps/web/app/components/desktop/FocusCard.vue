@@ -79,7 +79,10 @@ async function onShare() {
 
     <h1 class="title">{{ post.title }}</h1>
 
-    <PostCardBody :body-html="post.bodyHtml" class="body" />
+    <PostCardBody
+      :body-html="post.bodyHtml"
+      class="body"
+    />
 
     <div class="spacer" />
 

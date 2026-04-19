@@ -30,7 +30,10 @@ const emit = defineEmits<{
       :transition="{ type: 'spring', stiffness: 400, damping: 22 }"
       @click="emit('onVote', 'like')"
     >
-      <Icon name="lucide:heart" class="icon" />
+      <Icon
+        name="lucide:heart"
+        class="icon"
+      />
       <span class="count">{{ likeCount }}</span>
     </motion.button>
 
@@ -42,7 +45,10 @@ const emit = defineEmits<{
       :transition="{ type: 'spring', stiffness: 400, damping: 22 }"
       @click="emit('onToggleSave')"
     >
-      <Icon name="lucide:bookmark" class="icon" />
+      <Icon
+        name="lucide:bookmark"
+        class="icon"
+      />
       <span class="label">save</span>
     </motion.button>
 
@@ -54,7 +60,10 @@ const emit = defineEmits<{
       :transition="{ type: 'spring', stiffness: 400, damping: 22 }"
       @click="emit('onOpenNote')"
     >
-      <Icon name="lucide:pencil" class="icon" />
+      <Icon
+        name="lucide:pencil"
+        class="icon"
+      />
       <span class="label">note</span>
     </motion.button>
 
@@ -65,7 +74,10 @@ const emit = defineEmits<{
       :transition="{ type: 'spring', stiffness: 400, damping: 22 }"
       @click="emit('onOpenComments')"
     >
-      <Icon name="lucide:message-square" class="icon" />
+      <Icon
+        name="lucide:message-square"
+        class="icon"
+      />
       <span class="count">{{ commentCount }}</span>
     </motion.button>
 
@@ -76,7 +88,10 @@ const emit = defineEmits<{
       :transition="{ type: 'spring', stiffness: 400, damping: 22 }"
       @click="emit('onShare')"
     >
-      <Icon name="lucide:share-2" class="icon" />
+      <Icon
+        name="lucide:share-2"
+        class="icon"
+      />
       <span class="label">share</span>
     </motion.button>
   </div>

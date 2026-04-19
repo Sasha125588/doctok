@@ -74,17 +74,23 @@ onUnmounted(() => {
           v-else-if="postsState.isLoading.value"
           key="loading"
           class="loading"
-        >// завантаження...</div>
+        >
+          // завантаження...
+        </div>
         <div
           v-else
           key="empty"
           class="loading"
-        >// оберіть тему</div>
+        >
+          // оберіть тему
+        </div>
       </AnimatePresence>
       <div
         v-if="toastMessage"
         class="toast"
-      >{{ toastMessage }}</div>
+      >
+        {{ toastMessage }}
+      </div>
     </div>
   </section>
 </template>

@@ -35,12 +35,17 @@ function selectTopic(slug: string) {
       <div class="title">Recent &amp; Pinned</div>
     </div>
     <div class="list">
-      <template v-for="section in sections" :key="section.label">
+      <template
+        v-for="section in sections"
+        :key="section.label"
+      >
         <div class="section">{{ section.label }}</div>
         <div
           v-if="!section.slugs.length"
           class="empty"
-        >// порожньо</div>
+        >
+          // порожньо
+        </div>
         <div
           v-for="slug in section.slugs"
           :key="section.label + ':' + slug"

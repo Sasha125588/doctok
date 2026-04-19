@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import DesktopSidePanel from './DesktopSidePanel.vue'
-
 import { useFeedView } from '~/composables/useFeedView'
 import { useLang } from '~/composables/useLang'
 import { useNotes } from '~/composables/useNotes'
@@ -42,7 +41,11 @@ function close() {
 </script>
 
 <template>
-  <DesktopSidePanel :open="isOpen" title="note" @close="close">
+  <DesktopSidePanel
+    :open="isOpen"
+    title="note"
+    @close="close"
+  >
     <div class="area">
       <textarea
         v-model="text"
@@ -50,7 +53,12 @@ function close() {
         placeholder="Твої нотатки до цього поста..."
       />
       <div class="hint">// зберігається локально</div>
-      <button class="save" @click="save">зберегти →</button>
+      <button
+        class="save"
+        @click="save"
+      >
+        зберегти →
+      </button>
     </div>
   </DesktopSidePanel>
 </template>

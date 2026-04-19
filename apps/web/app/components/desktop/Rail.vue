@@ -2,8 +2,20 @@
 const navItems = [
   { key: 'feed', icon: 'lucide:layout-grid', title: 'Стрічка', active: true, disabled: false },
   { key: 'search', icon: 'lucide:search', title: 'Каталог (скоро)', active: false, disabled: true },
-  { key: 'courses', icon: 'lucide:book-open', title: 'Міні-курси (скоро)', active: false, disabled: true },
-  { key: 'saved', icon: 'lucide:bookmark', title: 'Збережене (скоро)', active: false, disabled: true },
+  {
+    key: 'courses',
+    icon: 'lucide:book-open',
+    title: 'Міні-курси (скоро)',
+    active: false,
+    disabled: true,
+  },
+  {
+    key: 'saved',
+    icon: 'lucide:bookmark',
+    title: 'Збережене (скоро)',
+    active: false,
+    disabled: true,
+  },
 ]
 const footerItem = {
   key: 'profile',
@@ -24,7 +36,10 @@ const footerItem = {
       :title="item.title"
       :disabled="item.disabled"
     >
-      <Icon :name="item.icon" class="icon" />
+      <Icon
+        :name="item.icon"
+        class="icon"
+      />
     </button>
     <div class="spacer" />
     <button
@@ -32,7 +47,10 @@ const footerItem = {
       :title="footerItem.title"
       :disabled="footerItem.disabled"
     >
-      <Icon :name="footerItem.icon" class="icon" />
+      <Icon
+        :name="footerItem.icon"
+        class="icon"
+      />
     </button>
   </nav>
 </template>

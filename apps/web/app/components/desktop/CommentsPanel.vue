@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import DesktopSidePanel from './DesktopSidePanel.vue'
-
 import { useComments } from '~/composables/useComments'
 import { useFeedView } from '~/composables/useFeedView'
 import { useLang } from '~/composables/useLang'
@@ -52,11 +51,29 @@ function formatTime(iso: string | undefined) {
 </script>
 
 <template>
-  <DesktopSidePanel :open="isOpen" title="comments" @close="close">
+  <DesktopSidePanel
+    :open="isOpen"
+    title="comments"
+    @close="close"
+  >
     <div class="list">
-      <div v-if="isLoading" class="empty">// завантаження...</div>
-      <div v-else-if="!comments.length" class="empty">// поки немає коментарів</div>
-      <div v-for="c in comments" :key="String(c.id)" class="comment">
+      <div
+        v-if="isLoading"
+        class="empty"
+      >
+        // завантаження...
+      </div>
+      <div
+        v-else-if="!comments.length"
+        class="empty"
+      >
+        // поки немає коментарів
+      </div>
+      <div
+        v-for="c in comments"
+        :key="String(c.id)"
+        class="comment"
+      >
         <div class="meta">
           <div class="avatar">{{ initial(c.userId) }}</div>
           <span class="author">{{ c.userId ?? 'user' }}</span>
@@ -73,7 +90,13 @@ function formatTime(iso: string | undefined) {
         placeholder="написати..."
         @keydown.enter.exact.prevent="submit"
       />
-      <button class="send" :disabled="isSending" @click="submit">→</button>
+      <button
+        class="send"
+        :disabled="isSending"
+        @click="submit"
+      >
+        →
+      </button>
     </div>
   </DesktopSidePanel>
 </template>

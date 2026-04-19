@@ -5,7 +5,6 @@ import BrowseMode from './BrowseMode.vue'
 import CommentsPanel from './CommentsPanel.vue'
 import FocusMode from './FocusMode.vue'
 import NotesPanel from './NotesPanel.vue'
-
 import { useFeedView } from '~/composables/useFeedView'
 
 const { mode, activeTopicSlug } = useFeedView()

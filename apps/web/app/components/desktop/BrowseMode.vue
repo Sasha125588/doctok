@@ -33,10 +33,18 @@ function open(index: number) {
         >
           <PostKindBadge :kind="post.kind" />
           <div class="title">{{ post.title }}</div>
-          <div class="body" v-html="post.bodyHtml" />
+          <div
+            class="body"
+            v-html="post.bodyHtml"
+          />
         </button>
       </div>
-      <div v-if="!state.posts.value.length" class="empty">// нема постів</div>
+      <div
+        v-if="!state.posts.value.length"
+        class="empty"
+      >
+        // нема постів
+      </div>
     </div>
   </section>
 </template>

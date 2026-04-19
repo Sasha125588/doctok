@@ -17,10 +17,18 @@ const emit = defineEmits<{
     :animate="{ width: open ? 210 : 0 }"
     :transition="{ duration: 0.22, ease: 'easeInOut' }"
   >
-    <div class="inner" :class="{ 'is-hidden': !open }">
+    <div
+      class="inner"
+      :class="{ 'is-hidden': !open }"
+    >
       <header class="header">
         <span class="title">// {{ title }}</span>
-        <button class="close" @click="emit('close')">×</button>
+        <button
+          class="close"
+          @click="emit('close')"
+        >
+          ×
+        </button>
       </header>
       <slot />
     </div>
