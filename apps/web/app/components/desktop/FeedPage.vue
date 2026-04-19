@@ -2,7 +2,9 @@
 import { AnimatePresence, motion } from 'motion-v'
 
 import BrowseMode from './BrowseMode.vue'
+import CommentsPanel from './CommentsPanel.vue'
 import FocusMode from './FocusMode.vue'
+import NotesPanel from './NotesPanel.vue'
 
 import { useFeedView } from '~/composables/useFeedView'
 
@@ -40,7 +42,8 @@ const slugKey = computed(() => `slug:${activeTopicSlug.value}`)
         </motion.div>
       </AnimatePresence>
     </div>
-    <!-- Side panels inserted in Chunk 6 -->
+    <CommentsPanel :key="`comments-${slugKey}`" />
+    <NotesPanel :key="`notes-${slugKey}`" />
   </div>
 </template>
 
