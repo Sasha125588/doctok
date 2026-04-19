@@ -20,7 +20,8 @@ public class Endpoint: IEndpoint
     {
       var userId = CurrentUser.GetUserIdOrThrow(user);
 
-      var result = await handler.Handle(new Command(commentId, userId, req.Value), ct);
+      var c = new Command(commentId, userId, req.Value);
+      var result = await handler.Handle(c, ct);
 
       return result.ToResponse(Results.Ok);
     })

@@ -10,7 +10,7 @@ public sealed class TopicsGetPostsQueryParams : LangQueryParams
   [FromQuery(Name = "slug")]
   [StringLength(512)]
   [Required]
-  public string? Slug { get; init; }
+  public required string Slug { get; init; }
 
   [FromQuery(Name = "limit")]
   [Range(1, 50)]

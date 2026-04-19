@@ -18,7 +18,9 @@ public sealed class Endpoint : IEndpoint
         CancellationToken ct) =>
       {
         var userId = CurrentUser.GetUserIdOrThrow(user);
-        var result = await handler.Handle(new Command(commentId, userId, req.Body.Trim()), ct);
+
+        var c = new Command(commentId, userId, req.Body.Trim());
+        var result = await handler.Handle(c, ct);
 
         return result.ToResponse(comment => Results.Created($"/api/comments/{commentId}/replies/{comment.Id}", comment));
       })

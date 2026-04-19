@@ -9,5 +9,5 @@ public sealed class ResolveMdnQueryParams : LangQueryParams
   [FromQuery(Name = "externalRef")]
   [StringLength(512)]
   [Required]
-  public string? ExternalRef { get; init; }
+  public required string ExternalRef { get; init; }
 }

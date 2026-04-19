@@ -10,5 +10,5 @@ public abstract class LangQueryParams
   [StringLength(10)]
   [DefaultValue("en")]
   [Required]
-  public string? Lang { get; init; }
+  public required string Lang { get; init; }
 }

@@ -10,10 +10,9 @@ public sealed class Endpoint : IAdminEndpoint
             PreloadMdnRequest req,
             Handler handler,
             CancellationToken ct) =>
-        {
-            var res = await handler.Handle(
-                new Command(req.Lang, req.Count, req.Seed, req.Prefix),
-                ct);
+          {
+            var c = new Command(req.Lang, req.Count, req.Seed, req.Prefix);
+            var res = await handler.Handle(c, ct);
 
             return Results.Ok(res);
         })

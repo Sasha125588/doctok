@@ -19,7 +19,9 @@ public sealed class Endpoint : IEndpoint
         CancellationToken ct) =>
       {
         var userId = CurrentUser.GetUserIdOrThrow(user);
-        var result = await handler.Handle(new Command(postId, userId, req.Value), ct);
+        var c = new Command(postId, userId, req.Value);
+
+        var result = await handler.Handle(c, ct);
 
         return result.ToResponse(Results.Ok);
       })

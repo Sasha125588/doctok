@@ -17,7 +17,7 @@ public sealed class Endpoint : IEndpoint
     {
       var userId = CurrentUser.GetUserIdOrNull(user);
 
-      var q = new Query(query.Slug ?? string.Empty, query.Lang, query.Limit, query.Cursor, userId);
+      var q = new Query(query.Slug, query.Lang, query.Limit, query.Cursor, userId);
       var result = await handler.Handle(q, ct);
 
       return result.ToResponse(Results.Ok);

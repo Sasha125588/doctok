@@ -12,7 +12,8 @@ public sealed class Endpoint : IEndpoint
         Handler handler,
         CancellationToken ct) =>
       {
-        var q = new Query(query.ExternalRef ?? string.Empty, query.Lang ?? "en");
+        var q = new Query(query.ExternalRef, query.Lang);
+
         var result = await handler.Handle(q, ct);
 
         return result.ToResponse(Results.Ok);

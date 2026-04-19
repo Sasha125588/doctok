@@ -11,5 +11,5 @@ public sealed class TopicsStreamQueryParams : LangQueryParams
   [StringLength(512)]
   [DefaultValue("mdn/web/api/element/scrollheight")]
   [Required]
-  public string? Slug { get; init; }
+  public required string Slug { get; init; }
 }

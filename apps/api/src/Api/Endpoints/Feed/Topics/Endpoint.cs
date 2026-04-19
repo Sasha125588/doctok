@@ -11,7 +11,9 @@ public sealed class Endpoint : IEndpoint
         Handler handler,
         CancellationToken ct) =>
       {
-        var result = await handler.Handle(new Query(query.Cursor, query.Lang, query.Limit), ct);
+        var q = new Query(query.Cursor, query.Lang, query.Limit);
+        var result = await handler.Handle(q, ct);
+
         return Results.Ok(result);
       })
       .WithTags("Feed")

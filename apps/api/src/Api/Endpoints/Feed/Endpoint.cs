@@ -18,7 +18,9 @@ public sealed class Endpoint : IEndpoint
         if (user.Identity?.IsAuthenticated == true)
           userId = CurrentUser.GetUserIdOrThrow(user);
 
-        var result = await handler.Handle(new Query(query.Cursor, query.Lang, query.Limit, userId), ct);
+        var q = new Query(query.Cursor, query.Lang, query.Limit, userId);
+        var result = await handler.Handle(q, ct);
+
         return Results.Ok(result);
       })
       .WithTags("Feed")
