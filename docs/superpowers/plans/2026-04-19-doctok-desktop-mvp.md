@@ -214,6 +214,7 @@ const mode = ref<FeedMode>('focus')
 const readMode = ref<ReadMode>('simplified')
 const activePanel = ref<FeedPanel>(null)
 const sidebarHidden = ref(false)
+const activeTopicPostCount = ref(0)
 
 export function useFeedView() {
   return {
@@ -223,6 +224,7 @@ export function useFeedView() {
     readMode,
     activePanel,
     sidebarHidden,
+    activeTopicPostCount,
   }
 }
 ```
@@ -1287,92 +1289,63 @@ git add apps/web/app/components/desktop/ActionsColumn.vue
 git commit -m "feat(web): add desktop ActionsColumn with spring taps (task 4.3)"
 ```
 
-### Task 4.4: FocusMode component
+### Task 4.4: FocusCard component (per-post wrapper)
 
 **Files:**
-- Create: `apps/web/app/components/desktop/FocusMode.vue`
+- Create: `apps/web/app/components/desktop/FocusCard.vue`
+
+This wrapper owns `useVote` for a single post. Parent (`FocusMode`) remounts it via `:key="cardKey"` so composable lifecycle matches the active post. Mirrors the existing `PostCard.vue` pattern (`apps/web/app/components/post/PostCard.vue`).
 
 - [ ] **Step 1:** Write
 
 ```vue
 <script setup lang="ts">
-import { AnimatePresence, motion } from 'motion-v'
+import { motion } from 'motion-v'
 
 import ActionsColumn from './ActionsColumn.vue'
 import CardMeta from './CardMeta.vue'
 import RelatedTags from './RelatedTags.vue'
 import PostCardBody from '~/components/post/PostCardBody.vue'
-import { useFeedView } from '~/composables/useFeedView'
-import { useLang } from '~/composables/useLang'
 import { useNotes } from '~/composables/useNotes'
 import { useSavedPosts } from '~/composables/useSavedPosts'
-import { useTopicPosts } from '~/composables/useTopicPosts'
 import { useVote } from '~/composables/useVote'
 
-import type { ReactionValue } from '#api/types.gen'
+import type { ReactionValue, TopicPostView } from '#api/types.gen'
 
-const { lang } = useLang()
-const { activeTopicSlug, activePostIndex, activePanel } = useFeedView()
+const props = defineProps<{
+  post: TopicPostView
+  totalPosts: number
+  currentIndex: number
+}>()
+
+const emit = defineEmits<{
+  openNotes: []
+  openComments: []
+  toast: [string]
+}>()
+
 const { isSaved, toggle: toggleSave } = useSavedPosts()
 const { has: hasNote } = useNotes()
 
-const { state: postsState } = useTopicPosts({
-  query: {
-    slug: activeTopicSlug.value ?? '',
-    lang: lang.value,
-  },
+const localMyVote = ref<ReactionValue>(props.post.myVote)
+const localLikeCount = ref(+props.post.likeCount)
+// localDislikeCount is required by useVote's contract but not rendered in ActionsColumn.
+const localDislikeCount = ref(+props.post.dislikeCount)
+
+const { functions } = useVote({
+  postId: +props.post.id,
+  topicSlug: props.post.topicSlug,
+  localMyVote,
+  localLikeCount,
+  localDislikeCount,
 })
-
-// Refetch when slug changes (query key already includes slug, but the composable
-// was built with a snapshot call — we re-instantiate via key on parent).
-const activePost = computed(() => postsState.posts.value[activePostIndex.value])
-
-// Local reaction mirror — same pattern as PostCardActions.vue
-const localMyVote = ref<ReactionValue>('none')
-const localLikeCount = ref(0)
-const localDislikeCount = ref(0)
-
-watch(
-  activePost,
-  (post) => {
-    if (!post) return
-    localMyVote.value = post.myVote
-    localLikeCount.value = +post.likeCount
-    localDislikeCount.value = +post.dislikeCount
-  },
-  { immediate: true }
-)
-
-const voteFns = computed(() => {
-  if (!activePost.value) return null
-  return useVote({
-    postId: +activePost.value.id,
-    topicSlug: activePost.value.topicSlug,
-    localMyVote,
-    localLikeCount,
-    localDislikeCount,
-  }).functions
-})
-
-function onVote(value: ReactionValue) {
-  voteFns.value?.onVote(value)
-}
 
 function onToggleSave() {
-  if (activePost.value) toggleSave(activePost.value)
-}
-
-function onOpenComments() {
-  activePanel.value = activePanel.value === 'comments' ? null : 'comments'
-}
-
-function onOpenNote() {
-  activePanel.value = activePanel.value === 'notes' ? null : 'notes'
+  toggleSave(props.post)
 }
 
 async function onShare() {
-  if (!activePost.value) return
-  const url = `${window.location.origin}/topic/${activePost.value.topicSlug}`
+  const url = `${window.location.origin}/topic/${props.post.topicSlug}`
   if (navigator.share) {
     try {
       await navigator.share({ url })
@@ -1383,86 +1356,53 @@ async function onShare() {
   }
   try {
     await navigator.clipboard.writeText(url)
+    emit('toast', 'скопійовано')
   } catch {
     /* ignored */
   }
 }
-
-const cardKey = computed(() => `${activeTopicSlug.value}:${activePostIndex.value}`)
 </script>
 
 <template>
-  <section class="focus">
-    <div class="card-area">
-      <AnimatePresence mode="wait">
-        <motion.article
-          v-if="activePost"
-          :key="cardKey"
-          class="card"
-          :initial="{ opacity: 0, x: 14 }"
-          :animate="{ opacity: 1, x: 0 }"
-          :exit="{ opacity: 0, x: -14 }"
-          :transition="{ duration: 0.18, ease: 'easeOut' }"
-        >
-          <CardMeta
-            :topic-title="activePost.topicTitle"
-            :kind="activePost.kind"
-            :total-posts="postsState.posts.value.length"
-            :current-index="activePostIndex"
-          />
+  <motion.article
+    class="card"
+    :initial="{ opacity: 0, x: 14 }"
+    :animate="{ opacity: 1, x: 0 }"
+    :exit="{ opacity: 0, x: -14 }"
+    :transition="{ duration: 0.18, ease: 'easeOut' }"
+  >
+    <CardMeta
+      :topic-title="post.topicTitle"
+      :kind="post.kind"
+      :total-posts="totalPosts"
+      :current-index="currentIndex"
+    />
 
-          <h1 class="title">{{ activePost.title }}</h1>
+    <h1 class="title">{{ post.title }}</h1>
 
-          <PostCardBody :body-html="activePost.bodyHtml" class="body" />
+    <PostCardBody :body-html="post.bodyHtml" class="body" />
 
-          <div class="spacer" />
+    <div class="spacer" />
 
-          <div class="bottom">
-            <RelatedTags />
-            <ActionsColumn
-              :my-vote="localMyVote"
-              :like-count="localLikeCount"
-              :comment-count="activePost.commentCount"
-              :is-saved="isSaved(+activePost.id)"
-              :has-note="hasNote(activePost.id)"
-              @on-vote="onVote"
-              @on-toggle-save="onToggleSave"
-              @on-open-note="onOpenNote"
-              @on-open-comments="onOpenComments"
-              @on-share="onShare"
-            />
-          </div>
-        </motion.article>
-        <div
-          v-else-if="postsState.isLoading.value"
-          key="loading"
-          class="loading"
-        >// завантаження...</div>
-        <div
-          v-else
-          key="empty"
-          class="loading"
-        >// оберіть тему</div>
-      </AnimatePresence>
+    <div class="bottom">
+      <RelatedTags />
+      <ActionsColumn
+        :my-vote="localMyVote"
+        :like-count="localLikeCount"
+        :comment-count="+post.commentCount"
+        :is-saved="isSaved(+post.id)"
+        :has-note="hasNote(+post.id)"
+        @on-vote="functions.onVote"
+        @on-toggle-save="onToggleSave"
+        @on-open-note="emit('openNotes')"
+        @on-open-comments="emit('openComments')"
+        @on-share="onShare"
+      />
     </div>
-  </section>
+  </motion.article>
 </template>
 
 <style scoped>
-.focus {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  overflow: hidden;
-}
-.card-area {
-  flex: 1;
-  padding: 18px 28px 18px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  position: relative;
-}
 .card {
   flex: 1;
   display: flex;
@@ -1492,6 +1432,126 @@ const cardKey = computed(() => `${activeTopicSlug.value}:${activePostIndex.value
   gap: 12px;
   flex-shrink: 0;
 }
+</style>
+```
+
+- [ ] **Step 2:** Commit
+
+```bash
+git add apps/web/app/components/desktop/FocusCard.vue
+git commit -m "feat(web): add desktop FocusCard per-post wrapper with useVote (task 4.4)"
+```
+
+### Task 4.5: FocusMode container
+
+**Files:**
+- Create: `apps/web/app/components/desktop/FocusMode.vue`
+
+- [ ] **Step 1:** Write
+
+```vue
+<script setup lang="ts">
+import { AnimatePresence } from 'motion-v'
+
+import FocusCard from './FocusCard.vue'
+import { useFeedView } from '~/composables/useFeedView'
+import { useLang } from '~/composables/useLang'
+import { useTopicPosts } from '~/composables/useTopicPosts'
+
+const { lang } = useLang()
+const { activeTopicSlug, activePostIndex, activePanel, activeTopicPostCount } = useFeedView()
+
+// Snapshot slug: FocusMode is re-keyed by FeedPage on slug change (see Task 5.2),
+// so the composable remounts naturally. Mirrors the `topic/[...slug].vue` approach.
+const { state: postsState } = useTopicPosts({
+  query: {
+    slug: activeTopicSlug.value ?? '',
+    lang: lang.value,
+  },
+})
+
+const activePost = computed(() => postsState.posts.value[activePostIndex.value])
+
+// Publish post count to shared state so keyboard handler (DesktopShell, Task 6.6)
+// can bound ← / → navigation without re-calling useTopicPosts.
+watch(
+  () => postsState.posts.value.length,
+  (len) => {
+    activeTopicPostCount.value = len
+  },
+  { immediate: true }
+)
+
+const cardKey = computed(() => `${activeTopicSlug.value}:${activePostIndex.value}`)
+
+const toastMessage = ref<string | null>(null)
+let toastTimer: ReturnType<typeof setTimeout> | null = null
+
+function showToast(msg: string) {
+  toastMessage.value = msg
+  if (toastTimer) clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => {
+    toastMessage.value = null
+  }, 1600)
+}
+
+function openNotes() {
+  activePanel.value = activePanel.value === 'notes' ? null : 'notes'
+}
+
+function openComments() {
+  activePanel.value = activePanel.value === 'comments' ? null : 'comments'
+}
+</script>
+
+<template>
+  <section class="focus">
+    <div class="card-area">
+      <AnimatePresence mode="wait">
+        <FocusCard
+          v-if="activePost"
+          :key="cardKey"
+          :post="activePost"
+          :total-posts="postsState.posts.value.length"
+          :current-index="activePostIndex"
+          @open-notes="openNotes"
+          @open-comments="openComments"
+          @toast="showToast"
+        />
+        <div
+          v-else-if="postsState.isLoading.value"
+          key="loading"
+          class="loading"
+        >// завантаження...</div>
+        <div
+          v-else
+          key="empty"
+          class="loading"
+        >// оберіть тему</div>
+      </AnimatePresence>
+      <div
+        v-if="toastMessage"
+        class="toast"
+      >{{ toastMessage }}</div>
+    </div>
+  </section>
+</template>
+
+<style scoped>
+.focus {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+.card-area {
+  flex: 1;
+  padding: 18px 28px 18px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
 .loading {
   flex: 1;
   display: flex;
@@ -1500,17 +1560,53 @@ const cardKey = computed(() => `${activeTopicSlug.value}:${activePostIndex.value
   font-size: 11px;
   color: var(--dt-text-quaternary);
 }
+.toast {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #141414;
+  border: 1px solid #222;
+  color: var(--dt-text-tertiary);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  letter-spacing: 0.08em;
+  pointer-events: none;
+}
 </style>
 ```
 
-**Note on useTopicPosts reactivity:** The composable is instantiated once per mount with a snapshot of `activeTopicSlug.value`. To refresh when slug changes, `FocusMode` must be re-mounted. We handle that by keying the component in the parent (`FeedPage`, Task 5.1). That keeps the composable logic simple and matches how `PostCarousel` is already used in `topic/[...slug].vue`.
+**Note on reactivity:**
+- `useTopicPosts` takes a snapshot of `activeTopicSlug`. `FocusMode` is re-keyed by the parent (`FeedPage`, Task 5.2) on slug change, so the composable remounts and refetches correctly.
+- `useVote` in `FocusCard` also takes a snapshot of `postId` — `FocusCard` is keyed on `cardKey` (topic + index) so it remounts when the active post changes. Mirrors the `PostCard.vue` pattern at [post/PostCard.vue:32](apps/web/app/components/post/PostCard.vue:32).
+- `useTopicLinks` in `RelatedTags` (Task 4.2) is also snapshot-based, but since `RelatedTags` is a child of `FocusCard` which remounts on slug change, it refetches correctly too.
 
 - [ ] **Step 2:** Commit
 
 ```bash
 git add apps/web/app/components/desktop/FocusMode.vue
-git commit -m "feat(web): add desktop FocusMode card with reactions/share (task 4.4)"
+git commit -m "feat(web): add desktop FocusMode container with toast (task 4.5)"
 ```
+
+### Task 4.6: Typecheck verification
+
+- [ ] **Step 1:** Run
+
+```bash
+cd apps/web && bun run postinstall && bunx nuxt typecheck
+```
+
+Expected: No TypeScript errors in `components/desktop/`. If `bunx nuxt typecheck` is unavailable, use `bunx vue-tsc --noEmit` as a fallback. The linter check:
+
+```bash
+cd apps/web && bun run lint
+```
+
+Expected: No errors from new files. Warnings acceptable only if pre-existing.
+
+- [ ] **Step 2:** No commit (verification only)
 
 ---
 
@@ -2269,14 +2365,16 @@ import CommentsPanel from './CommentsPanel.vue'
 import NotesPanel from './NotesPanel.vue'
 ```
 
-And add panels inside the root `.feed-page` after `.stack`:
+And add panels inside the root `.feed-page` after `.stack`, keyed on `slugKey` so the panels' `useTopicPosts` call (which resolves the active post for notes/comments) re-instantiates on topic change:
 
 ```vue
-    <CommentsPanel />
-    <NotesPanel />
+    <CommentsPanel :key="`comments-${slugKey}`" />
+    <NotesPanel :key="`notes-${slugKey}`" />
 ```
 
 (Remove the `<!-- Side panels inserted in Chunk 6 -->` comment.)
+
+**Why the key:** Both `NotesPanel` and `CommentsPanel` call `useTopicPosts({ query: { slug: activeTopicSlug.value ?? '' } })` — a snapshot of the slug at mount time. Without re-keying, switching topics leaves the panel reading from the previous topic's posts cache. Keying on `slugKey` (already computed in `FeedPage` as `activeTopicSlug.value ?? ''`) forces remount on slug change, matching the `FocusMode` / `BrowseMode` approach.
 
 - [ ] **Step 2:** Verify:
   - Click the comment icon in ActionsColumn → comments panel slides in from the right (210px).
@@ -2298,22 +2396,23 @@ git commit -m "feat(web): mount comments/notes panels in FeedPage (task 6.5)"
 **Files:**
 - Modify: `apps/web/app/components/desktop/DesktopShell.vue`
 
-- [ ] **Step 1:** Add inside `<script setup lang="ts">`, after existing watches:
+- [ ] **Step 1:** In `DesktopShell.vue`:
+
+**(a)** Update the existing `useFeedView()` destructure (added in Task 3.4) to include the extra refs needed by the keyboard handler. Do **NOT** add a second `useFeedView()` call or duplicate the import. The line should become:
 
 ```ts
-import { useTopicPosts } from '~/composables/useTopicPosts'
-import { useFeedView } from '~/composables/useFeedView' // already imported above; keep single import
+const { activeTopicSlug, activePostIndex, activePanel, mode: feedMode, activeTopicPostCount } = useFeedView()
+```
 
-const { activePostIndex, activePanel, mode: feedMode } = useFeedView()
+**(b)** Update the `useFeed` destructure to include `functions`:
 
-// Posts for current topic (for ←→ bounds)
-const { state: postsState } = useTopicPosts({
-  query: {
-    slug: activeTopicSlug.value ?? '',
-    lang: lang.value,
-  },
-})
+```ts
+const { state, functions } = useFeed(lang)
+```
 
+**(c)** Add, after the existing `watch(() => state.topics.value, ...)` block:
+
+```ts
 function nextTopic(direction: 1 | -1) {
   const topics = state.topics.value
   const idx = topics.findIndex((t) => t.slug === activeTopicSlug.value)
@@ -2326,23 +2425,28 @@ function nextTopic(direction: 1 | -1) {
   }
   if (direction === 1 && state.hasNextPage.value && !state.isFetchingNextPage.value) {
     const lenBefore = topics.length
-    functions.fetchNextPage().then(() => {
-      const updated = state.topics.value
-      if (updated.length > lenBefore) {
-        activeTopicSlug.value = updated[lenBefore].slug
-        activePostIndex.value = 0
-      }
-    })
+    functions
+      .fetchNextPage()
+      .then(() => {
+        const updated = state.topics.value
+        if (updated.length > lenBefore) {
+          activeTopicSlug.value = updated[lenBefore].slug
+          activePostIndex.value = 0
+        }
+      })
+      .catch(() => {
+        /* swallow — user can retry */
+      })
   }
 }
 
 function onKeydown(e: KeyboardEvent) {
-  if (!feedMode.value || feedMode.value !== 'focus') return
+  if (feedMode.value !== 'focus') return
   if (activePanel.value !== null) return
   const tag = (document.activeElement?.tagName ?? '').toUpperCase()
   if (tag === 'INPUT' || tag === 'TEXTAREA') return
 
-  const len = postsState.posts.value.length
+  const len = activeTopicPostCount.value
 
   if (e.key === 'ArrowRight') {
     e.preventDefault()
@@ -2363,15 +2467,12 @@ onMounted(() => window.addEventListener('keydown', onKeydown))
 onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 ```
 
-Also update the destructure of `useFeed` at the top to include `functions`:
-
-```ts
-const { state, functions } = useFeed(lang)
-```
+**Note on post count source:** We read `activeTopicPostCount` from the shared `useFeedView` store rather than re-calling `useTopicPosts` here. `FocusMode` publishes the live count via a watch (Task 4.5), so this value stays in sync across topic changes without DesktopShell needing its own query subscription.
 
 - [ ] **Step 2:** Verify:
   - With focus-mode active and no side panel open, `→` / `←` navigates posts inside current topic (stops at ends).
   - `↓` / `↑` switches to next/previous topic (in feed order), reset post index to 0.
+  - **Topic-change bounds:** switch to a topic with a different post count (e.g. via sidebar click), then press `→` — the index must stop at the new topic's `len - 1`, not the previous topic's. This confirms `activeTopicPostCount` propagates correctly from `FocusMode`.
   - When on the last loaded topic, pressing `↓` triggers `fetchNextPage` (observe network tab) and jumps into the first newly loaded topic.
   - Pressing arrow keys while typing in a textarea (Notes or Comments) does **not** navigate — the event is consumed by the input naturally; our handler bails out on tag check.
   - Opening comments panel and pressing arrows: no navigation.
