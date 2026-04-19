@@ -1,0 +1,810 @@
+
+<h2 class="sr-only">DocTok v6 — виправлені tooltips, share, окрема сторінка міні-курсів</h2>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+#dt{background:#080808;border-radius:14px;overflow:hidden;display:flex;height:600px;font-family:'SF Mono','Fira Code','Consolas','Menlo',monospace;}
+#dt-rail{width:50px;border-right:1px solid #111;display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:2px;flex-shrink:0;}
+.rail-btn{width:36px;height:36px;border-radius:8px;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s;}
+.rail-btn:hover{background:#111;}
+.rail-btn.active{background:#001f0d;}
+.rail-btn svg{width:16px;height:16px;stroke:#333;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;transition:stroke 0.15s;}
+.rail-btn.active svg{stroke:#00e87a;}
+.rail-btn:hover:not(.active) svg{stroke:#555;}
+.rail-spacer{flex:1;}
+.rail-logo{font-size:10px;font-weight:700;color:#00e87a;letter-spacing:0.15em;writing-mode:vertical-rl;transform:rotate(180deg);margin-bottom:6px;padding:8px 0;}
+
+#dt-sidebar{width:168px;border-right:1px solid #111;display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;transition:width 0.22s ease,opacity 0.18s ease,border-color 0.22s ease;}
+#dt-sidebar.hidden{width:0;opacity:0;border-color:transparent;pointer-events:none;}
+#dt-sidebar-header{padding:12px 14px 8px;border-bottom:1px solid #0e0e0e;flex-shrink:0;}
+#dt-sidebar-title{font-size:8px;color:#2a2a2a;letter-spacing:0.14em;text-transform:uppercase;white-space:nowrap;}
+#dt-topic-list{overflow-y:auto;flex:1;padding:6px 0;}
+#dt-topic-list::-webkit-scrollbar{width:2px;}
+#dt-topic-list::-webkit-scrollbar-thumb{background:#1a1a1a;}
+.dt-topic-item{display:flex;align-items:center;gap:8px;padding:7px 12px;cursor:pointer;transition:background 0.12s;position:relative;white-space:nowrap;}
+.dt-topic-item:hover{background:#0c0c0c;}
+.dt-topic-item.active{background:#0f1a0f;}
+.dt-active-bar{position:absolute;left:0;top:0;bottom:0;width:2px;background:#00e87a;border-radius:0 2px 2px 0;}
+.dt-topic-icon{font-size:11px;color:#282828;width:18px;text-align:center;}
+.dt-topic-item.active .dt-topic-icon{color:#00e87a;}
+.dt-topic-name{font-size:11px;color:#444;flex:1;overflow:hidden;text-overflow:ellipsis;}
+.dt-topic-item.active .dt-topic-name{color:#c8e8c0;}
+.dt-topic-badge{font-size:7px;color:#1e1e1e;background:#0e0e0e;padding:1px 5px;border-radius:2px;}
+.dt-sidebar-section{font-size:7px;color:#1a1a1a;letter-spacing:0.12em;text-transform:uppercase;padding:10px 12px 4px;white-space:nowrap;}
+
+#dt-main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+#dt-topbar{height:46px;border-bottom:1px solid #111;display:flex;align-items:center;padding:0 18px;gap:10px;flex-shrink:0;}
+#dt-page-title{font-size:11px;color:#2a2a2a;letter-spacing:0.1em;white-space:nowrap;}
+#dt-mode-toggle{display:flex;border:1px solid #161616;border-radius:4px;overflow:hidden;}
+.dt-mode-btn{font-size:8px;padding:4px 11px;border:none;background:none;cursor:pointer;font-family:inherit;letter-spacing:0.08em;color:#2a2a2a;transition:all 0.15s;}
+.dt-mode-btn.active{background:#001f0d;color:#00e87a;}
+.dt-mode-btn:hover:not(.active){background:#0c0c0c;color:#555;}
+#dt-read-mode-toggle{display:flex;border:1px solid #161616;border-radius:4px;overflow:hidden;margin-left:auto;}
+.dt-rm-btn{font-size:8px;padding:4px 9px;border:none;background:none;cursor:pointer;font-family:inherit;letter-spacing:0.06em;color:#222;transition:all 0.15s;white-space:nowrap;}
+.dt-rm-btn.active{background:#0d1f35;color:#6ab4ff;}
+.dt-rm-btn:hover:not(.active){background:#0c0c0c;color:#444;}
+
+.dt-page{display:none;flex:1;flex-direction:column;overflow:hidden;}
+.dt-page.visible{display:flex;}
+#page-feed{flex-direction:row!important;}
+#dt-feed-content{display:flex;flex-direction:column;flex:1;overflow:hidden;min-width:0;}
+
+#mode-focus{display:flex;flex-direction:column;flex:1;overflow:hidden;}
+#dt-card-area{flex:1;padding:18px 28px 12px;display:flex;flex-direction:column;overflow:visible;position:relative;}
+#dt-card{flex:1;display:flex;flex-direction:column;gap:9px;transition:opacity 0.18s ease,transform 0.18s ease;min-height:0;}
+
+/* MERGED META ROW: breadcrumb + kind + dots + source */
+#dt-meta-row{display:flex;align-items:center;gap:7px;flex-shrink:0;flex-wrap:nowrap;overflow:hidden;}
+.dt-bc-cat{font-size:8px;color:#1a1a1a;cursor:pointer;transition:color 0.15s;white-space:nowrap;}
+.dt-bc-cat:hover{color:#444;}
+.dt-bc-sep{font-size:8px;color:#141414;}
+.dt-bc-topic{font-size:8px;color:#2a2a2a;white-space:nowrap;}
+#dt-kind-badge{font-size:8px;padding:2px 8px;border-radius:2px;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;flex-shrink:0;}
+#dt-prog-dots{display:flex;gap:3px;align-items:center;flex-shrink:0;}
+.dt-pdot{height:2px;border-radius:1px;transition:width 0.22s,background 0.22s;}
+#dt-source-badge{font-size:7px;padding:2px 7px;border-radius:2px;border:1px solid #161616;color:#2a2a2a;flex-shrink:0;margin-left:auto;}
+
+#dt-title{font-family:Georgia,'Palatino Linotype',serif;font-size:27px;font-weight:700;color:#eeece4;line-height:1.2;letter-spacing:-0.02em;flex-shrink:0;}
+#dt-body-text{font-size:12px;color:#555;line-height:1.85;flex-shrink:0;overflow:visible;position:relative;z-index:1;}
+
+/* TOOLTIP — appears BELOW the term */
+.dt-term{color:#6ab4ff;border-bottom:1px dotted #2a5f9f;cursor:help;position:relative;display:inline;}
+.dt-tooltip{display:none;position:absolute;top:calc(100% + 5px);left:0;width:210px;background:#0d1f35;border:1px solid #2a5f9f55;border-radius:6px;padding:8px 11px;font-size:10px;color:#8ab8e8;line-height:1.65;z-index:999;pointer-events:none;white-space:normal;}
+.dt-tooltip b{color:#9ab8e8;display:block;margin-bottom:3px;}
+.dt-term:hover .dt-tooltip{display:block;}
+
+#dt-code-block{display:none;font-size:10px;background:#050505;border:1px solid #141414;border-radius:6px;padding:11px 14px;color:#9de87a;line-height:1.65;white-space:pre-wrap;position:relative;max-height:120px;overflow:hidden;flex-shrink:0;}
+#dt-code-lang{position:absolute;top:6px;right:10px;font-size:7px;color:#222;letter-spacing:0.1em;}
+#dt-spacer{flex:1;min-height:4px;}
+#dt-bottom-row{display:flex;align-items:flex-end;gap:12px;flex-shrink:0;}
+#dt-related-wrap{flex:1;display:flex;flex-direction:column;gap:5px;}
+#dt-rel-label{font-size:8px;color:#1a1a1a;letter-spacing:0.1em;}
+#dt-rel-tags{display:flex;gap:4px;flex-wrap:wrap;}
+.dt-tag{font-size:9px;padding:3px 8px;border-radius:2px;border:1px solid #141616;color:#2a2a2a;cursor:pointer;background:none;font-family:inherit;transition:all 0.15s;}
+.dt-tag:hover{border-color:#00e87a33;color:#00e87a;background:#001f0d;}
+
+#dt-post-actions{display:flex;flex-direction:column;gap:5px;align-items:center;flex-shrink:0;}
+.dt-action-btn{display:flex;flex-direction:column;align-items:center;gap:2px;border:none;background:none;cursor:pointer;font-family:inherit;padding:2px;}
+.dt-action-btn svg{width:14px;height:14px;stroke:#2a2a2a;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;transition:stroke 0.15s;}
+.dt-action-btn:hover svg{stroke:#888;}
+.dt-action-btn.liked svg{stroke:#00e87a;fill:#00e87a22;}
+.dt-action-btn.saved svg{stroke:#ffb830;fill:#ffb83022;}
+.dt-action-btn.noted svg{stroke:#a78bfa;fill:#a78bfa22;}
+.dt-action-count{font-size:7px;color:#1e1e1e;}
+.dt-action-btn.liked .dt-action-count{color:#00e87a;}
+
+#dt-nav-bar{height:44px;border-top:1px solid #111;display:flex;align-items:center;padding:0 16px;gap:7px;flex-shrink:0;}
+.dt-nbtn{font-family:inherit;font-size:9px;padding:4px 11px;border-radius:2px;cursor:pointer;letter-spacing:0.06em;transition:all 0.15s;}
+.nb-prev{color:#222;background:none;border:1px solid #141414;}
+.nb-prev:hover{color:#666;border-color:#2a2a2a;}
+.nb-next{color:#00e87a;background:#001f0d;border:1px solid #00e87a33;}
+.nb-next:hover{background:#002a12;}
+.nb-rand{color:#222;background:none;border:1px solid #141414;margin-left:4px;}
+.nb-rand:hover{color:#666;}
+#dt-key-hints{margin-left:auto;display:flex;gap:3px;}
+.dt-key{font-size:7px;padding:2px 5px;border:1px solid #141414;border-radius:2px;color:#1a1a1a;}
+
+#mode-browse{display:none;flex:1;flex-direction:column;overflow:hidden;}
+#dt-browse-area{flex:1;padding:20px 24px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;}
+#dt-browse-area::-webkit-scrollbar{width:2px;}
+.dt-browse-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.dt-browse-card{padding:12px;border:1px solid #0e0e0e;border-radius:6px;background:#060606;cursor:pointer;transition:all 0.15s;display:flex;flex-direction:column;gap:7px;}
+.dt-browse-card:hover{border-color:#161616;background:#0c0c0c;}
+.dt-browse-card.current{border-color:#00e87a22;background:#001f0d;}
+.dt-bc-kind{font-size:7px;padding:2px 7px;border-radius:2px;letter-spacing:0.1em;align-self:flex-start;}
+.dt-bc-title{font-family:Georgia,serif;font-size:13px;color:#c8c8be;line-height:1.3;}
+.dt-bc-body{font-size:9px;color:#2e2e2e;line-height:1.6;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+
+#dt-quiz-panel{display:none;flex:1;flex-direction:column;padding:22px 28px;gap:13px;overflow:hidden;}
+#dt-quiz-panel.visible{display:flex;}
+.dt-quiz-header{font-size:8px;color:#2a2a2a;letter-spacing:0.12em;text-transform:uppercase;}
+.dt-quiz-q{font-family:Georgia,serif;font-size:17px;color:#eeece4;line-height:1.4;}
+.dt-quiz-code{font-size:11px;background:#050505;border:1px solid #141414;border-radius:6px;padding:12px 14px;color:#9de87a;line-height:1.65;white-space:pre-wrap;}
+.dt-quiz-options{display:flex;flex-direction:column;gap:6px;}
+.dt-quiz-opt{font-family:inherit;font-size:11px;padding:8px 13px;border:1px solid #161616;border-radius:4px;background:#060606;color:#444;cursor:pointer;text-align:left;transition:all 0.15s;line-height:1.5;}
+.dt-quiz-opt:hover:not(:disabled){border-color:#2a2a2a;color:#888;}
+.dt-quiz-opt.correct{border-color:#006b38;background:#001f0d;color:#00e87a;}
+.dt-quiz-opt.wrong{border-color:#6b1f1f;background:#1f0d0d;color:#e87a7a;}
+.dt-quiz-explanation{font-size:11px;color:#2a5a30;line-height:1.7;padding:10px 12px;background:#001f0d;border-radius:4px;border:1px solid #00e87a1a;display:none;}
+.dt-quiz-next{font-family:inherit;font-size:9px;padding:5px 14px;border-radius:2px;cursor:pointer;letter-spacing:0.06em;color:#00e87a;background:#001f0d;border:1px solid #00e87a33;transition:all 0.15s;display:none;align-self:flex-start;}
+.dt-quiz-next:hover{background:#002a12;}
+
+.dt-side-panel{width:0;border-left:1px solid transparent;display:flex;flex-direction:column;overflow:hidden;transition:width 0.22s ease,border-color 0.22s ease;flex-shrink:0;}
+.dt-side-panel.open{width:210px;border-color:#111;}
+.dt-panel-header{padding:11px 13px;border-bottom:1px solid #0e0e0e;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.dt-panel-title{font-size:9px;color:#2a2a2a;letter-spacing:0.1em;}
+.dt-panel-close{background:none;border:none;cursor:pointer;color:#1e1e1e;font-size:16px;line-height:1;padding:0;transition:color 0.15s;}
+.dt-panel-close:hover{color:#555;}
+#dt-comments-list{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:10px;}
+#dt-comments-list::-webkit-scrollbar{width:2px;}
+.dt-comment{display:flex;flex-direction:column;gap:3px;}
+.dt-comment-meta{display:flex;align-items:center;gap:6px;}
+.dt-comment-avatar{width:18px;height:18px;border-radius:50%;background:#001f0d;display:flex;align-items:center;justify-content:center;font-size:7px;color:#00e87a;flex-shrink:0;}
+.dt-comment-author{font-size:9px;color:#2a2a2a;}
+.dt-comment-time{font-size:8px;color:#1a1a1a;margin-left:auto;}
+.dt-comment-text{font-size:10px;color:#3a3a3a;line-height:1.6;padding-left:24px;}
+.dt-panel-input-wrap{padding:10px 12px;border-top:1px solid #0e0e0e;display:flex;gap:6px;flex-shrink:0;}
+.dt-panel-textarea{background:#060606;border:1px solid #141414;border-radius:4px;outline:none;font-family:inherit;font-size:10px;color:#c8c8c0;padding:7px 9px;flex:1;caret-color:#00e87a;resize:none;}
+.dt-panel-textarea::placeholder{color:#1a1a1a;}
+.dt-panel-send{background:#001f0d;border:1px solid #00e87a33;border-radius:3px;color:#00e87a;font-family:inherit;font-size:9px;padding:0 9px;cursor:pointer;transition:all 0.15s;}
+.dt-panel-send:hover{background:#002a12;}
+#dt-notes-area{flex:1;padding:12px;display:flex;flex-direction:column;gap:8px;overflow:hidden;}
+#dt-note-hint{font-size:8px;color:#1a1a1a;line-height:1.6;}
+#dt-note-save{font-family:inherit;font-size:9px;padding:5px 12px;border-radius:2px;cursor:pointer;letter-spacing:0.06em;color:#a78bfa;background:#1a0f35;border:1px solid #a78bfa33;transition:all 0.15s;}
+#dt-note-save:hover{background:#22143f;}
+
+/* SEARCH */
+#dt-search-inner{flex:1;display:flex;flex-direction:column;padding:20px 26px;gap:16px;overflow:hidden;}
+#dt-search-box-wrap{display:flex;align-items:center;gap:10px;background:#060606;border:1px solid #161616;border-radius:6px;padding:0 16px;flex-shrink:0;}
+#dt-search-box-wrap svg{width:13px;height:13px;stroke:#333;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+#dt-search-input{background:none;border:none;outline:none;font-family:inherit;font-size:13px;color:#c8c8c0;padding:12px 0;flex:1;caret-color:#00e87a;}
+#dt-search-input::placeholder{color:#1a1a1a;}
+#dt-search-catalog{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:18px;}
+#dt-search-catalog::-webkit-scrollbar{width:2px;}
+#dt-search-results-section{display:none;flex-direction:column;flex:1;overflow:hidden;min-height:0;}
+#dt-results-label{font-size:8px;color:#1e1e1e;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;flex-shrink:0;}
+#dt-search-results-wrap{overflow-y:auto;display:flex;flex-direction:column;gap:5px;}
+.dt-catalog-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
+.dt-catalog-section-title{font-size:8px;color:#2a2a2a;letter-spacing:0.14em;text-transform:uppercase;}
+.dt-catalog-show-all{font-size:8px;color:#1a1a1a;background:none;border:none;cursor:pointer;font-family:inherit;transition:color 0.15s;}
+.dt-catalog-show-all:hover{color:#444;}
+.dt-catalog-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;}
+.dt-catalog-row::-webkit-scrollbar{height:2px;}
+.dt-catalog-row::-webkit-scrollbar-thumb{background:#1a1a1a;}
+.dt-catalog-card{flex-shrink:0;width:120px;padding:11px;border:1px solid #0e0e0e;border-radius:6px;background:#060606;cursor:pointer;transition:all 0.15s;display:flex;flex-direction:column;gap:5px;}
+.dt-catalog-card:hover{border-color:#161616;background:#0a0a0a;}
+.dt-cc-icon{font-size:15px;color:#2a2a2a;}
+.dt-cc-name{font-size:10px;color:#4a4a4a;line-height:1.3;}
+.dt-cc-meta{font-size:8px;color:#1a1a1a;}
+.dt-course-card-small{flex-shrink:0;width:150px;padding:11px;border:1px solid #1a1400;border-radius:6px;background:#0e0c00;cursor:pointer;transition:all 0.15s;display:flex;flex-direction:column;gap:6px;}
+.dt-course-card-small:hover{border-color:#2a2200;background:#141000;}
+.dt-search-result{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid #0e0e0e;border-radius:4px;cursor:pointer;transition:all 0.12s;background:#060606;}
+.dt-search-result:hover{background:#0c0c0c;border-color:#161616;}
+.dt-sr-kind{font-size:7px;padding:2px 6px;border-radius:2px;letter-spacing:0.1em;flex-shrink:0;}
+.dt-sr-title{font-size:11px;color:#444;flex:1;}
+.dt-sr-topic{font-size:8px;color:#1a1a1a;}
+
+/* COURSES PAGE */
+#dt-courses-inner{flex:1;padding:20px 26px;overflow-y:auto;display:flex;flex-direction:column;gap:20px;}
+#dt-courses-inner::-webkit-scrollbar{width:2px;}
+.dt-courses-section-title{font-size:8px;color:#2a2a2a;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:10px;}
+.dt-courses-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.dt-course-big-card{padding:16px;border:1px solid #1a1400;border-radius:8px;background:#0a0800;cursor:pointer;transition:all 0.15s;display:flex;flex-direction:column;gap:10px;}
+.dt-course-big-card:hover{border-color:#2e2200;background:#0e0c00;}
+.dt-course-big-card.in-progress{border-color:#3a2800;background:#0e0c00;}
+.dt-cbc-header{display:flex;align-items:flex-start;gap:10px;}
+.dt-cbc-icon{font-size:20px;color:#2e2200;}
+.dt-cbc-info{flex:1;}
+.dt-cbc-name{font-size:13px;color:#8a7a40;line-height:1.3;margin-bottom:3px;}
+.dt-cbc-cat{font-size:8px;color:#2e2200;letter-spacing:0.08em;}
+.dt-cbc-desc{font-size:10px;color:#2a2200;line-height:1.6;}
+.dt-cbc-progress-row{display:flex;align-items:center;gap:8px;}
+.dt-cbc-progress-bg{flex:1;height:2px;background:#1e1800;border-radius:1px;overflow:hidden;}
+.dt-cbc-progress-fill{height:100%;border-radius:1px;background:#ffb830;}
+.dt-cbc-pct{font-size:8px;color:#3a3000;}
+.dt-cbc-lessons{display:flex;flex-direction:column;gap:4px;}
+.dt-cbc-lesson{font-size:9px;color:#2a2200;display:flex;align-items:center;gap:6px;}
+.dt-cbc-lesson.done{color:#4a4000;}
+.dt-cbc-lesson-dot{width:5px;height:5px;border-radius:50%;background:#1e1800;flex-shrink:0;}
+.dt-cbc-lesson.done .dt-cbc-lesson-dot{background:#ffb83066;}
+
+/* SAVED */
+#dt-saved-inner{flex:1;padding:22px 26px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;}
+.dt-saved-card{display:flex;flex-direction:column;gap:5px;padding:11px 13px;border:1px solid #0e0e0e;border-radius:6px;background:#060606;cursor:pointer;transition:all 0.15s;}
+.dt-saved-card:hover{border-color:#161616;background:#0a0a0a;}
+.dt-saved-meta{display:flex;align-items:center;gap:8px;}
+.dt-saved-kind{font-size:7px;padding:2px 6px;border-radius:2px;letter-spacing:0.1em;}
+.dt-saved-topic{font-size:8px;color:#1a1a1a;}
+.dt-saved-title{font-family:Georgia,serif;font-size:14px;color:#c8c8be;line-height:1.3;}
+.dt-saved-body{font-size:10px;color:#2a2a2a;line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.dt-empty{font-size:11px;color:#1a1a1a;text-align:center;padding:80px 0;line-height:2.4;}
+
+/* PROGRESS */
+#dt-progress-inner{flex:1;padding:22px 26px;overflow-y:auto;display:flex;flex-direction:column;gap:13px;}
+.dt-streak{background:#001f0d;border:1px solid #00e87a1a;border-radius:6px;padding:13px 16px;display:flex;align-items:center;gap:14px;}
+.dt-streak-val{font-size:28px;font-weight:700;color:#00e87a;font-family:Georgia,serif;}
+.dt-streak-label{font-size:11px;color:#4a9a60;}
+.dt-streak-sub{font-size:10px;color:#1e5030;}
+.dt-stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.dt-stat-card{background:#060606;border:1px solid #0e0e0e;border-radius:6px;padding:11px;display:flex;flex-direction:column;gap:3px;}
+.dt-stat-val{font-size:21px;font-weight:600;color:#eeece4;line-height:1;}
+.dt-stat-label{font-size:8px;color:#1e1e1e;letter-spacing:0.1em;text-transform:uppercase;}
+.dt-section-label{font-size:8px;color:#1a1a1a;letter-spacing:0.14em;text-transform:uppercase;}
+.dt-tp-row{display:flex;flex-direction:column;gap:4px;margin-bottom:6px;}
+.dt-tp-meta{display:flex;justify-content:space-between;}
+.dt-tp-name{font-size:10px;color:#333;}
+.dt-tp-pct{font-size:8px;color:#1a1a1a;}
+.dt-tp-bar-bg{height:2px;background:#0e0e0e;border-radius:1px;overflow:hidden;}
+.dt-tp-bar-fill{height:100%;border-radius:1px;background:#00e87a;}
+</style>
+
+<div id="dt">
+<div id="dt-rail">
+  <div class="rail-logo">DOC</div>
+  <button class="rail-btn active" onclick="goPage('feed',this)" title="Стрічка"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg></button>
+  <button class="rail-btn" onclick="goPage('search',this)" title="Каталог"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></button>
+  <button class="rail-btn" onclick="goPage('courses',this)" title="Міні-курси"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></button>
+  <button class="rail-btn" onclick="goPage('saved',this)" title="Збережене"><svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>
+  <div class="rail-spacer"></div>
+  <button class="rail-btn" onclick="goPage('progress',this)" title="Профіль"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></button>
+</div>
+
+<div id="dt-sidebar">
+  <div id="dt-sidebar-header"><div id="dt-sidebar-title">Recent & Pinned</div></div>
+  <div id="dt-topic-list"></div>
+</div>
+
+<div id="dt-main">
+  <div id="dt-topbar">
+    <span id="dt-page-title">feed</span>
+    <div id="dt-mode-toggle">
+      <button class="dt-mode-btn active" onclick="setMode('focus',this)">focus</button>
+      <button class="dt-mode-btn" onclick="setMode('browse',this)">browse</button>
+    </div>
+    <div id="dt-read-mode-toggle">
+      <button class="dt-rm-btn active" onclick="setReadMode('simplified',this)">simplified</button>
+      <button class="dt-rm-btn" onclick="setReadMode('standard',this)">standard</button>
+      <button class="dt-rm-btn" onclick="setReadMode('detailed',this)">detailed</button>
+      <button class="dt-rm-btn" onclick="setReadMode('original',this)">original</button>
+    </div>
+  </div>
+
+  <div id="page-feed" class="dt-page visible">
+    <div id="dt-feed-content">
+      <div id="mode-focus">
+        <div id="dt-card-area">
+          <div id="dt-card">
+            <div id="dt-meta-row">
+              <span class="dt-bc-cat" id="dt-bc-cat"></span>
+              <span class="dt-bc-sep">→</span>
+              <span class="dt-bc-topic" id="dt-bc-topic"></span>
+              <span style="color:#141414;font-size:8px;margin:0 2px;">·</span>
+              <span id="dt-kind-badge"></span>
+              <div id="dt-prog-dots"></div>
+              <span id="dt-source-badge"></span>
+            </div>
+            <h1 id="dt-title"></h1>
+            <p id="dt-body-text"></p>
+            <pre id="dt-code-block"><span id="dt-code-lang"></span><span id="dt-code-content"></span></pre>
+            <div id="dt-spacer"></div>
+            <div id="dt-bottom-row">
+              <div id="dt-related-wrap">
+                <div id="dt-rel-label">→ related</div>
+                <div id="dt-rel-tags"></div>
+              </div>
+              <div id="dt-post-actions">
+                <button class="dt-action-btn" id="btn-like" onclick="toggleLike()">
+                  <svg viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+                  <span class="dt-action-count" id="like-count">24</span>
+                </button>
+                <button class="dt-action-btn" id="btn-save" onclick="toggleSave()">
+                  <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                  <span class="dt-action-count" style="font-size:7px;color:#1a1a1a;">save</span>
+                </button>
+                <button class="dt-action-btn" id="btn-note" onclick="togglePanel('notes')">
+                  <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  <span class="dt-action-count" style="font-size:7px;color:#1a1a1a;">note</span>
+                </button>
+                <button class="dt-action-btn" onclick="togglePanel('comments')">
+                  <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  <span class="dt-action-count" id="comment-count">8</span>
+                </button>
+                <button class="dt-action-btn" onclick="sharePost()">
+                  <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>
+                  <span class="dt-action-count" style="font-size:7px;color:#1a1a1a;">share</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="dt-quiz-panel">
+          <div class="dt-quiz-header">// quiz — перевір себе</div>
+          <div class="dt-quiz-q" id="quiz-q"></div>
+          <pre class="dt-quiz-code" id="quiz-code" style="display:none;"></pre>
+          <div class="dt-quiz-options" id="quiz-opts"></div>
+          <div class="dt-quiz-explanation" id="quiz-exp"></div>
+          <button class="dt-quiz-next" id="quiz-next" onclick="nextQuiz()">далі →</button>
+        </div>
+
+        <div id="dt-nav-bar">
+          <button class="dt-nbtn nb-prev" onclick="nav('left')">← prev</button>
+          <button class="dt-nbtn nb-next" onclick="nav('right')">next →</button>
+          <button class="dt-nbtn nb-rand" onclick="nav('random')">⇄ random</button>
+          <div id="dt-key-hints"><span class="dt-key">←</span><span class="dt-key">→</span><span class="dt-key">↑↓</span></div>
+        </div>
+      </div>
+
+      <div id="mode-browse">
+        <div id="dt-browse-area">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+            <span id="dt-browse-icon" style="font-size:18px;color:#2a2a2a;"></span>
+            <span id="dt-browse-name" style="font-family:Georgia,serif;font-size:18px;color:#eeece4;"></span>
+          </div>
+          <p id="dt-browse-desc" style="font-size:11px;color:#2e2e2e;line-height:1.6;"></p>
+          <div class="dt-browse-grid" id="dt-browse-grid"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="dt-comments-panel" class="dt-side-panel">
+      <div class="dt-panel-header"><span class="dt-panel-title">// comments</span><button class="dt-panel-close" onclick="togglePanel('comments')">×</button></div>
+      <div id="dt-comments-list"></div>
+      <div class="dt-panel-input-wrap">
+        <textarea class="dt-panel-textarea" id="dt-comment-input" rows="1" placeholder="написати..."></textarea>
+        <button class="dt-panel-send" onclick="sendComment()">→</button>
+      </div>
+    </div>
+
+    <div id="dt-notes-panel" class="dt-side-panel">
+      <div class="dt-panel-header"><span class="dt-panel-title">// note</span><button class="dt-panel-close" onclick="togglePanel('notes')">×</button></div>
+      <div id="dt-notes-area">
+        <textarea class="dt-panel-textarea" id="dt-note-textarea" style="flex:1;color:#8ab8e8;min-height:120px;" placeholder="Твої нотатки до цього поста..."></textarea>
+        <div id="dt-note-hint">// зберігається локально</div>
+        <button id="dt-note-save" onclick="saveNote()">зберегти →</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="page-search" class="dt-page">
+    <div id="dt-search-inner">
+      <div id="dt-search-box-wrap">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input id="dt-search-input" placeholder="Пошук тем, методів, API..." oninput="doSearch(this.value)"/>
+      </div>
+      <div id="dt-search-catalog"></div>
+      <div id="dt-search-results-section">
+        <div id="dt-results-label"></div>
+        <div id="dt-search-results-wrap"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="page-courses" class="dt-page">
+    <div id="dt-courses-inner">
+      <div>
+        <div class="dt-courses-section-title">★ в процесі</div>
+        <div class="dt-courses-grid" id="dt-courses-inprogress"></div>
+      </div>
+      <div>
+        <div class="dt-courses-section-title">всі курси</div>
+        <div class="dt-courses-grid" id="dt-courses-all"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="page-saved" class="dt-page">
+    <div id="dt-saved-inner"></div>
+  </div>
+
+  <div id="page-progress" class="dt-page">
+    <div id="dt-progress-inner">
+      <div class="dt-streak"><div class="dt-streak-val">7</div><div><div class="dt-streak-label">днів поспіль</div><div class="dt-streak-sub">Продовжуй — завтра буде 8.</div></div></div>
+      <div class="dt-stats-grid">
+        <div class="dt-stat-card"><div class="dt-stat-val" style="color:#6ab4ff;">12</div><div class="dt-stat-label">тем вивчено</div></div>
+        <div class="dt-stat-card"><div class="dt-stat-val">34</div><div class="dt-stat-label">постів прочитано</div></div>
+        <div class="dt-stat-card"><div class="dt-stat-val" style="color:#ffb830;">5</div><div class="dt-stat-label">збережено</div></div>
+      </div>
+      <div class="dt-section-label">прогрес по темах</div>
+      <div id="dt-topic-progress"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+const tooltips={
+  "2D систему розкладки":{t:"2D layout",d:"Розкладка по двох осях одночасно: горизонтальній (колонки) і вертикальній (рядки)."},
+  "Flexbox":{t:"Flexbox",d:"1D метод розкладки — вирівнює елементи лише по одній осі (рядок або колонка)."},
+  "мікрозадачі":{t:"Microtasks",d:"Задачі з вищим пріоритетом ніж macrotasks. Виконуються одразу після поточного стеку викликів."},
+  "callback hell":{t:"Callback Hell",d:"Глибоко вкладені callback-и що ускладнюють читання. Проміси та async/await вирішують цю проблему."},
+  "pending":{t:"Promise: pending",d:"Початковий стан промісу — операція ще виконується, результат невідомий."},
+};
+
+const categories=[
+  {name:"CSS",icon:"◈",topics:[
+    {name:"CSS Grid",icon:"▦",category:"CSS",desc:"2D система розкладки",source:"MDN",posts:[
+      {kind:"summary",title:"CSS Grid",content:{simplified:"CSS Grid — це як таблиця в Excel: є рядки і колонки, і ти кладеш елементи в конкретні клітинки. На відміну від Flexbox (що працює лише в один бік), Grid дозволяє контролювати обидва напрямки одночасно.",standard:"CSS Grid — потужна 2D систему розкладки. На відміну від Flexbox (1D), Grid працює по обох осях і дозволяє явно розміщувати елементи в клітинки. Підтримується всіма сучасними браузерами з 2017 року.",detailed:"CSS Grid Layout — специфікація W3C рівня 2. Включає явне і неявне розміщення, іменовані grid areas, підгрід (subgrid) і функцію minmax(). Відмінність від Flexbox: Grid описує макет з боку контейнера, Flexbox — з боку елементів.",original:"The CSS Grid Layout Module Level 1 defines a two-dimensional grid-based layout system. A grid container establishes a grid formatting context. Grid items are placed by row and column positions."},code:null,related:["grid-template","Flexbox","1fr","subgrid"],quiz:[{q:"Яка властивість робить елемент Grid-контейнером?",opts:["display: flex","display: grid","display: block","grid: auto"],correct:1,exp:"display: grid — єдина правильна відповідь. display: flex створює Flex-контейнер, а не Grid."},{q:"Що робить repeat(3, 1fr)?",opts:["Повторює елемент 3 рази","Створює 3 рівні колонки","Встановлює висоту рядка","Задає відступ"],correct:1,exp:"repeat(3, 1fr) — скорочення для 1fr 1fr 1fr. Три рівні колонки що ділять простір порівну."}]},
+      {kind:"example",title:"Три рівні колонки",content:{simplified:"Ось найпростіший спосіб зробити три однакові колонки. 1fr означає 'одна частина вільного простору':",standard:"Базовий Grid-макет — три рівні колонки з відступами:",detailed:"repeat(3, 1fr) використовує функцію repeat() для скорочення. 1fr — fractional unit, розподіляє вільний простір після відрахування фіксованих розмірів та gap.",original:"The repeat() CSS function represents a repeated fragment of the track list, allowing columns that exhibit a recurring pattern to be written in a compact form."},code:`.container {\n  display: grid;\n  grid-template-columns: repeat(3, 1fr);\n  gap: 24px;\n}\n.responsive {\n  grid-template-columns:\n    repeat(auto-fit, minmax(200px, 1fr));\n}`,lang:"CSS",related:["repeat()","minmax()","auto-fill","auto-fit"]},
+      {kind:"fact",title:"IE вперше реалізував Grid",content:{simplified:"Знаєш що кумедно? Саме Internet Explorer — браузер який всі ненавиділи — першим додав підтримку Grid у 2011. Але з іншим синтаксисом. Сучасний Grid з'явився лише у 2017.",standard:"IE запустив ранню версію CSS Grid у 2011 — за роки до сучасної специфікації W3C. Але зі старим синтаксисом з префіксом -ms-.",detailed:"Microsoft реалізував Grid за специфікацією 2011 року. Синтаксис суттєво відрізнявся: -ms-grid-column замість grid-column, не було fr units та auto-placement. Сучасна специфікація CSS Grid Level 1 стандартизована у березні 2017.",original:"Internet Explorer 10 shipped an implementation of an early version of the spec in 2011, using the -ms- prefix. The syntax was significantly different from the modern specification."},code:null,related:["CSS history","IE prefixes","W3C"]}
+    ]},
+    {name:"Flexbox",icon:"⇔",category:"CSS",desc:"1D розкладка для вирівнювання",source:"MDN",posts:[
+      {kind:"summary",title:"CSS Flexbox",content:{simplified:"Flexbox — це як рядок або колонка де елементи можуть розтягуватись, стискатись і вирівнюватись. Думай про це як розумний рядок тексту що знає як розподілити простір.",standard:"Flexible Box Model — 1D метод розкладки. Елементи вирівнюються по головній та поперечній осях. Ідеально для компонентів і навігації.",detailed:"Flexbox визначає головну вісь (flex-direction) і поперечну. justify-content керує розподілом по головній осі, align-items — по поперечній. flex-grow, flex-shrink, flex-basis визначають поведінку елементів при зміні розміру.",original:"The Flexible Box Module, usually referred to as flexbox, was designed as a one-dimensional layout model, and as a method that could offer space distribution between items in an interface."},code:null,related:["justify-content","align-items","flex-grow","CSS Grid"]},
+      {kind:"example",title:"Класичне центрування",content:{simplified:"Рецепт якого чекали десятиліття — центрування по обох осях:",standard:"Центрування елемента горизонтально і вертикально:",detailed:"justify-content: center вирівнює по головній осі (горизонтально для row). align-items: center — по поперечній. min-height: 100vh розтягує контейнер на весь екран.",original:"To center an element horizontally and vertically within its container using flexbox, set display: flex, justify-content: center, and align-items: center on the parent."},code:`.parent {\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  min-height: 100vh;\n}`,lang:"CSS",related:["flex-direction","flex-wrap","gap"]},
+      {kind:"fact",title:"Три різних синтаксиси",content:{simplified:"Flexbox міняв обличчя тричі. Якщо ти бачиш старий код з display:box або display:flexbox — знай що це допотопний синтаксис, сучасний — display:flex.",standard:"Flexbox пройшов три повністю різних синтаксиси: 2009 — display:box, 2011 — display:flexbox, 2012+ — display:flex.",detailed:"Кожна ітерація мала несумісний синтаксис. У 2011-2013 браузери мали одночасно різні реалізації з -webkit-, -moz- і -ms- префіксами. Це спричиняло хаос для розробників та інструментів autoprefixer.",original:"The flexbox specification has gone through multiple revisions. The 2009 version used display:box; the 2011 version used display:flexbox; the final 2012+ version uses display:flex."},code:null,related:["Can I Use","CSS history","-webkit-"]}
+    ]}
+  ]},
+  {name:"JavaScript",icon:"◇",topics:[
+    {name:"Promises",icon:"⇢",category:"JavaScript",desc:"Асинхронні операції без callback hell",source:"MDN",posts:[
+      {kind:"summary",title:"JavaScript Promises",content:{simplified:"Promise — це як «талончик» у черзі. Ти отримуєш його одразу, але реальний результат (або помилку) — пізніше. Замість того щоб чекати стоячи, ти можеш займатись іншими справами.",standard:"Promise — об'єкт що представляє результат асинхронної операції. Три стани: pending, fulfilled, rejected. Позбавляє від callback hell.",detailed:"Promise реалізує Promises/A+. Внутрішньо зберігає стан і чергу обробників. .then() завжди повертає новий Promise. Обробники виконуються як мікрозадачі — після синхронного коду але до macrotasks.",original:"The Promise object represents the eventual completion or failure of an asynchronous operation. A Promise is in one of these states: pending, fulfilled, or rejected."},code:null,related:["async/await","мікрозадачі","Event Loop","fetch()"],quiz:[{q:"Який стан Promise після успішного виконання?",opts:["pending","fulfilled","resolved","completed"],correct:1,exp:"'fulfilled' — офіційний термін. 'resolved' використовується неформально, але технічно resolved може означати і rejected якщо Promise прив'язаний до іншого rejected Promise."},{q:"Де виконуються обробники .then()?",opts:["Синхронно","Як macrotask","Як microtask","В окремому потоці"],correct:2,exp:"Обробники Promise виконуються як мікрозадачі — після поточного синхронного коду, але до будь-яких macrotasks (setTimeout, setInterval)."}]},
+      {kind:"example",title:"Ланцюжок .then()",content:{simplified:"Кожен .then() отримує те що повернув попередній і передає результат наступному. Якщо щось пішло не так — одразу до .catch():",standard:"Трансформуй дані покроково через ланцюжок .then():",detailed:"Кожен .then() повертає новий Promise. Це Promise chaining — основа async pipeline. .finally() виконується завжди незалежно від результату.",original:"The then() method returns a Promise and takes up to two arguments: callback functions for the fulfilled and rejected cases."},code:`fetch('/api/users')\n  .then(r => r.json())\n  .then(users => users.filter(u => u.active))\n  .catch(err => console.error(err))\n  .finally(() => hideSpinner());`,lang:"JS",related:[".catch()",".finally()","Promise.all","async/await"]},
+      {kind:"fact",title:"Promises/A+ з 2012",content:{simplified:"Проміси придумали не автори JavaScript. Спочатку вони жили в бібліотеках (Q, Bluebird), і лише потім стали частиною мови у ES2015.",standard:"Специфікація TC39 базувалась на стандарті Promises/A+ від спільноти open-source розробників 2012 року.",detailed:"Promises/A+ написала Domenic Denicola та інші. Бібліотеки Q (Kris Kowal) і Bluebird реалізували її задовго до ES2015. TC39 взяв за основу цю специфікацію при стандартизації Promise в ES6 (2015).",original:"Promises/A+ is an open standard for sound, interoperable JavaScript promises. It clarifies the behavioral clauses of the earlier Promises/A proposal."},code:null,related:["ES2015","Bluebird","TC39"]}
+    ]}
+  ]},
+  {name:"Web APIs",icon:"◉",topics:[
+    {name:"Web APIs",icon:"◈",category:"Web APIs",desc:"Вбудовані API браузера",source:"web.dev",posts:[
+      {kind:"summary",title:"Web APIs",content:{simplified:"Уяви що браузер — це смартфон, а Web API — його вбудовані додатки. GPS (Geolocation), камера (MediaDevices), сховище (IndexedDB) — все це вже є, просто треба знати як викликати.",standard:"Браузери надають сотні вбудованих API поверх JavaScript: DOM, Fetch, Geolocation, IndexedDB, WebSockets, Canvas і тисячі інших.",detailed:"Web APIs визначаються WHATWG (DOM, Fetch, URL), W3C (WebRTC, WebXR) та IETF (WebSockets). Доступність залежить від браузера і контексту (HTTPS-only, user gesture). Базовий рівень підтримки відстежується через Baseline.",original:"When writing code for the Web, there are a large number of Web APIs available. Below is a list of all the APIs and interfaces that you may be able to use while developing your Web app."},code:null,related:["Navigator","Window","DOM","WHATWG"],quiz:[{q:"Який API вимагає HTTPS і дозволу користувача?",opts:["localStorage","Geolocation API","document.querySelector","JSON.parse"],correct:1,exp:"Geolocation API вимагає: 1) захищеного контексту (HTTPS або localhost), 2) явного дозволу через браузерний діалог."},{q:"Де зберігаються дані IndexedDB?",opts:["На сервері","У cookie","Локально в браузері","В sessionStorage"],correct:2,exp:"IndexedDB — клієнтська база даних що зберігається локально. Підтримує складні запити і великі обсяги даних на відміну від localStorage."}]},
+      {kind:"example",title:"Intersection Observer",content:{simplified:"Замість перевірки позиції елементів під час скролу (повільно), Observer сам повідомляє коли елемент з'являється на екрані:",standard:"Відстежуй появу елементів у viewport без scroll-подій — ефективніший спосіб для lazy-loading:",detailed:"IntersectionObserver використовує compositor thread замість main thread — унеможливлює jank. threshold: 0.1 означає спрацювання коли 10% елементу видимо. rootMargin розширює зону спостереження за межі viewport.",original:"The Intersection Observer API provides a way to asynchronously observe changes in the intersection of a target element with an ancestor element or with a top-level document's viewport."},code:`const observer = new IntersectionObserver(\n  entries => entries.forEach(e => {\n    if (e.isIntersecting) {\n      loadImage(e.target);\n      observer.unobserve(e.target);\n    }\n  }),\n  { threshold: 0.1 }\n);\ndocument.querySelectorAll('[data-src]')\n  .forEach(el => observer.observe(el));`,lang:"JS",related:["lazy loading","MutationObserver","ResizeObserver"]},
+      {kind:"fact",title:"5000+ інтерфейсів",content:{simplified:"Якби ти вчив по одному Web API на день — тобі знадобилося б більше 13 років щоб пройти все в MDN. І за цей час додадуть ще стільки ж.",standard:"MDN документує понад 5 000 Web API інтерфейсів. Більшість розробників використовують менше 1% з них.",detailed:"За даними MDN, специфікації охоплюють понад 10 000 окремих методів і властивостей. Проект Baseline визначає підмножину API що стабільно підтримується у Chrome, Edge, Firefox і Safari — ~70% від усього.",original:"MDN Web Docs provides information about open web technologies including HTML, CSS, and APIs for both Web sites and progressive web apps."},code:null,related:["MDN","Baseline","deprecated"]}
+    ]}
+  ]}
+];
+
+const miniCourses=[
+  {name:"Promises без болю",icon:"⇢",count:8,progress:62,category:"JavaScript",desc:"Від callback hell до async/await — крок за кроком",lessons:["Що таке асинхронність?","Перший Promise","Ланцюжок .then()","Promise.all та race","async/await синтаксис","Обробка помилок","Мікрозадачі","Фінальний quiz"]},
+  {name:"CSS Grid за 10 карток",icon:"▦",count:10,progress:30,category:"CSS",desc:"Від display:grid до складних макетів",lessons:["display: grid","grid-template-columns","grid-template-rows","gap та spacing","Розміщення елементів","auto-fill vs auto-fit","minmax()","Named areas","Subgrid","Фінальний quiz"]},
+  {name:"Web APIs: старт",icon:"◈",count:6,progress:0,category:"Web APIs",desc:"Найкорисніші браузерні API для щоденної роботи",lessons:["Fetch API","IntersectionObserver","ResizeObserver","Web Storage","Clipboard API","Фінальний quiz"]},
+  {name:"Async/Await глибоко",icon:"↻",count:7,progress:0,category:"JavaScript",desc:"Все що треба знати про асинхронний JavaScript",lessons:["Event Loop","Call Stack","Microtasks vs Macrotasks","async functions","await та Promise","Top-level await","Фінальний quiz"]},
+];
+
+const kindStyle={summary:{badge:"#0d1f35",badgeText:"#6ab4ff",dot:"#2a5f9f"},example:{badge:"#001f10",badgeText:"#00e87a",dot:"#006b38"},fact:{badge:"#1e1400",badgeText:"#ffb830",dot:"#7a5200"}};
+const sourceColors={"MDN":{bg:"#0d1a35",c:"#4a8fff"},"web.dev":{bg:"#0d1f0d",c:"#00c060"},"javascript.info":{bg:"#1f1000",c:"#ff9800"}};
+
+const allTopics=[];
+categories.forEach(cat=>cat.topics.forEach(tp=>allTopics.push(tp)));
+
+let t=0,p=0,saved=[],likedPosts=new Set(),likeCounts={},commentCounts={},userComments={},notes={};
+let currentMode='focus',currentPage='feed',readMode='simplified',activePanel=null,quizIdx=0,quizAnswered=false;
+let recentTopics=[0,1],pinnedTopics=[2];
+
+allTopics.forEach((tp,ti)=>tp.posts.forEach((_,pi)=>{
+  const k=ti+'-'+pi;
+  likeCounts[k]=Math.floor(Math.random()*60)+5;
+  commentCounts[k]=Math.floor(Math.random()*12)+2;
+  userComments[k]=[];
+}));
+
+const sampleComments=[
+  {author:"alex_dev",text:"Нарешті зрозумів різницю між auto-fill і auto-fit!",time:"2h"},
+  {author:"css_witch",text:"Варто ще додати про named grid areas",time:"1h"},
+];
+
+function wrapTerms(text){
+  let result=text;
+  Object.keys(tooltips).forEach(term=>{
+    if(result.includes(term)){
+      const d=tooltips[term];
+      result=result.replace(term,`<span class="dt-term">${term}<span class="dt-tooltip"><b>${d.t}</b>${d.d}</span></span>`);
+    }
+  });
+  return result;
+}
+
+function buildSidebar(){
+  const el=document.getElementById('dt-topic-list');el.innerHTML='';
+  const addSec=(label,idxs)=>{
+    const s=document.createElement('div');s.className='dt-sidebar-section';s.textContent=label;el.appendChild(s);
+    idxs.forEach(i=>{
+      if(i>=allTopics.length)return;
+      const tp=allTopics[i];
+      const item=document.createElement('div');item.className='dt-topic-item'+(i===t?' active':'');
+      item.innerHTML=`${i===t?'<div class="dt-active-bar"></div>':''}<span class="dt-topic-icon">${tp.icon}</span><span class="dt-topic-name">${tp.name}</span><span class="dt-topic-badge">${tp.category}</span>`;
+      item.onclick=()=>{t=i;p=0;buildSidebar();renderPost('fade');if(currentMode==='browse')renderBrowse();};
+      el.appendChild(item);
+    });
+  };
+  addSec('pinned',pinnedTopics);addSec('recent',recentTopics);
+}
+
+function renderPost(dir){
+  const isLastPost=p===allTopics[t].posts.length-1;
+  const hasQuiz=isLastPost&&allTopics[t].posts[0].quiz;
+  document.getElementById('dt-card').style.display=hasQuiz?'none':'flex';
+  document.getElementById('dt-quiz-panel').classList.toggle('visible',hasQuiz);
+  if(hasQuiz){quizIdx=0;quizAnswered=false;renderQuiz();return;}
+  document.getElementById('dt-card').style.display='flex';
+  const card=document.getElementById('dt-card');
+  card.style.opacity='0';
+  card.style.transform=`translate(${dir==='right'?'14px':dir==='left'?'-14px':'0'},${dir==='down'?'-10px':dir==='up'?'10px':'0'})`;
+  setTimeout(()=>{
+    const tp=allTopics[t];const post=tp.posts[p];const ks=kindStyle[post.kind];
+    document.getElementById('dt-bc-cat').textContent=tp.category;
+    document.getElementById('dt-bc-topic').textContent=tp.name;
+    const badge=document.getElementById('dt-kind-badge');
+    badge.textContent=post.kind;badge.style.background=ks.badge;badge.style.color=ks.badgeText;badge.style.border='1px solid '+ks.dot+'44';
+    const src=tp.source||'MDN';const sc=sourceColors[src]||{bg:'#111',c:'#444'};
+    const sb=document.getElementById('dt-source-badge');sb.textContent=src;sb.style.background=sc.bg;sb.style.color=sc.c;sb.style.borderColor=sc.c+'33';
+    document.getElementById('dt-title').textContent=post.title;
+    document.getElementById('dt-body-text').innerHTML=wrapTerms(post.content[readMode]||post.content.standard);
+    const dots=document.getElementById('dt-prog-dots');dots.innerHTML='';
+    tp.posts.forEach((_,i)=>{const d=document.createElement('div');d.className='dt-pdot';d.style.width=i===p?'18px':'5px';d.style.background=i===p?ks.dot:'#1a1a1a';dots.appendChild(d);});
+    const code=document.getElementById('dt-code-block');
+    if(post.code){code.style.display='block';document.getElementById('dt-code-content').textContent=post.code;document.getElementById('dt-code-lang').textContent=post.lang||'';}
+    else{code.style.display='none';}
+    const tags=document.getElementById('dt-rel-tags');tags.innerHTML='';
+    post.related.forEach(tag=>{
+      const el=document.createElement('button');el.className='dt-tag';el.textContent=tag;
+      el.onclick=()=>{
+        const found=allTopics.findIndex(tp2=>tp2.name.toLowerCase().includes(tag.toLowerCase()));
+        if(found>-1){t=found;p=0;if(!recentTopics.includes(found)){recentTopics.unshift(found);if(recentTopics.length>3)recentTopics.pop();}buildSidebar();renderPost('right');}
+        else sendPrompt('Розкажи детально про '+tag+' у веб-розробці');
+      };
+      tags.appendChild(el);
+    });
+    const k=t+'-'+p;
+    document.getElementById('btn-like').className='dt-action-btn'+(likedPosts.has(k)?' liked':'');
+    document.getElementById('like-count').textContent=likeCounts[k]||0;
+    document.getElementById('comment-count').textContent=(commentCounts[k]||0)+(userComments[k]||[]).length;
+    document.getElementById('btn-save').className='dt-action-btn'+(saved.some(s=>s.key===k)?' saved':'');
+    document.getElementById('btn-note').className='dt-action-btn'+(notes[k]?' noted':'');
+    if(activePanel==='notes')document.getElementById('dt-note-textarea').value=notes[k]||'';
+    card.style.transition='none';
+    card.style.transform=`translate(${dir==='right'?'-12px':dir==='left'?'12px':'0'},${dir==='down'?'8px':dir==='up'?'-8px':'0'})`;
+    requestAnimationFrame(()=>{card.style.transition='opacity 0.18s ease,transform 0.18s ease';card.style.opacity='1';card.style.transform='translate(0,0)';});
+  },140);
+}
+
+function renderQuiz(){
+  const quizData=allTopics[t].posts[0].quiz;
+  if(!quizData||quizIdx>=quizData.length){
+    document.getElementById('dt-quiz-panel').classList.remove('visible');
+    document.getElementById('dt-card').style.display='flex';
+    p=0;renderPost('up');return;
+  }
+  const q=quizData[quizIdx];
+  document.getElementById('quiz-q').textContent=q.q;
+  const codeEl=document.getElementById('quiz-code');
+  if(q.code){codeEl.style.display='block';codeEl.textContent=q.code;}else{codeEl.style.display='none';}
+  const opts=document.getElementById('quiz-opts');opts.innerHTML='';
+  q.opts.forEach((opt,i)=>{
+    const btn=document.createElement('button');btn.className='dt-quiz-opt';btn.textContent=opt;
+    btn.onclick=()=>{
+      if(quizAnswered)return;quizAnswered=true;
+      btn.classList.add(i===q.correct?'correct':'wrong');
+      if(i!==q.correct)opts.children[q.correct].classList.add('correct');
+      opts.querySelectorAll('.dt-quiz-opt').forEach(b=>b.disabled=true);
+      const exp=document.getElementById('quiz-exp');exp.textContent=q.exp;exp.style.display='block';
+      document.getElementById('quiz-next').style.display='block';
+    };
+    opts.appendChild(btn);
+  });
+  document.getElementById('quiz-exp').style.display='none';
+  document.getElementById('quiz-next').style.display='none';
+  document.getElementById('quiz-next').textContent=quizIdx<quizData.length-1?'наступне питання →':'завершити quiz →';
+}
+
+function nextQuiz(){quizIdx++;quizAnswered=false;renderQuiz();}
+
+function renderBrowse(){
+  const tp=allTopics[t];
+  document.getElementById('dt-browse-icon').textContent=tp.icon;
+  document.getElementById('dt-browse-name').textContent=tp.name;
+  document.getElementById('dt-browse-desc').textContent=tp.desc;
+  const grid=document.getElementById('dt-browse-grid');grid.innerHTML='';
+  tp.posts.forEach((post,pi)=>{
+    const ks=kindStyle[post.kind];
+    const card=document.createElement('div');card.className='dt-browse-card'+(pi===p?' current':'');
+    card.innerHTML=`<span class="dt-bc-kind" style="background:${ks.badge};color:${ks.badgeText};border:1px solid ${ks.dot}33;">${post.kind}</span><div class="dt-bc-title">${post.title}</div><div class="dt-bc-body">${post.content.standard}</div>`;
+    card.onclick=()=>{p=pi;setMode('focus',document.querySelector('.dt-mode-btn'));renderPost('right');};
+    grid.appendChild(card);
+  });
+  if(tp.posts[0].quiz){
+    const qCard=document.createElement('div');qCard.className='dt-browse-card';
+    qCard.style.cssText='border-color:#ffb83022;background:#1e1400;';
+    qCard.innerHTML=`<span class="dt-bc-kind" style="background:#1e1400;color:#ffb830;border:1px solid #7a520033;">quiz</span><div class="dt-bc-title">Перевір себе</div><div class="dt-bc-body">Короткий тест щоб закріпити тему</div>`;
+    qCard.onclick=()=>{p=tp.posts.length-1;setMode('focus',document.querySelector('.dt-mode-btn'));renderPost('right');};
+    grid.appendChild(qCard);
+  }
+}
+
+function nav(dir){
+  const tp=allTopics[t];
+  if(dir==='right'){if(p<tp.posts.length-1)p++;else p=tp.posts.length-1;}
+  else if(dir==='left'){p=Math.max(p-1,0);}
+  else{
+    let nt;do{nt=Math.floor(Math.random()*allTopics.length);}while(nt===t);
+    t=nt;p=0;
+    if(!recentTopics.includes(t)){recentTopics.unshift(t);if(recentTopics.length>3)recentTopics.pop();}
+    buildSidebar();
+  }
+  renderPost(dir==='random'?'fade':dir);
+}
+
+function setMode(mode,btn){
+  currentMode=mode;
+  document.querySelectorAll('.dt-mode-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.dt-mode-btn').forEach(b=>{if(b.textContent===mode)b.classList.add('active');});
+  document.getElementById('mode-focus').style.display=mode==='focus'?'flex':'none';
+  document.getElementById('mode-browse').style.display=mode==='browse'?'flex':'none';
+  document.getElementById('dt-read-mode-toggle').style.display=mode==='focus'?'flex':'none';
+  if(mode==='browse')renderBrowse();
+}
+
+function setReadMode(mode,btn){
+  readMode=mode;
+  document.querySelectorAll('.dt-rm-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPost('fade');
+}
+
+function toggleLike(){
+  const k=t+'-'+p;
+  if(likedPosts.has(k)){likedPosts.delete(k);likeCounts[k]--;}
+  else{likedPosts.add(k);likeCounts[k]++;}
+  renderPost('fade');
+}
+
+function toggleSave(){
+  const k=t+'-'+p;const tp=allTopics[t];const post=tp.posts[p];
+  const idx=saved.findIndex(s=>s.key===k);
+  if(idx>-1){saved.splice(idx,1);}
+  else{saved.push({key:k,t,p,title:post.title,kind:post.kind,body:post.content.standard,topicName:tp.name});}
+  renderPost('fade');
+}
+
+function saveNote(){
+  const k=t+'-'+p;const val=document.getElementById('dt-note-textarea').value.trim();
+  if(val)notes[k]=val;else delete notes[k];
+  document.getElementById('btn-note').className='dt-action-btn'+(notes[k]?' noted':'');
+}
+
+function sharePost(){
+  const tp=allTopics[t];const post=tp.posts[p];
+  sendPrompt('Поділися постом "'+post.title+'" з теми '+tp.name+' — поясни чому це корисно знати і що можна вивчити далі');
+}
+
+function togglePanel(panel){
+  if(activePanel===panel){document.getElementById('dt-'+activePanel+'-panel').classList.remove('open');activePanel=null;return;}
+  if(activePanel)document.getElementById('dt-'+activePanel+'-panel').classList.remove('open');
+  activePanel=panel;
+  document.getElementById('dt-'+panel+'-panel').classList.add('open');
+  if(panel==='comments')buildComments();
+  if(panel==='notes')document.getElementById('dt-note-textarea').value=notes[t+'-'+p]||'';
+}
+
+function buildComments(){
+  const list=document.getElementById('dt-comments-list');list.innerHTML='';
+  const k=t+'-'+p;
+  [...sampleComments,...(userComments[k]||[])].forEach(c=>{
+    const el=document.createElement('div');el.className='dt-comment';
+    el.innerHTML=`<div class="dt-comment-meta"><div class="dt-comment-avatar">${c.author[0].toUpperCase()}</div><span class="dt-comment-author">${c.author}</span><span class="dt-comment-time">${c.time||'just now'}</span></div><div class="dt-comment-text">${c.text}</div>`;
+    list.appendChild(el);
+  });
+  list.scrollTop=list.scrollHeight;
+}
+
+function sendComment(){
+  const input=document.getElementById('dt-comment-input');const text=input.value.trim();if(!text)return;
+  const k=t+'-'+p;if(!userComments[k])userComments[k]=[];
+  userComments[k].push({author:'you',text});input.value='';buildComments();
+  document.getElementById('comment-count').textContent=(commentCounts[k]||0)+userComments[k].length;
+}
+
+function goPage(page,btn){
+  document.querySelectorAll('.dt-page').forEach(el=>el.classList.remove('visible'));
+  document.getElementById('page-'+page).classList.add('visible');
+  document.querySelectorAll('.rail-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('dt-page-title').textContent=page;
+  const isFeed=page==='feed';
+  document.getElementById('dt-sidebar').classList.toggle('hidden',!isFeed);
+  document.getElementById('dt-mode-toggle').style.display=isFeed?'flex':'none';
+  document.getElementById('dt-read-mode-toggle').style.display=isFeed?'flex':'none';
+  currentPage=page;
+  if(page==='search'){buildCatalog();setTimeout(()=>document.getElementById('dt-search-input').focus(),250);}
+  if(page==='courses')buildCourses();
+  if(page==='saved')buildSaved();
+  if(page==='progress')buildProgress();
+}
+
+function buildCatalog(){
+  const el=document.getElementById('dt-search-catalog');el.innerHTML='';
+  const courseSec=document.createElement('div');
+  courseSec.innerHTML=`<div class="dt-catalog-section-header"><span class="dt-catalog-section-title">★ міні-курси</span><button class="dt-catalog-show-all" onclick="goPage('courses',document.querySelectorAll('.rail-btn')[2])">всі курси →</button></div>`;
+  const courseRow=document.createElement('div');courseRow.className='dt-catalog-row';
+  miniCourses.forEach(c=>{
+    const card=document.createElement('div');card.className='dt-course-card-small';
+    const prog=c.progress;
+    card.innerHTML=`<div style="font-size:14px;color:#2e2200;">${c.icon}</div><div style="font-size:10px;color:#8a7a40;line-height:1.3;">${c.name}</div><div style="display:flex;align-items:center;gap:6px;"><span style="font-size:8px;color:#3a3000;">${c.count} карток</span><div style="flex:1;height:2px;background:#1e1800;border-radius:1px;"><div style="width:${prog}%;height:100%;border-radius:1px;background:#ffb830;"></div></div></div>`;
+    card.onclick=()=>goPage('courses',document.querySelectorAll('.rail-btn')[2]);
+    courseRow.appendChild(card);
+  });
+  courseSec.appendChild(courseRow);el.appendChild(courseSec);
+  categories.forEach(cat=>{
+    const sec=document.createElement('div');
+    sec.innerHTML=`<div class="dt-catalog-section-header"><span class="dt-catalog-section-title">${cat.icon} ${cat.name}</span><button class="dt-catalog-show-all">показати всі →</button></div>`;
+    const row=document.createElement('div');row.className='dt-catalog-row';
+    cat.topics.forEach(tp=>{
+      const ti=allTopics.findIndex(a=>a.name===tp.name);
+      const card=document.createElement('div');card.className='dt-catalog-card';
+      card.innerHTML=`<div class="dt-cc-icon">${tp.icon}</div><div class="dt-cc-name">${tp.name}</div><div class="dt-cc-meta">${tp.posts.length} posts · ${tp.source||'MDN'}</div>`;
+      card.onclick=()=>{t=ti;p=0;buildSidebar();goPage('feed',document.querySelectorAll('.rail-btn')[0]);renderPost('fade');};
+      row.appendChild(card);
+    });
+    sec.appendChild(row);el.appendChild(sec);
+  });
+}
+
+function doSearch(q){
+  const catalog=document.getElementById('dt-search-catalog');
+  const resultsSection=document.getElementById('dt-search-results-section');
+  if(!q){catalog.style.display='flex';resultsSection.style.display='none';return;}
+  catalog.style.display='none';resultsSection.style.display='flex';
+  const res=document.getElementById('dt-search-results-wrap');res.innerHTML='';
+  document.getElementById('dt-results-label').textContent=`результати для "${q}"`;
+  const all=[];allTopics.forEach((tp,ti)=>tp.posts.forEach((post,pi)=>all.push({tp,ti,post,pi})));
+  const filtered=all.filter(({tp,post})=>
+    post.title.toLowerCase().includes(q.toLowerCase())||
+    post.content.standard.toLowerCase().includes(q.toLowerCase())||
+    tp.name.toLowerCase().includes(q.toLowerCase())||
+    (post.related&&post.related.some(r=>r.toLowerCase().includes(q.toLowerCase())))
+  );
+  if(!filtered.length){res.innerHTML='<div style="font-size:11px;color:#1a1a1a;padding:20px 0;">// нічого не знайдено</div>';return;}
+  filtered.slice(0,7).forEach(({tp,ti,post,pi})=>{
+    const ks=kindStyle[post.kind];
+    const el=document.createElement('div');el.className='dt-search-result';
+    el.innerHTML=`<span class="dt-sr-kind" style="background:${ks.badge};color:${ks.badgeText};border:1px solid ${ks.dot}33;">${post.kind}</span><span class="dt-sr-title">${post.title}</span><span class="dt-sr-topic">${tp.name}</span>`;
+    el.onclick=()=>{t=ti;p=pi;buildSidebar();goPage('feed',document.querySelectorAll('.rail-btn')[0]);renderPost('fade');};
+    res.appendChild(el);
+  });
+}
+
+function buildCourses(){
+  const inProg=document.getElementById('dt-courses-inprogress');
+  const allCont=document.getElementById('dt-courses-all');
+  inProg.innerHTML='';allCont.innerHTML='';
+  miniCourses.forEach(c=>{
+    const card=document.createElement('div');
+    card.className='dt-course-big-card'+(c.progress>0?' in-progress':'');
+    const doneCount=Math.floor(c.lessons.length*c.progress/100);
+    const lessonsHtml=c.lessons.slice(0,4).map((l,i)=>`<div class="dt-cbc-lesson${i<doneCount?' done':''}"><div class="dt-cbc-lesson-dot"></div>${l}</div>`).join('')+(c.lessons.length>4?`<div style="font-size:8px;color:#1e1800;margin-top:2px;">+${c.lessons.length-4} ще...</div>`:'');
+    card.innerHTML=`<div class="dt-cbc-header"><div class="dt-cbc-icon">${c.icon}</div><div class="dt-cbc-info"><div class="dt-cbc-name">${c.name}</div><div class="dt-cbc-cat">${c.category}</div></div></div><div class="dt-cbc-desc">${c.desc}</div><div class="dt-cbc-progress-row"><div class="dt-cbc-progress-bg"><div class="dt-cbc-progress-fill" style="width:${c.progress}%"></div></div><span class="dt-cbc-pct">${c.progress}%</span></div><div class="dt-cbc-lessons">${lessonsHtml}</div>`;
+    card.onclick=()=>sendPrompt('Хочу розпочати або продовжити курс "'+c.name+'". Що вивчимо першим?');
+    if(c.progress>0)inProg.appendChild(card);
+    else allCont.appendChild(card);
+  });
+  if(!inProg.children.length)inProg.innerHTML='<div style="font-size:11px;color:#1a1a1a;padding:20px 0;">// ще не розпочато жодного курсу</div>';
+}
+
+function buildSaved(){
+  const el=document.getElementById('dt-saved-inner');el.innerHTML='';
+  if(!saved.length){el.innerHTML='<div class="dt-empty">// порожньо<br><br>натисни bookmark у стрічці</div>';return;}
+  saved.forEach(s=>{
+    const ks=kindStyle[s.kind];
+    const card=document.createElement('div');card.className='dt-saved-card';
+    card.innerHTML=`<div class="dt-saved-meta"><span class="dt-saved-kind" style="background:${ks.badge};color:${ks.badgeText};">${s.kind}</span><span class="dt-saved-topic">${s.topicName}</span></div><div class="dt-saved-title">${s.title}</div><div class="dt-saved-body">${s.body}</div>`;
+    card.onclick=()=>{t=s.t;p=s.p;buildSidebar();goPage('feed',document.querySelectorAll('.rail-btn')[0]);renderPost('fade');};
+    el.appendChild(card);
+  });
+}
+
+function buildProgress(){
+  const el=document.getElementById('dt-topic-progress');el.innerHTML='';
+  [100,67,33].forEach((pct,i)=>{
+    if(i>=allTopics.length)return;
+    const row=document.createElement('div');row.className='dt-tp-row';
+    row.innerHTML=`<div class="dt-tp-meta"><span class="dt-tp-name">${allTopics[i].name}</span><span class="dt-tp-pct">${pct}%</span></div><div class="dt-tp-bar-bg"><div class="dt-tp-bar-fill" style="width:${pct}%"></div></div>`;
+    el.appendChild(row);
+  });
+}
+
+document.addEventListener('keydown',e=>{
+  if(currentPage!=='feed'||currentMode!=='focus')return;
+  const tag=document.activeElement.tagName;
+  if(tag==='TEXTAREA'||tag==='INPUT')return;
+  if(e.key==='ArrowRight'){e.preventDefault();nav('right');}
+  if(e.key==='ArrowLeft'){e.preventDefault();nav('left');}
+  if(e.key==='ArrowUp'||e.key==='ArrowDown'){e.preventDefault();nav('random');}
+});
+
+buildSidebar();renderPost('up');buildCatalog();
+</script>
