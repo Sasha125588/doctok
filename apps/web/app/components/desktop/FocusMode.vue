@@ -25,7 +25,7 @@ const activePost = computed(() => postsState.posts.value[activePostIndex.value])
 watch(
   () => postsState.posts.value.length,
   (len) => {
-    if (len > 0) activeTopicPostCount.value = len
+    activeTopicPostCount.value = len
   },
   { immediate: true }
 )
@@ -53,6 +53,7 @@ function openComments() {
 
 onUnmounted(() => {
   if (toastTimer) clearTimeout(toastTimer)
+  activeTopicPostCount.value = 0
 })
 </script>
 
