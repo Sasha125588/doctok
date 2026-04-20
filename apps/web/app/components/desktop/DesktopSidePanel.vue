@@ -20,6 +20,8 @@ const emit = defineEmits<{
     <div
       class="inner"
       :class="{ 'is-hidden': !open }"
+      :inert="!open"
+      :aria-hidden="!open"
     >
       <header class="header">
         <span class="title">// {{ title }}</span>
@@ -56,6 +58,7 @@ const emit = defineEmits<{
 .inner.is-hidden {
   opacity: 0;
   pointer-events: none;
+  visibility: hidden;
 }
 .header {
   padding: 11px 13px;

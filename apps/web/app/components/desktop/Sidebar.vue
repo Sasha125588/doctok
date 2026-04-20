@@ -17,7 +17,10 @@ function titleOf(slug: string) {
 
 const sections = computed(() => [
   { label: 'pinned', slugs: pinned.value },
-  { label: 'recent', slugs: [...recent.value, ...props.topics.map((topic) => topic.slug)] },
+  {
+    label: 'recent',
+    slugs: Array.from(new Set([...recent.value, ...props.topics.map((topic) => topic.slug)])),
+  },
 ])
 
 function selectTopic(slug: string) {

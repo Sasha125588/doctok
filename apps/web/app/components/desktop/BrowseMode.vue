@@ -79,8 +79,12 @@ function open(index: number) {
   display: flex;
   flex-direction: column;
   gap: 7px;
+  height: 160px;
+
+  min-width: 0;
   text-align: left;
   font-family: inherit;
+  word-break: break-word;
 }
 .card:hover {
   border-color: #161616;
@@ -93,18 +97,21 @@ function open(index: number) {
 .title {
   font-family: var(--font-display);
   font-size: 13px;
-  color: #c8c8be;
+  color: #dadacf;
   line-height: 1.3;
 }
 .body {
   font-family: var(--font-mono);
   font-size: 9px;
-  color: #2e2e2e;
+  color: #727272;
   line-height: 1.6;
+  flex: 1;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
   overflow: hidden;
+  margin-bottom: auto;
 }
 .empty {
   font-size: 11px;

@@ -20,12 +20,10 @@ export function useComments(postId: Ref<number | null>) {
 
   const createMutation = useMutation({
     ...postsCommentsCreateMutation(),
-    onSuccess: () => {
-      if (postId.value != null) {
-        queryClient.invalidateQueries({
-          queryKey: postsCommentsListQueryKey({ path: { postId: postId.value } }),
-        })
-      }
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: postsCommentsListQueryKey({ path: { postId: variables.path.postId } }),
+      })
     },
   })
 

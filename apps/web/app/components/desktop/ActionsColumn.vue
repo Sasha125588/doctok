@@ -5,14 +5,14 @@ import type { ReactionValue } from '#api/types.gen'
 
 defineProps<{
   myVote: ReactionValue
-  likeCount: number | string
-  commentCount: number | string
+  likeCount: number
+  commentCount: number
   isSaved: boolean
   hasNote: boolean
 }>()
 
 const emit = defineEmits<{
-  onVote: [ReactionValue]
+  onVote: [value: ReactionValue]
   onToggleSave: []
   onOpenNote: []
   onOpenComments: []
@@ -23,8 +23,11 @@ const emit = defineEmits<{
 <template>
   <div class="actions">
     <motion.button
+      type="button"
       class="btn"
       :class="{ 'is-liked': myVote === 'like' }"
+      :aria-pressed="myVote === 'like'"
+      aria-label="Like post"
       :while-tap="{ scale: 0.9 }"
       :while-hover="{ scale: 1.08 }"
       :transition="{ type: 'spring', stiffness: 400, damping: 22 }"
@@ -34,10 +37,16 @@ const emit = defineEmits<{
         name="lucide:heart"
         class="icon"
       />
-      <span class="count">{{ likeCount }}</span>
+      <span
+        class="count"
+        aria-hidden="true"
+        >{{ likeCount }}</span
+      >
     </motion.button>
 
     <motion.button
+      type="button"
+      :aria-pressed="isSaved"
       class="btn"
       :class="{ 'is-saved': isSaved }"
       :while-tap="{ scale: 0.9 }"
@@ -53,6 +62,8 @@ const emit = defineEmits<{
     </motion.button>
 
     <motion.button
+      type="button"
+      :aria-pressed="hasNote"
       class="btn"
       :class="{ 'is-noted': hasNote }"
       :while-tap="{ scale: 0.9 }"
@@ -68,7 +79,9 @@ const emit = defineEmits<{
     </motion.button>
 
     <motion.button
+      type="button"
       class="btn"
+      aria-label="Open comments"
       :while-tap="{ scale: 0.9 }"
       :while-hover="{ scale: 1.08 }"
       :transition="{ type: 'spring', stiffness: 400, damping: 22 }"
@@ -78,10 +91,16 @@ const emit = defineEmits<{
         name="lucide:message-square"
         class="icon"
       />
-      <span class="count">{{ commentCount }}</span>
+      <span
+        class="count"
+        aria-hidden="true"
+        >{{ commentCount }}</span
+      >
     </motion.button>
 
     <motion.button
+      type="button"
+      aria-label="Share"
       class="btn"
       :while-tap="{ scale: 0.9 }"
       :while-hover="{ scale: 1.08 }"

@@ -4,7 +4,7 @@ import { useLang } from '~/composables/useLang'
 import { useTopicLinks } from '~/composables/useTopicLinks'
 
 const { lang } = useLang()
-const { activeTopicSlug } = useFeedView()
+const { activeTopicSlug, activePostIndex } = useFeedView()
 
 const enabled = computed(() => !!activeTopicSlug.value)
 const { state } = useTopicLinks(
@@ -19,6 +19,7 @@ const { state } = useTopicLinks(
 
 function go(slug: string) {
   activeTopicSlug.value = slug
+  activePostIndex.value = 0
 }
 </script>
 

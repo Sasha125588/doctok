@@ -8,7 +8,7 @@ import { useFeedView } from '~/composables/useFeedView'
 const { mode, activeTopicSlug } = useFeedView()
 
 // Keyed so child composables re-instantiate on slug change (see FocusMode note).
-const slugKey = computed(() => `${mode}:slug:${activeTopicSlug.value}`)
+const slugKey = computed(() => `${mode.value}:slug:${activeTopicSlug.value}`)
 </script>
 
 <template>

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { AnimatePresence, motion } from 'motion-v'
+
 import FocusCard from './FocusCard.vue'
 import { useFeedView } from '~/composables/useFeedView'
 import { useLang } from '~/composables/useLang'
@@ -22,13 +24,9 @@ const activePost = computed(() => state.posts.value[activePostIndex.value])
 // can bound ← / → navigation without re-calling useTopicPosts.
 watch(
   () => state.posts.value.length,
-  (len) => {
-    if (len > 0) activeTopicPostCount.value = len
-  },
+  (len) => (activeTopicPostCount.value = len),
   { immediate: true }
 )
-
-const cardKey = computed(() => `${activeTopicSlug.value}:${activePostIndex.value}`)
 
 const toastMessage = ref<string | null>(null)
 let toastTimer: ReturnType<typeof setTimeout> | null = null
@@ -57,39 +55,42 @@ onUnmounted(() => {
 <template>
   <section class="focus">
     <div class="card-area">
-      <AnimatePresence mode="wait">
-        <FocusCard
-          v-if="activePost"
-          :key="cardKey"
-          :post="activePost"
-          :total-posts="state.posts.value.length"
-          :current-index="activePostIndex"
-          @open-notes="openNotes"
-          @open-comments="openComments"
-          @toast="showToast"
-        />
-        <div
-          v-else-if="state.isLoading.value"
-          key="loading"
-          class="loading"
+      <AnimatePresence
+        :initial="false"
+        mode="wait"
+      >
+        <motion.div
+          :key="activePost ? `card-${activePost.id}` : state.isLoading.value ? 'loading' : 'empty'"
+          class="card-slot"
+          :initial="{ opacity: 0, x: 10 }"
+          :animate="{ opacity: 1, x: 0 }"
+          :exit="{ opacity: 0, x: -10 }"
+          :transition="{ duration: 0.16, ease: 'easeOut' }"
         >
-          // завантаження...
-        </div>
-        <!-- <div
-          v-else-if="state."
-          key="not-found"
-          class="loading"
-        >
-          // завантаження...
-        </div> -->
-        <div
-          v-else
-          key="empty"
-          class="loading"
-        >
-          // оберіть тему
-        </div>
+          <FocusCard
+            v-if="activePost"
+            :post="activePost"
+            :total-posts="state.posts.value.length"
+            :current-index="activePostIndex"
+            @open-notes="openNotes"
+            @open-comments="openComments"
+            @toast="showToast"
+          />
+          <div
+            v-else-if="state.isLoading.value"
+            class="loading"
+          >
+            // завантаження...
+          </div>
+          <div
+            v-else
+            class="loading"
+          >
+            // оберіть тему
+          </div>
+        </motion.div>
       </AnimatePresence>
+
       <div
         v-if="toastMessage"
         class="toast"
@@ -122,6 +123,11 @@ onUnmounted(() => {
   justify-content: center;
   font-size: 11px;
   color: var(--dt-text-quaternary);
+}
+.card-slot {
+  flex: 1;
+  min-height: 0;
+  display: flex;
 }
 .toast {
   position: absolute;

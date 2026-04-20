@@ -48,9 +48,16 @@ async function nextTopic(direction: 1 | -1) {
   if (direction === 1 && state.hasNextPage.value && !state.isFetchingNextPage.value) {
     const lenBefore = topics.length
 
-    await functions.fetchNextPage()
+    try {
+      await functions.fetchNextPage()
+    } catch {
+      return
+    }
 
-    activeTopicSlug.value = state.topics.value[lenBefore]!.slug
+    const nextTopic = state.topics.value[lenBefore]
+    if (!nextTopic) return
+
+    activeTopicSlug.value = nextTopic.slug
     activePostIndex.value = 0
   }
 }

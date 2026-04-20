@@ -26,6 +26,7 @@ const draft = ref('')
 const isOpen = computed(() => activePanel.value === 'comments')
 
 function submit() {
+  if (isSending.value) return
   if (!draft.value.trim()) return
   send(draft.value, () => {
     draft.value = ''

@@ -26,17 +26,9 @@ const emit = defineEmits<{
 const { isSaved, toggle: toggleSave } = useSavedPosts()
 const { has: hasNote } = useNotes()
 
-const localMyVote = ref<ReactionValue>(props.post.myVote)
-const localLikeCount = ref(+props.post.likeCount)
-// localDislikeCount is required by useVote's contract but not rendered in ActionsColumn.
-const localDislikeCount = ref(+props.post.dislikeCount)
-
 const { functions } = useVote({
   postId: +props.post.id,
   topicSlug: props.post.topicSlug,
-  localMyVote,
-  localLikeCount,
-  localDislikeCount,
 })
 
 function onToggleSave() {
@@ -89,8 +81,8 @@ async function onShare() {
     <div class="bottom">
       <RelatedTags />
       <ActionsColumn
-        :my-vote="localMyVote"
-        :like-count="localLikeCount"
+        :my-vote="post.myVote"
+        :like-count="+post.likeCount"
         :comment-count="+post.commentCount"
         :is-saved="isSaved(+post.id)"
         :has-note="hasNote(+post.id)"
