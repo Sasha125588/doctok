@@ -24,49 +24,40 @@ watch(
   () => state.topics.value,
   (topics) => {
     if (!activeTopicSlug.value && topics.length) {
-      activeTopicSlug.value = topics[0].slug
+      activeTopicSlug.value = topics[0]!.slug
     }
   },
   { immediate: true }
 )
 
 // Track recency whenever active topic changes.
-watch(activeTopicSlug, (slug) => {
-  if (slug) addRecent(slug)
-})
+// watch(activeTopicSlug, (slug) => {
+//   if (slug) addRecent(slug)
+// })
 
-function nextTopic(direction: 1 | -1) {
+async function nextTopic(direction: 1 | -1) {
   const topics = state.topics.value
   const idx = topics.findIndex((t) => t.slug === activeTopicSlug.value)
   if (idx === -1) return
-  const next = idx + direction
-  if (next >= 0 && next < topics.length) {
-    activeTopicSlug.value = topics[next].slug
+  const nextIdx = idx + direction
+  if (nextIdx >= 0 && nextIdx < topics.length) {
+    activeTopicSlug.value = topics[nextIdx]!.slug
     activePostIndex.value = 0
     return
   }
   if (direction === 1 && state.hasNextPage.value && !state.isFetchingNextPage.value) {
     const lenBefore = topics.length
-    functions
-      .fetchNextPage()
-      .then(() => {
-        const updated = state.topics.value
-        if (updated.length > lenBefore) {
-          activeTopicSlug.value = updated[lenBefore].slug
-          activePostIndex.value = 0
-        }
-      })
-      .catch(() => {
-        /* swallow — user can retry */
-      })
+
+    await functions.fetchNextPage()
+
+    activeTopicSlug.value = state.topics.value[lenBefore]!.slug
+    activePostIndex.value = 0
   }
 }
 
 function onKeydown(e: KeyboardEvent) {
   if (feedMode.value !== 'focus') return
   if (activePanel.value !== null) return
-  const tag = (document.activeElement?.tagName ?? '').toUpperCase()
-  if (tag === 'INPUT' || tag === 'TEXTAREA') return
 
   const len = activeTopicPostCount.value
 
@@ -92,7 +83,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 <template>
   <div class="desktop-scope shell">
     <Rail />
-    <Sidebar />
+    <Sidebar :topics="state.topics.value" />
+
     <main class="main">
       <Topbar />
       <div class="body">

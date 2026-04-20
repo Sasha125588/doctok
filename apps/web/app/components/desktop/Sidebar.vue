@@ -1,27 +1,28 @@
 <script setup lang="ts">
 import { AnimatePresence, motion } from 'motion-v'
 
-import { useFeed } from '~/composables/useFeed'
 import { useFeedView } from '~/composables/useFeedView'
-import { useLang } from '~/composables/useLang'
 import { useTopicHistory } from '~/composables/useTopicHistory'
 
-const { lang } = useLang()
-const { state } = useFeed(lang)
+import type { TopicFeedPageView } from '#api/types.gen'
+
+const props = defineProps<{ topics: TopicFeedPageView[] }>()
+
 const { pinned, recent } = useTopicHistory()
-const { activeTopicSlug, sidebarHidden } = useFeedView()
+const { activeTopicSlug, sidebarHidden, activePostIndex } = useFeedView()
 
 function titleOf(slug: string) {
-  return state.topics.value.find((t) => t.slug === slug)?.title ?? slug
+  return props.topics.find((t) => t.slug === slug)?.title ?? slug
 }
 
 const sections = computed(() => [
   { label: 'pinned', slugs: pinned.value },
-  { label: 'recent', slugs: recent.value },
+  { label: 'recent', slugs: [...recent.value, ...props.topics.map((topic) => topic.slug)] },
 ])
 
 function selectTopic(slug: string) {
   activeTopicSlug.value = slug
+  activePostIndex.value = 0
 }
 </script>
 

@@ -18,7 +18,7 @@ export interface TopicEvent {
 const topicEvents = ['topic-ready', 'topic-failed', 'topic-timeout'] as const
 
 export function useTopicPosts(options: Options<TopicsGetPostsData>) {
-  const query = useQuery(topicsGetPostsOptions(options))
+  const query = useQuery({ ...topicsGetPostsOptions(options) })
 
   const posts = computed(() => query.data.value?.items ?? [])
 

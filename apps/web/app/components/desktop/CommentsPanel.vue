@@ -33,6 +33,7 @@ function submit() {
 }
 
 function close() {
+  if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
   activePanel.value = null
 }
 

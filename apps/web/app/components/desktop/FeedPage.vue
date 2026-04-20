@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { AnimatePresence, motion } from 'motion-v'
-
 import BrowseMode from './BrowseMode.vue'
 import CommentsPanel from './CommentsPanel.vue'
 import FocusMode from './FocusMode.vue'
@@ -10,39 +8,31 @@ import { useFeedView } from '~/composables/useFeedView'
 const { mode, activeTopicSlug } = useFeedView()
 
 // Keyed so child composables re-instantiate on slug change (see FocusMode note).
-const slugKey = computed(() => `slug:${activeTopicSlug.value}`)
+const slugKey = computed(() => `${mode}:slug:${activeTopicSlug.value}`)
 </script>
 
 <template>
   <div class="feed-page">
     <div class="stack">
-      <AnimatePresence mode="wait">
-        <motion.div
-          v-if="mode === 'focus'"
-          key="focus"
-          class="pane"
-          :initial="{ opacity: 0 }"
-          :animate="{ opacity: 1 }"
-          :exit="{ opacity: 0 }"
-          :transition="{ duration: 0.18 }"
-        >
-          <FocusMode :key="slugKey" />
-        </motion.div>
-        <motion.div
-          v-else
-          key="browse"
-          class="pane"
-          :initial="{ opacity: 0 }"
-          :animate="{ opacity: 1 }"
-          :exit="{ opacity: 0 }"
-          :transition="{ duration: 0.18 }"
-        >
-          <BrowseMode :key="slugKey" />
-        </motion.div>
-      </AnimatePresence>
+      <FocusMode
+        v-if="activeTopicSlug && mode === 'focus'"
+        :key="slugKey"
+        class="pane"
+      />
+      <BrowseMode
+        v-else-if="activeTopicSlug && mode === 'browse'"
+        :key="slugKey"
+        class="pane"
+      />
     </div>
-    <CommentsPanel :key="`comments-${slugKey}`" />
-    <NotesPanel :key="`notes-${slugKey}`" />
+    <CommentsPanel
+      v-if="activeTopicSlug"
+      :key="`comments-${slugKey}`"
+    />
+    <NotesPanel
+      v-if="activeTopicSlug"
+      :key="`notes-${slugKey}`"
+    />
   </div>
 </template>
 

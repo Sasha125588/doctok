@@ -36,6 +36,7 @@ function save() {
 const isOpen = computed(() => activePanel.value === 'notes')
 
 function close() {
+  if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
   activePanel.value = null
 }
 </script>

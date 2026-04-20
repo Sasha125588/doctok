@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { AnimatePresence } from 'motion-v'
-
 import FocusCard from './FocusCard.vue'
 import { useFeedView } from '~/composables/useFeedView'
 import { useLang } from '~/composables/useLang'
@@ -11,21 +9,21 @@ const { activeTopicSlug, activePostIndex, activePanel, activeTopicPostCount } = 
 
 // Snapshot slug: FocusMode is re-keyed by FeedPage on slug change (see Task 5.2),
 // so the composable remounts naturally. Mirrors the `topic/[...slug].vue` approach.
-const { state: postsState } = useTopicPosts({
+const { state } = useTopicPosts({
   query: {
     slug: activeTopicSlug.value ?? '',
     lang: lang.value,
   },
 })
 
-const activePost = computed(() => postsState.posts.value[activePostIndex.value])
+const activePost = computed(() => state.posts.value[activePostIndex.value])
 
 // Publish post count to shared state so keyboard handler (DesktopShell, Task 6.6)
 // can bound ← / → navigation without re-calling useTopicPosts.
 watch(
-  () => postsState.posts.value.length,
+  () => state.posts.value.length,
   (len) => {
-    activeTopicPostCount.value = len
+    if (len > 0) activeTopicPostCount.value = len
   },
   { immediate: true }
 )
@@ -53,7 +51,6 @@ function openComments() {
 
 onUnmounted(() => {
   if (toastTimer) clearTimeout(toastTimer)
-  activeTopicPostCount.value = 0
 })
 </script>
 
@@ -65,19 +62,26 @@ onUnmounted(() => {
           v-if="activePost"
           :key="cardKey"
           :post="activePost"
-          :total-posts="postsState.posts.value.length"
+          :total-posts="state.posts.value.length"
           :current-index="activePostIndex"
           @open-notes="openNotes"
           @open-comments="openComments"
           @toast="showToast"
         />
         <div
-          v-else-if="postsState.isLoading.value"
+          v-else-if="state.isLoading.value"
           key="loading"
           class="loading"
         >
           // завантаження...
         </div>
+        <!-- <div
+          v-else-if="state."
+          key="not-found"
+          class="loading"
+        >
+          // завантаження...
+        </div> -->
         <div
           v-else
           key="empty"
