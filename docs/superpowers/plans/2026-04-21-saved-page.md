@@ -53,11 +53,13 @@ export interface SavedPost {
   topicSlug: string
   title: string
   kind: string
-  savedAt: number
+  // Optional to stay compatible with legacy localStorage entries written before
+  // this field existed. New entries always set it via Date.now().
+  savedAt?: number
 }
 ```
 
-- [ ] **Step 2: Set `savedAt` on add, expose sorted-desc list, leave legacy entries readable**
+- [ ] **Step 2: Set `savedAt` on add, expose sorted-desc list, expose direct `remove`, leave legacy entries readable**
 
 Replace the whole exported function with:
 
@@ -70,7 +72,7 @@ export function useSavedPosts() {
   function toggle(post: TopicPostView) {
     const id = +post.id
     if (isSaved(id)) {
-      saved.value = saved.value.filter((s) => s.postId !== id)
+      remove(id)
     } else {
       saved.value = [
         ...saved.value,
@@ -85,13 +87,17 @@ export function useSavedPosts() {
     }
   }
 
+  function remove(postId: number) {
+    saved.value = saved.value.filter((s) => s.postId !== postId)
+  }
+
   // Newest first. Legacy entries (no savedAt) default to 0 and sink to the end.
   // No write-back to localStorage; legacy entries stay legacy until toggled.
   const sorted = computed<SavedPost[]>(() =>
     [...saved.value].sort((a, b) => (b.savedAt ?? 0) - (a.savedAt ?? 0))
   )
 
-  return { saved, sorted, isSaved, toggle }
+  return { saved, sorted, isSaved, toggle, remove }
 }
 ```
 
@@ -270,7 +276,7 @@ const props = defineProps<{ post: SavedPost }>()
 
 const router = useRouter()
 const { activeTopicSlug, pendingPostId, mode } = useFeedView()
-const { toggle } = useSavedPosts()
+const { remove } = useSavedPosts()
 
 function open() {
   activeTopicSlug.value = props.post.topicSlug
@@ -279,16 +285,8 @@ function open() {
   router.push('/')
 }
 
-function remove() {
-  // toggle() expects TopicPostView shape; it only reads .id/.topicSlug/.title/.kind,
-  // and the existing useSavedPosts.toggle branches on isSaved(+post.id) — for a saved
-  // entry it deletes by id. Passing the SavedPost-shaped object with id set works.
-  toggle({
-    id: String(props.post.postId),
-    topicSlug: props.post.topicSlug,
-    title: props.post.title,
-    kind: props.post.kind,
-  } as never)
+function onRemove() {
+  remove(props.post.postId)
 }
 </script>
 
@@ -305,7 +303,7 @@ function remove() {
       class="remove"
       type="button"
       title="видалити зі збережених"
-      @click.stop="remove"
+      @click.stop="onRemove"
     >
       <Icon
         name="lucide:bookmark-minus"
@@ -916,6 +914,8 @@ git commit -m "feat(web): route-aware Topbar (hide pills on /saved)"
 
 ### Task 3.3: `FocusMode` consumes `pendingPostId`
 
+**Note on scope:** `FocusMode.vue` already calls `useTopicPosts` itself and destructures `const { state } = useTopicPosts(...)`. The existing `watch(() => state.posts.value.length, ...)` is your precedent — `state.posts` is a reactive ref in scope inside this component. No prop-drilling needed.
+
 **Files:**
 - Modify: `apps/web/app/components/desktop/FocusMode.vue`
 
@@ -976,7 +976,60 @@ git commit -m "feat(web): consume pendingPostId in FocusMode for saved-card hand
 
 ---
 
-### Task 3.4: Final pass — lint, fmt, acceptance
+### Task 3.4: Guard shell-level keyboard handler from firing on non-feed routes
+
+Currently `DesktopShell.vue` attaches a global `keydown` listener that reads `useFeedView` state and mutates `activePostIndex` / `activeTopicSlug`. On `/saved` this handler is still attached (shell is mounted) and would cycle posts of whatever topic was last active in memory — invisible to the user but surprising. Guard it on route.
+
+**Files:**
+- Modify: `apps/web/app/components/desktop/DesktopShell.vue`
+
+- [ ] **Step 1: Add a route guard at the top of `onKeydown`**
+
+In `DesktopShell.vue`, at the top of the script (near other imports/composables) add:
+
+```ts
+const route = useRoute()
+```
+
+Then modify the `onKeydown` function — add this as the first check inside the body, before any other guard:
+
+```ts
+function onKeydown(e: KeyboardEvent) {
+  if (route.path !== '/') return
+  if (feedMode.value !== 'focus') return
+  if (activePanel.value !== null) return
+  // ... rest unchanged
+}
+```
+
+- [ ] **Step 2: Verify lint + fmt**
+
+```bash
+cd apps/web && pnpm lint && pnpm fmt:check
+```
+
+- [ ] **Step 3: Manual verification**
+
+```bash
+cd apps/web && pnpm dev
+```
+
+1. On `/`: arrow keys cycle posts (unchanged).
+2. Navigate to `/saved`: press arrow keys repeatedly → nothing happens, `activePostIndex` in devtools/Vue devtools stays fixed.
+3. Navigate back to `/`: arrows work again.
+
+Kill dev.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add apps/web/app/components/desktop/DesktopShell.vue
+git commit -m "fix(web): guard DesktopShell keyboard handler to feed route"
+```
+
+---
+
+### Task 3.5: Final pass — lint, fmt, acceptance
 
 **Files:** none (verification + final polish only)
 
