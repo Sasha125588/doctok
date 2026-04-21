@@ -964,13 +964,13 @@ watchEffect(() => {
 
 `watchEffect` is Vue-global, no import needed under Nuxt's auto-imports (same pattern as the existing `watch` calls elsewhere in this codebase).
 
-- [ ] **Step 2: Verify lint + fmt**
+- [ ] **Step 3: Verify lint + fmt**
 
 ```bash
 cd apps/web && pnpm lint && pnpm fmt:check
 ```
 
-- [ ] **Step 3: Manual verification — full handoff flow**
+- [ ] **Step 4: Manual verification — full handoff flow**
 
 ```bash
 cd apps/web && pnpm dev
@@ -986,7 +986,7 @@ cd apps/web && pnpm dev
 
 Kill dev.
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add apps/web/app/components/desktop/FeedPage.vue docs/superpowers/specs/2026-04-21-saved-page-design.md
