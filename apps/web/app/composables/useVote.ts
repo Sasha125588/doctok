@@ -3,64 +3,124 @@ import { useMutation, useQueryClient } from '@tanstack/vue-query'
 
 import type { ReactionValue, TopicsGetPostsResponse } from '#api/types.gen'
 
-export interface useVoteProps {
+export interface UseVoteOptions {
   postId: number
   topicSlug: string
-  localMyVote: MaybeRefOrGetter<ReactionValue>
-  localLikeCount: MaybeRefOrGetter<number>
-  localDislikeCount: MaybeRefOrGetter<number>
 }
 
-export const useVote = (props: useVoteProps) => {
+export interface VoteContext {
+  queryKey: any
+  previousData?: TopicsGetPostsResponse
+}
+
+export const useVote = (options: UseVoteOptions) => {
   const { lang } = useLang()
+
+  const getQueryKey = () =>
+    topicsGetPostsQueryKey({
+      query: { slug: options.topicSlug, lang: lang.value },
+    })
 
   const queryClient = useQueryClient()
 
-  const voteMutation = useMutation(postsReactionsToggleMutation())
+  const voteMutation = useMutation({
+    ...postsReactionsToggleMutation(),
 
-  const onVote = (value: ReactionValue) =>
-    voteMutation.mutate(
-      {
-        path: { postId: props.postId },
-        body: { value },
-      },
-      {
-        onSuccess(data) {
-          props.localMyVote = data.myVote
-          props.localLikeCount = +data.likeCount
-          props.localDislikeCount = +data.dislikeCount
+    onMutate: async (variables) => {
+      const queryKey = getQueryKey()
 
-          queryClient.setQueryData(
-            topicsGetPostsQueryKey({
-              query: {
-                slug: props.topicSlug,
-                lang: lang.value,
-              },
-            }),
-            (oldData: TopicsGetPostsResponse | undefined) => {
-              if (!oldData) return oldData
-              const targetId = props.postId
+      const postId = variables.path.postId
+      const nextVote = variables.body.value
 
-              const changes = {
-                likeCount: data.likeCount,
-                dislikeCount: data.dislikeCount,
-                myVote: data.myVote,
-              }
+      await queryClient.cancelQueries({ queryKey })
 
-              return {
-                ...oldData,
-                items: oldData.items.map((post) =>
-                  post.id === targetId ? { ...post, ...changes } : post
-                ),
+      const previousData = queryClient.getQueryData<TopicsGetPostsResponse>(queryKey)
+
+      queryClient.setQueryData<TopicsGetPostsResponse>(queryKey, (oldData) => {
+        if (!oldData) return oldData
+
+        return {
+          ...oldData,
+          items: oldData.items.map((post) => {
+            if (+post.id !== postId) return post
+
+            const prev = post.myVote
+
+            let likeCount = +post.likeCount
+            let dislikeCount = +post.dislikeCount
+            let myVote = prev
+
+            if (nextVote === 'like') {
+              if (prev === 'like') {
+                likeCount--
+                myVote = 'none'
+              } else {
+                likeCount++
+                if (prev === 'dislike') dislikeCount--
+                myVote = 'like'
               }
             }
-          )
-        },
-        onError(error) {
-          console.error(`${value} Error:`, error)
-        },
-      }
-    )
+
+            if (nextVote === 'dislike') {
+              if (prev === 'dislike') {
+                dislikeCount--
+                myVote = 'none'
+              } else {
+                dislikeCount++
+                if (prev === 'like') likeCount--
+                myVote = 'dislike'
+              }
+            }
+
+            return {
+              ...post,
+              likeCount,
+              dislikeCount,
+              myVote,
+            }
+          }),
+        }
+      })
+
+      return { previousData, queryKey }
+    },
+
+    onSuccess(data, variables) {
+      const queryKey = getQueryKey()
+
+      const postId = variables.path.postId
+
+      queryClient.setQueryData<TopicsGetPostsResponse>(queryKey, (oldData) => {
+        if (!oldData) return oldData
+
+        return {
+          ...oldData,
+          items: oldData.items.map((post) =>
+            +post.id === postId
+              ? {
+                  ...post,
+                  likeCount: data.likeCount,
+                  dislikeCount: data.dislikeCount,
+                  myVote: data.myVote,
+                }
+              : post
+          ),
+        }
+      })
+    },
+
+    onError(_err, _variables, onMutateResult) {
+      if (!onMutateResult?.previousData || !onMutateResult.queryKey) return
+
+      queryClient.setQueryData(onMutateResult.queryKey, onMutateResult.previousData)
+    },
+  })
+
+  const onVote = (value: ReactionValue) =>
+    voteMutation.mutate({
+      path: { postId: options.postId },
+      body: { value },
+    })
 
   return {
     functions: {

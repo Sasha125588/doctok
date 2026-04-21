@@ -7,7 +7,7 @@ const kindConfig = usePostKind(() => props.kind)
 
 <template>
   <div
-    class="inline-flex items-center gap-1.5 rounded border px-2.5 py-1 font-mono text-[0.65rem] font-medium tracking-widest uppercase"
+    class="inline-flex w-max items-center gap-1.5 rounded border px-2.5 py-1 font-mono text-[0.65rem] font-medium tracking-widest uppercase"
     :style="{
       color: kindConfig.cssColor,
       borderColor: kindConfig.cssColor + '44',

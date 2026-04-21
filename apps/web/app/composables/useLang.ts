@@ -1,7 +1,7 @@
 export function useLang() {
   const lang = useCookie('doctoc_content_lang', { default: () => 'en' })
 
-  function setLang(value: string) {
+  const setLang = (value: string) => {
     lang.value = value
     reloadNuxtApp()
   }
