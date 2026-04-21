@@ -5,18 +5,16 @@ import {
 } from '#api/@tanstack/vue-query.gen'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 
-export function useComments(postId: Ref<number | null>) {
-  const enabled = computed(() => postId.value != null)
+export function useComments(postId: Ref<number>) {
   const queryClient = useQueryClient()
 
   const listOptions = computed(() => ({
     ...postsCommentsListOptions({
       path: { postId: postId.value ?? 0 },
     }),
-    enabled: enabled.value,
   }))
 
-  const query = useQuery(() => listOptions.value)
+  const query = useQuery(listOptions)
 
   const createMutation = useMutation({
     ...postsCommentsCreateMutation(),

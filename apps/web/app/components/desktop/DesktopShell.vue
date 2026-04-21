@@ -6,7 +6,7 @@ import Topbar from './Topbar.vue'
 import { useFeed } from '~/composables/useFeed'
 import { useFeedView } from '~/composables/useFeedView'
 import { useLang } from '~/composables/useLang'
-import { useTopicHistory } from '~/composables/useTopicHistory'
+// import { useTopicHistory } from '~/composables/useTopicHistory'
 
 const { lang } = useLang()
 const { state, functions } = useFeed(lang)
@@ -17,9 +17,8 @@ const {
   mode: feedMode,
   activeTopicPostCount,
 } = useFeedView()
-const { addRecent } = useTopicHistory()
+// const { addRecent } = useTopicHistory()
 
-// Seed active topic once feed arrives. addRecent is handled by the recency watcher below.
 watch(
   () => state.topics.value,
   (topics) => {
@@ -30,7 +29,7 @@ watch(
   { immediate: true }
 )
 
-// Track recency whenever active topic changes.
+// TODO: реалізувати recent topics
 // watch(activeTopicSlug, (slug) => {
 //   if (slug) addRecent(slug)
 // })

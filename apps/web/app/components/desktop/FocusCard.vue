@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { motion } from 'motion-v'
+import { toast } from 'vue-sonner'
 
 import ActionsColumn from './ActionsColumn.vue'
 import CardMeta from './CardMeta.vue'
@@ -20,7 +21,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   openNotes: []
   openComments: []
-  toast: [string]
 }>()
 
 const { isSaved, toggle: toggleSave } = useSavedPosts()
@@ -41,16 +41,12 @@ async function onShare() {
     try {
       await navigator.share({ url })
       return
-    } catch {
-      /* fall through to clipboard */
-    }
+    } catch {}
   }
   try {
     await navigator.clipboard.writeText(url)
-    emit('toast', 'скопійовано')
-  } catch {
-    /* ignored */
-  }
+    toast('скопійовано')
+  } catch {}
 }
 </script>
 

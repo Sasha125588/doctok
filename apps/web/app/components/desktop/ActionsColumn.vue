@@ -45,6 +45,7 @@ const emit = defineEmits<{
     </motion.button>
 
     <motion.button
+      aria-label="Save post"
       type="button"
       :aria-pressed="isSaved"
       class="btn"
@@ -62,6 +63,7 @@ const emit = defineEmits<{
     </motion.button>
 
     <motion.button
+      aria-label="Add note"
       type="button"
       :aria-pressed="hasNote"
       class="btn"

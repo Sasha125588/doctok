@@ -1,26 +1,17 @@
 <script setup lang="ts">
 import DesktopSidePanel from './DesktopSidePanel.vue'
 import { useFeedView } from '~/composables/useFeedView'
-import { useLang } from '~/composables/useLang'
 import { useNotes } from '~/composables/useNotes'
-import { useTopicPosts } from '~/composables/useTopicPosts'
 
-const { lang } = useLang()
-const { activeTopicSlug, activePostIndex, activePanel } = useFeedView()
+const props = defineProps<{ activePostId: number }>()
+
+const { activePanel } = useFeedView()
 const { get, set } = useNotes()
 
-const { state } = useTopicPosts({
-  query: {
-    slug: activeTopicSlug.value ?? '',
-    lang: lang.value,
-  },
-})
-
-const activePostId = computed(() => state.posts.value[activePostIndex.value]?.id ?? null)
 const text = ref('')
 
 watch(
-  () => [activePostId.value, activePanel.value === 'notes'] as const,
+  () => [props.activePostId, activePanel.value === 'notes'] as const,
   ([id, open]) => {
     if (open && id != null) text.value = get(id)
   },
@@ -28,24 +19,18 @@ watch(
 )
 
 function save() {
-  if (activePostId.value != null) {
-    set(activePostId.value, text.value)
+  if (props.activePostId != null) {
+    set(props.activePostId, text.value)
   }
 }
 
 const isOpen = computed(() => activePanel.value === 'notes')
-
-function close() {
-  if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
-  activePanel.value = null
-}
 </script>
 
 <template>
   <DesktopSidePanel
     :open="isOpen"
     title="note"
-    @close="close"
   >
     <div class="area">
       <textarea
@@ -92,7 +77,7 @@ function close() {
 }
 .hint {
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: 10px;
   color: var(--dt-text-quaternary);
   line-height: 1.6;
 }

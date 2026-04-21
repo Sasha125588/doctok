@@ -32,8 +32,8 @@ export default defineNuxtConfig({
     '@nuxt/icon',
     'nuxt-svgo',
     '@peterbud/nuxt-query',
-    '@nuxtjs/mdc',
     'motion-v/nuxt',
+    'vue-sonner/nuxt',
   ],
 
   experimental: {
@@ -74,6 +74,10 @@ export default defineNuxtConfig({
 
     // @link https://nuxt.com/docs/api/nuxt-config#alias
     componentDir: '@/components/ui',
+  },
+
+  vueSonner: {
+    css: true, // true by default to include css file
   },
 
   icon: {

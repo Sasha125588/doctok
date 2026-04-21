@@ -7,15 +7,14 @@ const { lang } = useLang()
 const { activeTopicSlug, activePostIndex } = useFeedView()
 
 const enabled = computed(() => !!activeTopicSlug.value)
-const { state } = useTopicLinks(
-  {
-    query: {
-      slug: activeTopicSlug.value ?? '',
-      lang: lang.value,
-    },
+const queryOptions = computed(() => ({
+  query: {
+    slug: activeTopicSlug.value ?? '',
+    lang: lang.value,
   },
-  enabled
-)
+}))
+
+const { state } = useTopicLinks(queryOptions, enabled)
 
 function go(slug: string) {
   activeTopicSlug.value = slug
@@ -72,7 +71,7 @@ function go(slug: string) {
   font-size: 9px;
   padding: 3px 8px;
   border-radius: 2px;
-  border: 1px solid #141616;
+  border: 1px solid var(--dt-border-subtle);
   color: var(--dt-text-tertiary);
   cursor: pointer;
   background: none;

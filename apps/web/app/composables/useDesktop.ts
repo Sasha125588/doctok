@@ -1,5 +1,3 @@
 import { useMediaQuery } from '@vueuse/core'
 
-export function useDesktop() {
-  return useMediaQuery('(min-width: 1024px)', { ssrWidth: 1024 })
-}
+export const useDesktop = () => useMediaQuery('(min-width: 1024px)', { ssrWidth: 1024 })

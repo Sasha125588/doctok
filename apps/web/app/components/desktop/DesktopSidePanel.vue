@@ -1,33 +1,44 @@
 <script setup lang="ts">
 import { motion } from 'motion-v'
 
-defineProps<{
+const props = defineProps<{
   open: boolean
   title: string
 }>()
 
-const emit = defineEmits<{
-  close: []
-}>()
+const { activePanel } = useFeedView()
+
+const panel = useTemplateRef<HTMLElement>('panel')
+
+function close() {
+  if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
+  activePanel.value = null
+}
+
+onClickOutside(panel, () => {
+  if (!props.open) return
+  close()
+})
 </script>
 
 <template>
   <motion.aside
     class="panel"
-    :animate="{ width: open ? 210 : 0 }"
+    :animate="{ width: props.open ? 280 : 0 }"
     :transition="{ duration: 0.22, ease: 'easeInOut' }"
   >
     <div
+      ref="panel"
       class="inner"
-      :class="{ 'is-hidden': !open }"
-      :inert="!open"
-      :aria-hidden="!open"
+      :class="{ 'is-hidden': !props.open }"
+      :inert="!props.open"
+      :aria-hidden="!props.open"
     >
       <header class="header">
-        <span class="title">// {{ title }}</span>
+        <span class="title">// {{ props.title }}</span>
         <button
           class="close"
-          @click="emit('close')"
+          @click="close()"
         >
           ×
         </button>
@@ -47,7 +58,7 @@ const emit = defineEmits<{
   flex-direction: column;
 }
 .inner {
-  width: 210px;
+  width: 280px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -70,7 +81,7 @@ const emit = defineEmits<{
 }
 .title {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 10px;
   color: var(--dt-text-tertiary);
   letter-spacing: 0.1em;
 }
@@ -79,7 +90,7 @@ const emit = defineEmits<{
   border: none;
   cursor: pointer;
   color: var(--dt-text-quaternary);
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1;
   padding: 0;
   transition: color 0.15s;

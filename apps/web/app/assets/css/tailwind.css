@@ -86,6 +86,7 @@
   --dt-panel-border: #141414;
   --dt-text-tertiary: #7a7f86;
   --dt-text-quaternary: #5f666f;
+  --dt-border-subtle: #141616;
   --kind-summary-bg: #0d1f35;
   --kind-example-bg: #001f10;
   --kind-fact-bg: #1e1400;
@@ -113,5 +114,5 @@
 }
 
 .desktop-scope {
-  --font-display: Georgia, 'Palatino Linotype', serif;
+  --font-display: georgia, 'Palatino Linotype', serif;
 }

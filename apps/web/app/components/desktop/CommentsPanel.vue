@@ -1,25 +1,15 @@
 <script setup lang="ts">
+import { format } from 'date-fns'
+
 import DesktopSidePanel from './DesktopSidePanel.vue'
 import { useComments } from '~/composables/useComments'
 import { useFeedView } from '~/composables/useFeedView'
-import { useLang } from '~/composables/useLang'
-import { useTopicPosts } from '~/composables/useTopicPosts'
 
-const { lang } = useLang()
-const { activeTopicSlug, activePostIndex, activePanel } = useFeedView()
+const props = defineProps<{ activePostId: number }>()
 
-const { state } = useTopicPosts({
-  query: {
-    slug: activeTopicSlug.value ?? '',
-    lang: lang.value,
-  },
-})
+const { activePanel } = useFeedView()
 
-const activePostId = computed(() => {
-  const post = state.posts.value[activePostIndex.value]
-  return post ? +post.id : null
-})
-
+const activePostId = computed(() => props.activePostId)
 const { comments, isLoading, isSending, send } = useComments(activePostId)
 
 const draft = ref('')
@@ -27,37 +17,22 @@ const isOpen = computed(() => activePanel.value === 'comments')
 
 function submit() {
   if (isSending.value) return
-  if (!draft.value.trim()) return
   send(draft.value, () => {
     draft.value = ''
   })
-}
-
-function close() {
-  if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
-  activePanel.value = null
 }
 
 function initial(str: string | undefined) {
   return (str?.[0] ?? '?').toUpperCase()
 }
 
-function formatTime(iso: string | undefined) {
-  if (!iso) return ''
-  try {
-    const d = new Date(iso)
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  } catch {
-    return ''
-  }
-}
+const formatTime = (iso: string | undefined) => (iso ? format(new Date(iso), 'HH:mm') : '')
 </script>
 
 <template>
   <DesktopSidePanel
     :open="isOpen"
     title="comments"
-    @close="close"
   >
     <div class="list">
       <div
@@ -79,7 +54,7 @@ function formatTime(iso: string | undefined) {
       >
         <div class="meta">
           <div class="avatar">{{ initial(c.userId) }}</div>
-          <span class="author">{{ c.userId ?? 'user' }}</span>
+          <span class="author">{{ c.userId?.slice(10) ?? 'user' }}</span>
           <span class="time">{{ formatTime(c.createdAt) }}</span>
         </div>
         <div class="text">{{ c.body }}</div>

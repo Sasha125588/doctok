@@ -1,18 +1,14 @@
 <script setup lang="ts">
 import PostKindBadge from '~/components/post/PostKindBadge.vue'
 import { useFeedView } from '~/composables/useFeedView'
-import { useLang } from '~/composables/useLang'
-import { useTopicPosts } from '~/composables/useTopicPosts'
 
-const { lang } = useLang()
-const { activeTopicSlug, activePostIndex, mode } = useFeedView()
+import type { TopicPostView } from '#api/types.gen'
 
-const { state } = useTopicPosts({
-  query: {
-    slug: activeTopicSlug.value ?? '',
-    lang: lang.value,
-  },
-})
+const props = defineProps<{
+  posts?: TopicPostView[]
+}>()
+
+const { activePostIndex, mode } = useFeedView()
 
 function open(index: number) {
   activePostIndex.value = index
@@ -25,7 +21,7 @@ function open(index: number) {
     <div class="area">
       <div class="grid">
         <button
-          v-for="(post, i) in state.posts.value"
+          v-for="(post, i) in props.posts"
           :key="post.id"
           class="card"
           :class="{ 'is-current': i === activePostIndex }"
@@ -40,7 +36,7 @@ function open(index: number) {
         </button>
       </div>
       <div
-        v-if="!state.posts.value.length"
+        v-if="!props.posts?.length"
         class="empty"
       >
         // нема постів

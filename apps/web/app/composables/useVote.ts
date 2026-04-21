@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/vue-query'
 
 import type { ReactionValue, TopicsGetPostsResponse } from '#api/types.gen'
 
-export interface useVoteOptions {
+export interface UseVoteOptions {
   postId: number
   topicSlug: string
 }
@@ -12,7 +12,7 @@ export interface VoteContext {
   previousData?: TopicsGetPostsResponse
 }
 
-export const useVote = (options: useVoteOptions) => {
+export const useVote = (options: UseVoteOptions) => {
   const { lang } = useLang()
 
   const queryKey = topicsGetPostsQueryKey({
@@ -38,7 +38,7 @@ export const useVote = (options: useVoteOptions) => {
         return {
           ...oldData,
           items: oldData.items.map((post) => {
-            if (post.id !== postId) return post
+            if (+post.id !== postId) return post
 
             const prev = post.myVote
 
@@ -90,7 +90,7 @@ export const useVote = (options: useVoteOptions) => {
         return {
           ...oldData,
           items: oldData.items.map((post) =>
-            post.id === postId
+            +post.id === postId
               ? {
                   ...post,
                   likeCount: data.likeCount,

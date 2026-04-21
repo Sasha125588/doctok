@@ -3,41 +3,22 @@ import { AnimatePresence, motion } from 'motion-v'
 
 import FocusCard from './FocusCard.vue'
 import { useFeedView } from '~/composables/useFeedView'
-import { useLang } from '~/composables/useLang'
-import { useTopicPosts } from '~/composables/useTopicPosts'
 
-const { lang } = useLang()
-const { activeTopicSlug, activePostIndex, activePanel, activeTopicPostCount } = useFeedView()
+import type { TopicPostView } from '#api/types.gen'
 
-// Snapshot slug: FocusMode is re-keyed by FeedPage on slug change (see Task 5.2),
-// so the composable remounts naturally. Mirrors the `topic/[...slug].vue` approach.
-const { state } = useTopicPosts({
-  query: {
-    slug: activeTopicSlug.value ?? '',
-    lang: lang.value,
-  },
-})
+const props = defineProps<{
+  activePost?: TopicPostView
+  isLoading: boolean
+  totalPosts: number
+}>()
 
-const activePost = computed(() => state.posts.value[activePostIndex.value])
+const { activePostIndex, activePanel, activeTopicPostCount } = useFeedView()
 
-// Publish post count to shared state so keyboard handler (DesktopShell, Task 6.6)
-// can bound ← / → navigation without re-calling useTopicPosts.
 watch(
-  () => state.posts.value.length,
+  () => props.totalPosts,
   (len) => (activeTopicPostCount.value = len),
   { immediate: true }
 )
-
-const toastMessage = ref<string | null>(null)
-let toastTimer: ReturnType<typeof setTimeout> | null = null
-
-function showToast(msg: string) {
-  toastMessage.value = msg
-  if (toastTimer) clearTimeout(toastTimer)
-  toastTimer = setTimeout(() => {
-    toastMessage.value = null
-  }, 1600)
-}
 
 function openNotes() {
   activePanel.value = activePanel.value === 'notes' ? null : 'notes'
@@ -46,10 +27,6 @@ function openNotes() {
 function openComments() {
   activePanel.value = activePanel.value === 'comments' ? null : 'comments'
 }
-
-onUnmounted(() => {
-  if (toastTimer) clearTimeout(toastTimer)
-})
 </script>
 
 <template>
@@ -60,7 +37,7 @@ onUnmounted(() => {
         mode="wait"
       >
         <motion.div
-          :key="activePost ? `card-${activePost.id}` : state.isLoading.value ? 'loading' : 'empty'"
+          :key="activePost ? `card-${activePost.id}` : props.isLoading ? 'loading' : 'empty'"
           class="card-slot"
           :initial="{ opacity: 0, x: 10 }"
           :animate="{ opacity: 1, x: 0 }"
@@ -70,14 +47,13 @@ onUnmounted(() => {
           <FocusCard
             v-if="activePost"
             :post="activePost"
-            :total-posts="state.posts.value.length"
+            :total-posts="props.totalPosts"
             :current-index="activePostIndex"
             @open-notes="openNotes"
             @open-comments="openComments"
-            @toast="showToast"
           />
           <div
-            v-else-if="state.isLoading.value"
+            v-else-if="props.isLoading"
             class="loading"
           >
             // завантаження...
@@ -90,13 +66,6 @@ onUnmounted(() => {
           </div>
         </motion.div>
       </AnimatePresence>
-
-      <div
-        v-if="toastMessage"
-        class="toast"
-      >
-        {{ toastMessage }}
-      </div>
     </div>
   </section>
 </template>
@@ -128,20 +97,5 @@ onUnmounted(() => {
   flex: 1;
   min-height: 0;
   display: flex;
-}
-.toast {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #141414;
-  border: 1px solid #222;
-  color: var(--dt-text-tertiary);
-  font-family: var(--font-mono);
-  font-size: 9px;
-  padding: 6px 12px;
-  border-radius: 4px;
-  letter-spacing: 0.08em;
-  pointer-events: none;
 }
 </style>

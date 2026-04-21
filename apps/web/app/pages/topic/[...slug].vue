@@ -9,7 +9,14 @@ const slug = computed(() => route.params.slug!.join('/'))
 
 const { lang } = useLang()
 
-const { state } = useTopicPosts({ query: { slug: slug.value, lang: lang.value } })
+const queryOptions = computed(() => ({
+  query: {
+    slug: slug.value ?? '',
+    lang: lang.value,
+  },
+}))
+
+const { state } = useTopicPosts(queryOptions)
 const topicTitle = computed(() => state.posts.value[0]?.topicTitle ?? slug.value)
 
 const swiperKey = computed(() => `${slug.value}:${lang.value}`)

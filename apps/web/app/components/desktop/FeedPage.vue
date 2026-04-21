@@ -5,33 +5,50 @@ import FocusMode from './FocusMode.vue'
 import NotesPanel from './NotesPanel.vue'
 import { useFeedView } from '~/composables/useFeedView'
 
-const { mode, activeTopicSlug } = useFeedView()
+const { mode, activeTopicSlug, activePostIndex } = useFeedView()
 
-// Keyed so child composables re-instantiate on slug change (see FocusMode note).
-const slugKey = computed(() => `${mode.value}:slug:${activeTopicSlug.value}`)
+const { lang } = useLang()
+
+const queryOptions = computed(() => ({
+  query: {
+    slug: activeTopicSlug.value ?? '',
+    lang: lang.value,
+  },
+}))
+
+const { state } = useTopicPosts(queryOptions)
+
+const activePost = computed(() => state.posts.value[activePostIndex.value])
+const totalPosts = computed(() => state.posts.value.length)
+
+const slugKey = computed(() => `$slug:${activeTopicSlug.value}`)
 </script>
 
 <template>
   <div class="feed-page">
     <div class="stack">
       <FocusMode
-        v-if="activeTopicSlug && mode === 'focus'"
-        :key="slugKey"
+        v-if="mode === 'focus'"
+        :key="`focus-${slugKey}`"
         class="pane"
+        :active-post="activePost"
+        :is-loading="state.isLoading.value"
+        :total-posts="totalPosts"
       />
       <BrowseMode
-        v-else-if="activeTopicSlug && mode === 'browse'"
-        :key="slugKey"
+        v-else-if="mode === 'browse'"
+        :key="`browse-${slugKey}`"
         class="pane"
+        :posts="state.posts.value"
       />
     </div>
     <CommentsPanel
-      v-if="activeTopicSlug"
       :key="`comments-${slugKey}`"
+      :active-post-id="+activePost?.id!"
     />
     <NotesPanel
-      v-if="activeTopicSlug"
       :key="`notes-${slugKey}`"
+      :active-post-id="+activePost?.id!"
     />
   </div>
 </template>

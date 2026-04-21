@@ -17,17 +17,27 @@ export interface TopicEvent {
 
 const topicEvents = ['topic-ready', 'topic-failed', 'topic-timeout'] as const
 
-export function useTopicPosts(options: Options<TopicsGetPostsData>) {
-  const query = useQuery({ ...topicsGetPostsOptions(options) })
+export function useTopicPosts(options: Ref<Options<TopicsGetPostsData>>) {
+  const canFetch = computed(
+    () => Boolean(options.value.query.slug?.trim()) && Boolean(options.value.query.lang?.trim())
+  )
+
+  const query = useQuery(() => ({
+    ...topicsGetPostsOptions(options.value),
+    enabled: canFetch.value,
+  }))
 
   const posts = computed(() => query.data.value?.items ?? [])
 
-  const params = new URLSearchParams({
-    slug: options.query.slug,
-    lang: options.query.lang!,
+  const topicStreamUrl = computed(() => {
+    const params = new URLSearchParams({
+      slug: options.value.query.slug,
+      lang: options.value.query.lang,
+    })
+    return `/api/topics/stream?${params.toString()}`
   })
 
-  const sse = useEventSource(`/api/topics/stream?${params.toString()}`, [...topicEvents], {
+  const sse = useEventSource(topicStreamUrl, [...topicEvents], {
     immediate: false,
     autoReconnect: false,
     serializer: {
@@ -39,19 +49,20 @@ export function useTopicPosts(options: Options<TopicsGetPostsData>) {
     () => query.isError.value && isApiError(query.error.value) && query.error.value.status === 404
   )
 
-  const shouldResolve = computed(() => {
-    return isTopicNotFound.value && !!options.query.slug && !!options.query.lang
-  })
+  const shouldResolve = computed(() => isTopicNotFound.value && canFetch.value)
 
-  const resolveQuery = useQuery({
+  const resolveQuery = useQuery(() => ({
     ...resolveMdnOptions({
-      query: { externalRef: options.query.slug.replace(/^mdn\//, ''), lang: options.query.lang },
+      query: {
+        externalRef: options.value.query.slug.replace(/^mdn\//, ''),
+        lang: options.value.query.lang,
+      },
     }),
-    enabled: shouldResolve,
+    enabled: shouldResolve.value,
     retry: false,
     refetchOnWindowFocus: false,
     staleTime: Infinity,
-  })
+  }))
 
   const shouldOpenSse = computed(
     () => resolveQuery.isSuccess.value && resolveQuery.data.value?.status === 'pending'
