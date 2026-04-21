@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import FeedPage from './FeedPage.vue'
 import Rail from './Rail.vue'
 import Sidebar from './Sidebar.vue'
 import Topbar from './Topbar.vue'
@@ -102,7 +101,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
     <main class="main">
       <Topbar />
       <div class="body">
-        <FeedPage />
+        <slot />
       </div>
     </main>
   </div>
