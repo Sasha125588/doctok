@@ -41,24 +41,49 @@ New:
 
 Modified:
 
-- `DesktopShell.vue` — accepts a `default` slot for main content. `index.vue` keeps its current behavior (falls back to `<FeedPage />` when no slot provided, or passes `<FeedPage />` explicitly — whichever keeps the diff smallest and the pattern cleanest; decide during implementation).
+- `DesktopShell.vue` — content becomes a `default` slot. Callers supply the main content explicitly. `index.vue` is updated to pass `<FeedPage />` into the slot. No fallback content inside the shell — the shell is content-agnostic, each route owns its main view. This is the only acceptable option; fallback content would hide coupling between the shell and the feed, which is exactly what this change removes.
 - `Topbar.vue` — becomes route-aware: on `/saved` it shows a static title (`saved`) and hides the focus/browse pills. On `/` it behaves as today.
 - `Rail.vue` — becomes route-aware and actually navigates: each enabled nav item has a target path, active state is derived from `useRoute().path`, clicks call `router.push(path)`. `saved` moves from disabled to enabled with `path: '/saved'`. `search` and `courses` remain disabled.
-- `useFeedView.ts` — adds `pendingPostId: Ref<number | null>`, a one-shot handoff marker consumed by FocusMode.
-- `useSavedPosts.ts` — adds `savedAt: number` to `SavedPost`. New entries get `Date.now()`. Existing entries without `savedAt` default to `0` on read (stable under migration — no data loss, just groups pre-migration entries at the end).
+- `useFeedView.ts` — adds `pendingPostId: Ref<number | null>`, a one-shot handoff marker written by SavedCard, consumed by FocusMode (see §Data flow for the consume contract).
+- `useSavedPosts.ts` — `SavedPost` gains a required `savedAt: number` field. Writes always set `savedAt: Date.now()`. Reads expose a derived default of `0` for legacy entries that predate the field — no write-back to localStorage on read (no migration side effect; legacy entries stay legacy until the user toggles them). Sort order is always `savedAt desc`, so legacy entries sink to the bottom.
+
+`SavedPost` type shape (before → after):
+
+```ts
+// Before
+interface SavedPost {
+  postId: number
+  topicSlug: string
+  title: string
+  kind: string
+}
+
+// After
+interface SavedPost {
+  postId: number
+  topicSlug: string
+  title: string
+  kind: string
+  savedAt: number  // Date.now() at toggle-on time; 0 for legacy entries
+}
+```
 
 ### Data flow: click a saved card
 
-1. `SavedCard` click handler (not the remove button):
+1. `SavedCard` click handler (not the remove button). All four mutations fire synchronously in this order — the `router.push` comes last so FocusMode sees consistent state when it mounts or re-evaluates:
    - `activeTopicSlug.value = post.topicSlug`
    - `pendingPostId.value = post.postId`
    - `mode.value = 'focus'`
    - `router.push('/')`
-2. On `/`, `FeedPage` renders `FocusMode` for the new slug. `FocusMode` (keyed on slug via `FeedPage`) mounts fresh and `useTopicPosts` starts loading.
-3. A new watch inside `FocusMode` observes `[pendingPostId, state.posts.value]`. When both are set and the post list contains a matching id:
-   - `activePostIndex.value = posts.findIndex((p) => +p.id === pendingPostId.value)`
-   - `pendingPostId.value = null` (consume the marker so it doesn't re-fire)
-4. If the post isn't in the loaded list (e.g. stale bookmark, post deleted), `pendingPostId` is still cleared and `activePostIndex` defaults to `0` — user sees the topic's first post instead of a broken state.
+2. On `/`, `FeedPage` renders `FocusMode` for the active slug. `FocusMode` is keyed on slug (via `FeedPage`), so changing slug remounts it; same-slug re-entry does not remount.
+3. **Consumer lives in `FocusMode.vue`** (not in `useFeedView`). It's a `watchEffect` with both `pendingPostId` and `state.posts.value` as reactive reads:
+   - If `pendingPostId.value == null`: no-op.
+   - Else if `state.posts.value.length === 0`: wait (the effect re-runs when posts arrive).
+   - Else: find `idx = posts.findIndex((p) => +p.id === pendingPostId.value)`. Set `activePostIndex.value = idx >= 0 ? idx : 0`. Then set `pendingPostId.value = null` to consume the marker.
+   - The effect runs in both paths — fresh mount (slug changed, posts load async) and same-slug re-entry (posts already loaded, runs on next tick after `pendingPostId` flips).
+4. Stale bookmark (post missing from loaded list): still consumed, index defaults to 0 — user lands on the topic's first post rather than in a broken state.
+
+**Why `watchEffect` instead of a plain `watch`:** same-slug re-entry has no slug-change trigger; `FocusMode` stays mounted and `state.posts.value` is already populated. A `watchEffect` fires on `pendingPostId` flipping from `null → number` without needing slug to change.
 
 ### Data flow: remove from saved page
 
@@ -71,7 +96,8 @@ Modified:
 ### SavedPage layout
 
 - Header row: `// saved` label (monospace, tertiary color) + count badge (`{n} posts`).
-- Grid: `grid-template-columns: repeat(auto-fill, minmax(220px, 1fr))`, gap 12px, padding 20px, scroll inside main.
+- Grid: `grid-template-columns: repeat(auto-fill, minmax(220px, 1fr))`, gap 12px, padding 20px.
+- Scroll ownership: `SavedPage` root is the scroll container (`flex: 1; overflow-y: auto`). The shell's main slot stays non-scrolling — each page owns its own overflow behavior. This matches how `FeedPage` composes inside the current shell.
 - Cards enter with `motion.div` `initial={opacity:0, y:4} / animate={opacity:1, y:0}`, staggered by `index * 20ms`. Removal wrapped in `AnimatePresence` for fade-out.
 
 ### SavedCard visual
@@ -110,8 +136,9 @@ Shown when `saved.value.length === 0`:
 
 - **Stale bookmark (post no longer in topic).** Handled by the `pendingPostId` consumer: if no matching id found, clear marker and fall through to index 0.
 - **Topic slug no longer exists.** `useTopicPosts` will surface an empty / error state the same way it does for any missing topic — no additional handling required here.
-- **localStorage migration.** `savedAt` missing on old entries → default to 0. They sort to the end, but still render. No destructive rewrite on read.
-- **Sort stability.** Two entries with identical `savedAt` (should be rare, only if rapid toggles) — stable-sort by insertion order (JS `Array.prototype.sort` is stable in modern engines, fine).
+- **Click a saved card for the topic already active in focus mode.** Slug doesn't change → `FocusMode` does not remount. The `watchEffect` consumer still fires because `pendingPostId` flips `null → number` and is reactive. Posts are already loaded, so the effect sets `activePostIndex` immediately and clears the marker. This is the main regression vector for the handoff — covered explicitly here because the rest of the handoff path assumes slug change.
+- **localStorage migration.** `savedAt` missing on old entries → default to 0 derived at read time. They sort to the end (newest first), but still render. No write-back to localStorage on read.
+- **Sort stability.** Two entries with identical `savedAt` (rare, only if rapid toggles) — stable-sort by insertion order (JS `Array.prototype.sort` is stable in modern engines, fine).
 - **Rail active state on other routes** (e.g. `/topic/foo`). No Rail entry matches → no item is active. Acceptable for MVP; revisit when more pages land.
 
 ## Testing
@@ -126,7 +153,7 @@ Manual acceptance (automated tests are not yet a pattern in this workspace):
 6. Hover a card → remove icon appears → click it → card fades out, `/saved` count decreases, other cards stay.
 7. Refresh `/saved` → order preserved, count preserved (localStorage-backed).
 8. Arrow-key navigation from the newly-focused post works (verifies handoff didn't break the existing keyboard handler).
-9. Rail: `saved` button is highlighted while on `/saved`; `feed` is highlighted on `/`.
+9. Rail: `saved` button is highlighted while on `/saved`; `feed` is highlighted on `/`. On `/topic/foo` neither is highlighted — this is the documented MVP fallback, not a bug.
 
 ## Out-of-scope follow-ups (for future specs)
 
