@@ -388,7 +388,7 @@ function onRemove() {
 cd apps/web && pnpm lint && pnpm fmt:check
 ```
 
-Expected: no errors. If `oxlint` complains about the `as never` cast, acceptable to replace with a narrow helper; the goal is not to re-shape `toggle`'s signature in this task.
+Expected: no errors.
 
 - [ ] **Step 3: Commit**
 
@@ -912,28 +912,45 @@ git commit -m "feat(web): route-aware Topbar (hide pills on /saved)"
 
 ---
 
-### Task 3.3: `FocusMode` consumes `pendingPostId`
+### Task 3.3: `FeedPage` consumes `pendingPostId`
 
-**Note on scope:** `FocusMode.vue` already calls `useTopicPosts` itself and destructures `const { state } = useTopicPosts(...)`. The existing `watch(() => state.posts.value.length, ...)` is your precedent — `state.posts` is a reactive ref in scope inside this component. No prop-drilling needed.
+**Deviation from spec:** The spec §Data flow step 3 says "Consumer lives in `FocusMode.vue`". That assumed a pre-refactor version of FocusMode that owned `useTopicPosts`. The actual current FocusMode is presentational — it receives `activePost`, `isLoading`, `totalPosts` as props, and the `useTopicPosts` call lives in `FeedPage.vue` (which already has `state.posts.value` and `activePostIndex` available). The consumer therefore belongs in FeedPage. Behavior is unchanged; only the owner moves. Update the spec accordingly (Step 0 below).
 
 **Files:**
-- Modify: `apps/web/app/components/desktop/FocusMode.vue`
+- Modify: `apps/web/app/components/desktop/FeedPage.vue`
+- Modify: `docs/superpowers/specs/2026-04-21-saved-page-design.md`
 
-- [ ] **Step 1: Add `pendingPostId` to the destructure and add the consumer effect**
+- [ ] **Step 0: Update the spec to reflect the FeedPage owner**
 
-In `FocusMode.vue`, change the `useFeedView` destructure:
+In `docs/superpowers/specs/2026-04-21-saved-page-design.md`, under §Data flow → "Consumer lives in `FocusMode.vue`", change the wording to:
+
+> **Consumer lives in `FeedPage.vue`** (the component that owns `useTopicPosts` and therefore holds the `state.posts` reactive list; FocusMode is presentational and receives `activePost`/`totalPosts` as props).
+
+The rest of that bullet (the watchEffect semantics, same-slug re-entry note) stays.
+
+- [ ] **Step 1: Add `pendingPostId` to the `useFeedView` destructure in `FeedPage.vue`**
+
+Change the destructure line from:
 
 ```ts
-const { activeTopicSlug, activePostIndex, activePanel, activeTopicPostCount, pendingPostId } =
-  useFeedView()
+const { mode, activeTopicSlug, activePostIndex } = useFeedView()
 ```
 
-Add this `watchEffect` after the existing `watch` that publishes `activeTopicPostCount` (right before the `cardKey` computed, or right before the `toastMessage` ref — wherever reads cleanly; order inside `<script setup>` does not affect behavior):
+to:
 
 ```ts
-// Consume a pendingPostId handoff (e.g. from SavedPage). Runs on both fresh mount
-// (slug change) and same-slug re-entry, since watchEffect re-evaluates whenever any
-// reactive read changes — pendingPostId flipping from null → number is enough.
+const { mode, activeTopicSlug, activePostIndex, pendingPostId } = useFeedView()
+```
+
+- [ ] **Step 2: Add the consumer `watchEffect` in `FeedPage.vue`**
+
+Add immediately after the `const { state } = useTopicPosts(queryOptions)` line:
+
+```ts
+// Consume a pendingPostId handoff (e.g. from SavedPage). Runs on both fresh
+// state-posts load (slug changed, posts load async) and same-slug re-entry
+// (posts already loaded, runs on next tick after pendingPostId flips null→number).
+// Clearing pendingPostId to null at the end ensures the effect is a one-shot.
 watchEffect(() => {
   const target = pendingPostId.value
   if (target == null) return
@@ -944,6 +961,8 @@ watchEffect(() => {
   pendingPostId.value = null
 })
 ```
+
+`watchEffect` is Vue-global, no import needed under Nuxt's auto-imports (same pattern as the existing `watch` calls elsewhere in this codebase).
 
 - [ ] **Step 2: Verify lint + fmt**
 
@@ -970,8 +989,8 @@ Kill dev.
 - [ ] **Step 4: Commit**
 
 ```bash
-git add apps/web/app/components/desktop/FocusMode.vue
-git commit -m "feat(web): consume pendingPostId in FocusMode for saved-card handoff"
+git add apps/web/app/components/desktop/FeedPage.vue docs/superpowers/specs/2026-04-21-saved-page-design.md
+git commit -m "feat(web): consume pendingPostId in FeedPage for saved-card handoff"
 ```
 
 ---
@@ -991,7 +1010,7 @@ In `DesktopShell.vue`, at the top of the script (near other imports/composables)
 const route = useRoute()
 ```
 
-Then modify the `onKeydown` function — add this as the first check inside the body, before any other guard:
+Then modify the `onKeydown` function — add the `route.path` guard **as the very first check inside the body, above every existing guard** (`feedMode`, `activePanel`). Placing it first ensures the handler short-circuits before reading any feed-specific state:
 
 ```ts
 function onKeydown(e: KeyboardEvent) {
