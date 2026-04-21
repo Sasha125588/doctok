@@ -104,7 +104,7 @@ export function useSavedPosts() {
 - [ ] **Step 3: Verify lint + typecheck passes**
 
 ```bash
-cd apps/web && pnpm lint && pnpm fmt:check
+cd apps/web && bun run lint && bun run fmt:check
 ```
 
 Expected: no errors. (Any call sites that used `saved` directly still work; `sorted` is opt-in for new consumers.)
@@ -112,7 +112,7 @@ Expected: no errors. (Any call sites that used `saved` directly still work; `sor
 - [ ] **Step 4: Manual smoke-check existing feed bookmark toggle still works**
 
 ```bash
-cd apps/web && pnpm dev
+cd apps/web && bun run dev
 ```
 
 In a browser: open `/`, bookmark a post via the existing ActionsColumn, reload, confirm it stays saved (unchanged behavior). Kill dev.
@@ -157,7 +157,7 @@ return {
 - [ ] **Step 2: Verify lint**
 
 ```bash
-cd apps/web && pnpm lint
+cd apps/web && bun run lint
 ```
 
 Expected: no errors.
@@ -223,7 +223,7 @@ const isDesktop = useDesktop()
 - [ ] **Step 3: Verify lint + fmt**
 
 ```bash
-cd apps/web && pnpm lint && pnpm fmt:check
+cd apps/web && bun run lint && bun run fmt:check
 ```
 
 Expected: no errors.
@@ -231,7 +231,7 @@ Expected: no errors.
 - [ ] **Step 4: Manual verification — feed still works end-to-end**
 
 ```bash
-cd apps/web && pnpm dev
+cd apps/web && bun run dev
 ```
 
 In browser on `/`:
@@ -385,7 +385,7 @@ function onRemove() {
 - [ ] **Step 2: Verify lint + fmt**
 
 ```bash
-cd apps/web && pnpm lint && pnpm fmt:check
+cd apps/web && bun run lint && bun run fmt:check
 ```
 
 Expected: no errors.
@@ -510,7 +510,7 @@ const { sorted } = useSavedPosts()
 - [ ] **Step 2: Verify lint + fmt**
 
 ```bash
-cd apps/web && pnpm lint && pnpm fmt:check
+cd apps/web && bun run lint && bun run fmt:check
 ```
 
 - [ ] **Step 3: Commit**
@@ -548,13 +548,13 @@ const isDesktop = useDesktop()
 - [ ] **Step 2: Verify lint + fmt**
 
 ```bash
-cd apps/web && pnpm lint && pnpm fmt:check
+cd apps/web && bun run lint && bun run fmt:check
 ```
 
 - [ ] **Step 3: Manual verification**
 
 ```bash
-cd apps/web && pnpm dev
+cd apps/web && bun run dev
 ```
 
 Visit `http://localhost:3000/saved` directly in the browser (Rail still can't navigate there yet):
@@ -717,13 +717,13 @@ function go(item: NavItem) {
 - [ ] **Step 2: Verify lint + fmt**
 
 ```bash
-cd apps/web && pnpm lint && pnpm fmt:check
+cd apps/web && bun run lint && bun run fmt:check
 ```
 
 - [ ] **Step 3: Manual verification**
 
 ```bash
-cd apps/web && pnpm dev
+cd apps/web && bun run dev
 ```
 
 1. On `/`: Rail `feed` is highlighted.
@@ -888,13 +888,13 @@ const title = computed(() => {
 - [ ] **Step 2: Verify lint + fmt**
 
 ```bash
-cd apps/web && pnpm lint && pnpm fmt:check
+cd apps/web && bun run lint && bun run fmt:check
 ```
 
 - [ ] **Step 3: Manual verification**
 
 ```bash
-cd apps/web && pnpm dev
+cd apps/web && bun run dev
 ```
 
 1. On `/`: Topbar shows `feed`, focus/browse pills, read-mode toggle — unchanged.
@@ -967,13 +967,13 @@ watchEffect(() => {
 - [ ] **Step 3: Verify lint + fmt**
 
 ```bash
-cd apps/web && pnpm lint && pnpm fmt:check
+cd apps/web && bun run lint && bun run fmt:check
 ```
 
 - [ ] **Step 4: Manual verification — full handoff flow**
 
 ```bash
-cd apps/web && pnpm dev
+cd apps/web && bun run dev
 ```
 
 1. Starting fresh: visit `/`, open a topic, scroll a few posts deep (e.g. index 3), bookmark post #3 via ActionsColumn.
@@ -1024,13 +1024,13 @@ function onKeydown(e: KeyboardEvent) {
 - [ ] **Step 2: Verify lint + fmt**
 
 ```bash
-cd apps/web && pnpm lint && pnpm fmt:check
+cd apps/web && bun run lint && bun run fmt:check
 ```
 
 - [ ] **Step 3: Manual verification**
 
 ```bash
-cd apps/web && pnpm dev
+cd apps/web && bun run dev
 ```
 
 1. On `/`: arrow keys cycle posts (unchanged).
@@ -1055,17 +1055,17 @@ git commit -m "fix(web): guard DesktopShell keyboard handler to feed route"
 - [ ] **Step 1: Full lint + fmt + build**
 
 ```bash
-cd apps/web && pnpm lint && pnpm fmt:check && pnpm build
+cd apps/web && bun run lint && bun run fmt:check && bun run build
 ```
 
-Expected: all green. If `pnpm build` fails, diagnose type errors now, not after merge.
+Expected: all green. If `bun run build` fails, diagnose type errors now, not after merge.
 
 - [ ] **Step 2: Run every acceptance case from the spec's Testing section**
 
 Reference: `docs/superpowers/specs/2026-04-21-saved-page-design.md` §Testing. Run all 9 acceptance cases end-to-end in a single dev session:
 
 ```bash
-cd apps/web && pnpm dev
+cd apps/web && bun run dev
 ```
 
 1. Rail `saved` → `/saved` lands correctly.
