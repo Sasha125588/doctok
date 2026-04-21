@@ -10,6 +10,7 @@ export function useFeedView() {
   const activePanel = useState<FeedPanel | null>('activePanel', () => null)
   const sidebarHidden = useState<boolean>('sidebarHidden', () => false)
   const activeTopicPostCount = useState<number>('activeTopicPostCount', () => 0)
+  const pendingPostId = useState<number | null>('pendingPostId', () => null)
 
   return {
     activeTopicSlug,
@@ -19,5 +20,6 @@ export function useFeedView() {
     activePanel,
     sidebarHidden,
     activeTopicPostCount,
+    pendingPostId,
   }
 }
