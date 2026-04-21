@@ -38,6 +38,8 @@ onClickOutside(panel, () => {
         <span class="title">// {{ props.title }}</span>
         <button
           class="close"
+          type="button"
+          aria-label="Close panel"
           @click="close()"
         >
           ×

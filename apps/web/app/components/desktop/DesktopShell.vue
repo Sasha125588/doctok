@@ -22,8 +22,16 @@ const {
 watch(
   () => state.topics.value,
   (topics) => {
-    if (!activeTopicSlug.value && topics.length) {
+    if (!topics.length) {
+      activeTopicSlug.value = null
+      return
+    }
+    const exists = activeTopicSlug.value
+      ? topics.some((t) => t.slug === activeTopicSlug.value)
+      : false
+    if (!exists) {
       activeTopicSlug.value = topics[0]!.slug
+      activePostIndex.value = 0
     }
   },
   { immediate: true }

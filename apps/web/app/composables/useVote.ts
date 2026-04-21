@@ -9,15 +9,17 @@ export interface UseVoteOptions {
 }
 
 export interface VoteContext {
+  queryKey: any
   previousData?: TopicsGetPostsResponse
 }
 
 export const useVote = (options: UseVoteOptions) => {
   const { lang } = useLang()
 
-  const queryKey = topicsGetPostsQueryKey({
-    query: { slug: options.topicSlug, lang: lang.value },
-  })
+  const getQueryKey = () =>
+    topicsGetPostsQueryKey({
+      query: { slug: options.topicSlug, lang: lang.value },
+    })
 
   const queryClient = useQueryClient()
 
@@ -25,6 +27,8 @@ export const useVote = (options: UseVoteOptions) => {
     ...postsReactionsToggleMutation(),
 
     onMutate: async (variables) => {
+      const queryKey = getQueryKey()
+
       const postId = variables.path.postId
       const nextVote = variables.body.value
 
@@ -78,10 +82,12 @@ export const useVote = (options: UseVoteOptions) => {
         }
       })
 
-      return { previousData }
+      return { previousData, queryKey }
     },
 
     onSuccess(data, variables) {
+      const queryKey = getQueryKey()
+
       const postId = variables.path.postId
 
       queryClient.setQueryData<TopicsGetPostsResponse>(queryKey, (oldData) => {
@@ -104,9 +110,9 @@ export const useVote = (options: UseVoteOptions) => {
     },
 
     onError(_err, _variables, onMutateResult) {
-      if (!onMutateResult?.previousData) return
+      if (!onMutateResult?.previousData || !onMutateResult.queryKey) return
 
-      queryClient.setQueryData(queryKey, onMutateResult.previousData)
+      queryClient.setQueryData(onMutateResult.queryKey, onMutateResult.previousData)
     },
   })
 
