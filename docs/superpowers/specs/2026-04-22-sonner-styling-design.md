@@ -44,6 +44,10 @@ One consistent toast shape. Only the left-border accent color and the icon color
 
 Rationale: neutral and loading deliberately do *not* use a strong accent — loading is a transient "in progress" state, not something that needs peripheral attention. Adding `#2a2a2a` as a hardcoded value (rather than a new token) is intentional: it's a one-off visual that isn't reused elsewhere in the system; introducing a token for a single use-site adds noise.
 
+**Note on token reuse:** `--kind-summary` / `--kind-example` / `--kind-fact` were originally defined as *content-classification* colors (kind badges on posts). We reuse them here as *state* colors for toasts because the hues already match what the semantics call for (blue-info, green-success, orange-warning) and introducing a parallel state palette would duplicate values for no gain. If the design system later needs to diverge (e.g. content kinds get new hues while state colors stay), this spot in `Sonner.vue` is the single point of update.
+
+**Current callers (as of spec date):** One call site — `apps/web/app/components/desktop/FocusCard.vue:48` uses `toast('скопійовано')` (neutral). No callers of `.success` / `.error` / `.info` / `.warning` / `.loading` yet. Blast radius for this change is minimal.
+
 ## Behavior
 
 - Position: `bottom-right`. Explicitly set on `<Sonner>` even though this is the Sonner default — makes the intent visible in the component.
@@ -105,7 +109,11 @@ No new files. No changes to `app.vue`, no changes to any caller (e.g. `FocusCard
 
 3. **`position="bottom-right"`** — add this prop explicitly on `<Sonner>`.
 
-4. **Icon slots** — no change. The existing `#success-icon`, `#info-icon`, `#warning-icon`, `#error-icon`, `#loading-icon`, `#close-icon` overrides already point at the correct Lucide icons. Neutral toasts have no icon by default in Sonner — we leave that as-is (a neutral `toast('скопійовано')` shows text only, no icon). If later we want an icon on neutral toasts, that's a separate change.
+4. **Preserved as-is:**
+   - The `:class="cn('toaster group', props.class)"` binding on `<Sonner>` stays — external callers can still pass a `class` prop if needed (none do today, but no reason to remove the extension point).
+   - The `--border-radius` CSS variable set in the current `:style` object (`'--border-radius': 'var(--radius)'`) is removed, since the new `<style>` block applies `border-radius: 6px` directly on `[data-sonner-toast]`. Keeping both would be redundant and confusing.
+
+5. **Icon slots** — no change. The existing `#success-icon`, `#info-icon`, `#warning-icon`, `#error-icon`, `#loading-icon`, `#close-icon` overrides already point at the correct Lucide icons. Neutral toasts have no icon by default in Sonner — we leave that as-is (a neutral `toast('скопійовано')` shows text only, no icon). If later we want an icon on neutral toasts, that's a separate change.
 
 ### Why no wrapper composable
 
