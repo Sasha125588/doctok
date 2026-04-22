@@ -76,7 +76,7 @@ interface SavedPost {
    - `mode.value = 'focus'`
    - `router.push('/')`
 2. On `/`, `FeedPage` renders `FocusMode` for the active slug. `FocusMode` is keyed on slug (via `FeedPage`), so changing slug remounts it; same-slug re-entry does not remount.
-3. **Consumer lives in `FocusMode.vue`** (not in `useFeedView`). It's a `watchEffect` with both `pendingPostId` and `state.posts.value` as reactive reads:
+3. **Consumer lives in `FeedPage.vue`** (the component that owns `useTopicPosts` and therefore holds the `state.posts` reactive list; `FocusMode` is presentational and receives `activePost` / `totalPosts` as props). It's a `watchEffect` with both `pendingPostId` and `state.posts.value` as reactive reads:
    - If `pendingPostId.value == null`: no-op.
    - Else if `state.posts.value.length === 0`: wait (the effect re-runs when posts arrive).
    - Else: find `idx = posts.findIndex((p) => +p.id === pendingPostId.value)`. Set `activePostIndex.value = idx >= 0 ? idx : 0`. Then set `pendingPostId.value = null` to consume the marker.
