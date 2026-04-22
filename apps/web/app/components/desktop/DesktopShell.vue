@@ -16,6 +16,7 @@ const {
   activePanel,
   mode: feedMode,
   activeTopicPostCount,
+  pendingPostId,
 } = useFeedView()
 // const { addRecent } = useTopicHistory()
 
@@ -30,6 +31,10 @@ watch(
       ? topics.some((t) => t.slug === activeTopicSlug.value)
       : false
     if (!exists) {
+      // Don't clobber an in-flight handoff from SavedPage (pendingPostId is
+      // set by SavedCard.open() just before router.push('/') and cleared by
+      // the FeedPage consumer once posts load).
+      if (pendingPostId.value != null) return
       activeTopicSlug.value = topics[0]!.slug
       activePostIndex.value = 0
     }
