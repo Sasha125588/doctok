@@ -26,6 +26,7 @@ function onRemove() {
     class="card"
     tabindex="0"
     role="button"
+    :aria-label="`Відкрити: ${post.title}`"
     @click="open"
     @keydown.enter="open"
     @keydown.space.prevent="open"
