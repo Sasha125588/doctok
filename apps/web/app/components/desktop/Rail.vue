@@ -1,27 +1,36 @@
 <script setup lang="ts">
-const navItems = [
-  { key: 'feed', icon: 'lucide:layout-grid', title: 'Стрічка', active: true, disabled: false },
-  { key: 'search', icon: 'lucide:search', title: 'Каталог (скоро)', active: false, disabled: true },
-  {
-    key: 'courses',
-    icon: 'lucide:book-open',
-    title: 'Міні-курси (скоро)',
-    active: false,
-    disabled: true,
-  },
-  {
-    key: 'saved',
-    icon: 'lucide:bookmark',
-    title: 'Збережене (скоро)',
-    active: false,
-    disabled: true,
-  },
+const route = useRoute()
+const router = useRouter()
+
+interface NavItem {
+  key: string
+  icon: string
+  title: string
+  path?: string
+  disabled: boolean
+}
+
+const navItems: NavItem[] = [
+  { key: 'feed', icon: 'lucide:layout-grid', title: 'Стрічка', path: '/', disabled: false },
+  { key: 'search', icon: 'lucide:search', title: 'Каталог (скоро)', disabled: true },
+  { key: 'courses', icon: 'lucide:book-open', title: 'Міні-курси (скоро)', disabled: true },
+  { key: 'saved', icon: 'lucide:bookmark', title: 'Збережене', path: '/saved', disabled: false },
 ]
+
 const footerItem = {
   key: 'profile',
   icon: 'lucide:user',
   title: 'Профіль (скоро)',
   disabled: true,
+}
+
+function isActive(item: NavItem) {
+  return item.path != null && route.path === item.path
+}
+
+function go(item: NavItem) {
+  if (item.disabled || !item.path || isActive(item)) return
+  router.push(item.path)
 }
 </script>
 
@@ -32,9 +41,10 @@ const footerItem = {
       v-for="item in navItems"
       :key="item.key"
       class="rail-btn"
-      :class="{ 'is-active': item.active, 'is-disabled': item.disabled }"
+      :class="{ 'is-active': isActive(item), 'is-disabled': item.disabled }"
       :title="item.title"
       :disabled="item.disabled"
+      @click="go(item)"
     >
       <Icon
         :name="item.icon"
