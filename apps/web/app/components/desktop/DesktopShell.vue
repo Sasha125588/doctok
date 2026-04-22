@@ -103,7 +103,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 <template>
   <div class="desktop-scope shell">
     <Rail />
-    <Sidebar :topics="state.topics.value" />
+    <Sidebar
+      v-if="route.path === '/'"
+      :topics="state.topics.value"
+    />
 
     <main class="main">
       <Topbar />

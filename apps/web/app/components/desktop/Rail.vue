@@ -17,7 +17,7 @@ const navItems: NavItem[] = [
   { key: 'saved', icon: 'lucide:bookmark', title: 'Збережене', path: '/saved', disabled: false },
 ]
 
-const footerItem = {
+const footerItem: NavItem = {
   key: 'profile',
   icon: 'lucide:user',
   title: 'Профіль (скоро)',

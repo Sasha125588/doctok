@@ -1,13 +1,9 @@
 <script setup lang="ts">
-import { toast } from 'vue-sonner'
-
 import BrowseMode from './BrowseMode.vue'
 import CommentsPanel from './CommentsPanel.vue'
 import FocusMode from './FocusMode.vue'
 import NotesPanel from './NotesPanel.vue'
 import { useFeedView } from '~/composables/useFeedView'
-
-const isDev = import.meta.dev
 
 const { mode, activeTopicSlug, activePostIndex, pendingPostId } = useFeedView()
 
@@ -44,17 +40,6 @@ const slugKey = computed(() => `$slug:${activeTopicSlug.value}`)
 
 <template>
   <div class="feed-page">
-    <div
-      v-if="isDev"
-      class="toast-harness"
-    >
-      <button @click="toast('скопійовано')">neutral</button>
-      <button @click="toast.success('пост збережено')">success</button>
-      <button @click="toast.error('не вдалось зберегти пост')">error</button>
-      <button @click="toast.info('доступна нова версія')">info</button>
-      <button @click="toast.warning('повторити запит?')">warning</button>
-      <button @click="toast.loading('збереження нотатки…')">loading</button>
-    </div>
     <div class="stack">
       <FocusMode
         v-if="mode === 'focus'"
@@ -104,27 +89,5 @@ const slugKey = computed(() => `$slug:${activeTopicSlug.value}`)
   position: absolute;
   inset: 0;
   display: flex;
-}
-.toast-harness {
-  position: fixed;
-  top: 56px;
-  right: 20px;
-  z-index: 100;
-  display: flex;
-  gap: 6px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  pointer-events: auto;
-}
-.toast-harness button {
-  padding: 4px 8px;
-  background: #0a0a0a;
-  border: 1px solid #1a1a1a;
-  color: #c8c8c0;
-  border-radius: 4px;
-  cursor: pointer;
-}
-.toast-harness button:hover {
-  border-color: #2a2a2a;
 }
 </style>
