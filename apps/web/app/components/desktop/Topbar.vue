@@ -3,51 +3,61 @@ import { motion } from 'motion-v'
 
 import { type FeedMode, type ReadMode, useFeedView } from '~/composables/useFeedView'
 
+const route = useRoute()
 const { mode, readMode } = useFeedView()
 
 const modes: FeedMode[] = ['focus', 'browse']
 const readModes: ReadMode[] = ['simplified', 'standard', 'detailed', 'original']
+
+const isFeed = computed(() => route.path === '/')
+
+const title = computed(() => {
+  if (route.path === '/saved') return 'saved'
+  return 'feed'
+})
 </script>
 
 <template>
   <header class="topbar">
-    <span class="page-title">feed</span>
+    <span class="page-title">{{ title }}</span>
 
-    <div class="toggle">
-      <button
-        v-for="m in modes"
-        :key="m"
-        class="toggle-btn"
-        :class="{ 'is-active': mode === m }"
-        @click="mode = m"
-      >
-        <motion.span
-          v-if="mode === m"
-          layoutId="dt-mode-active"
-          class="active-pill"
-          :transition="{ type: 'spring', stiffness: 500, damping: 35 }"
-        />
-        <span class="label">{{ m }}</span>
-      </button>
-    </div>
+    <template v-if="isFeed">
+      <div class="toggle">
+        <button
+          v-for="m in modes"
+          :key="m"
+          class="toggle-btn"
+          :class="{ 'is-active': mode === m }"
+          @click="mode = m"
+        >
+          <motion.span
+            v-if="mode === m"
+            layoutId="dt-mode-active"
+            class="active-pill"
+            :transition="{ type: 'spring', stiffness: 500, damping: 35 }"
+          />
+          <span class="label">{{ m }}</span>
+        </button>
+      </div>
 
-    <div class="read-toggle">
-      <button
-        v-for="rm in readModes"
-        :key="rm"
-        class="read-btn"
-        :class="{ 'is-active': readMode === rm }"
-        @click="readMode = rm"
-      >
-        <motion.span
-          v-if="readMode === rm"
-          layoutId="dt-rm-active"
-          class="active-pill blue"
-          :transition="{ type: 'spring', stiffness: 500, damping: 35 }"
-        />
-        <span class="label">{{ rm }}</span>
-      </button>
-    </div>
+      <div class="read-toggle">
+        <button
+          v-for="rm in readModes"
+          :key="rm"
+          class="read-btn"
+          :class="{ 'is-active': readMode === rm }"
+          @click="readMode = rm"
+        >
+          <motion.span
+            v-if="readMode === rm"
+            layoutId="dt-rm-active"
+            class="active-pill blue"
+            :transition="{ type: 'spring', stiffness: 500, damping: 35 }"
+          />
+          <span class="label">{{ rm }}</span>
+        </button>
+      </div>
+    </template>
   </header>
 </template>
 

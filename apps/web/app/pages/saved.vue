@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import DesktopShell from '~/components/desktop/DesktopShell.vue'
-import FeedPage from '~/components/desktop/FeedPage.vue'
-import TopicFeed from '~/components/feed/TopicFeed.vue'
+import SavedPage from '~/components/desktop/SavedPage.vue'
 import { useDesktop } from '~/composables/useDesktop'
 
 const isDesktop = useDesktop()
@@ -9,7 +8,6 @@ const isDesktop = useDesktop()
 
 <template>
   <DesktopShell v-if="isDesktop">
-    <FeedPage />
+    <SavedPage />
   </DesktopShell>
-  <TopicFeed v-else />
 </template>

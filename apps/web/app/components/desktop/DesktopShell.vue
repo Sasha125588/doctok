@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import FeedPage from './FeedPage.vue'
 import Rail from './Rail.vue'
 import Sidebar from './Sidebar.vue'
 import Topbar from './Topbar.vue'
@@ -8,6 +7,7 @@ import { useFeedView } from '~/composables/useFeedView'
 import { useLang } from '~/composables/useLang'
 // import { useTopicHistory } from '~/composables/useTopicHistory'
 
+const route = useRoute()
 const { lang } = useLang()
 const { state, functions } = useFeed(lang)
 const {
@@ -16,6 +16,7 @@ const {
   activePanel,
   mode: feedMode,
   activeTopicPostCount,
+  pendingPostId,
 } = useFeedView()
 // const { addRecent } = useTopicHistory()
 
@@ -30,6 +31,10 @@ watch(
       ? topics.some((t) => t.slug === activeTopicSlug.value)
       : false
     if (!exists) {
+      // Don't clobber an in-flight handoff from SavedPage (pendingPostId is
+      // set by SavedCard.open() just before router.push('/') and cleared by
+      // the FeedPage consumer once posts load).
+      if (pendingPostId.value != null) return
       activeTopicSlug.value = topics[0]!.slug
       activePostIndex.value = 0
     }
@@ -70,6 +75,7 @@ async function nextTopic(direction: 1 | -1) {
 }
 
 function onKeydown(e: KeyboardEvent) {
+  if (route.path !== '/') return
   if (feedMode.value !== 'focus') return
   if (activePanel.value !== null) return
 
@@ -102,7 +108,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
     <main class="main">
       <Topbar />
       <div class="body">
-        <FeedPage />
+        <slot />
       </div>
     </main>
   </div>
