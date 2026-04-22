@@ -22,10 +22,13 @@ function onRemove() {
 </script>
 
 <template>
-  <button
+  <article
     class="card"
-    type="button"
+    tabindex="0"
+    role="button"
     @click="open"
+    @keydown.enter="open"
+    @keydown.space.prevent="open"
   >
     <PostKindBadge :kind="post.kind" />
     <div class="title">{{ post.title }}</div>
@@ -41,7 +44,7 @@ function onRemove() {
         class="remove-icon"
       />
     </button>
-  </button>
+  </article>
 </template>
 
 <style scoped>
