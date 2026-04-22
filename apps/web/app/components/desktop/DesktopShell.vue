@@ -7,6 +7,7 @@ import { useFeedView } from '~/composables/useFeedView'
 import { useLang } from '~/composables/useLang'
 // import { useTopicHistory } from '~/composables/useTopicHistory'
 
+const route = useRoute()
 const { lang } = useLang()
 const { state, functions } = useFeed(lang)
 const {
@@ -69,6 +70,7 @@ async function nextTopic(direction: 1 | -1) {
 }
 
 function onKeydown(e: KeyboardEvent) {
+  if (route.path !== '/') return
   if (feedMode.value !== 'focus') return
   if (activePanel.value !== null) return
 
