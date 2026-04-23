@@ -9,17 +9,12 @@ const { mode, readMode } = useFeedView()
 const modes: FeedMode[] = ['focus', 'browse']
 const readModes: ReadMode[] = ['simplified', 'standard', 'detailed', 'original']
 
-const isFeed = computed(() => route.path === '/')
-
-const title = computed(() => {
-  if (route.path === '/saved') return 'saved'
-  return 'feed'
-})
+const isFeed = computed(() => route.name === 'feed')
 </script>
 
 <template>
   <header class="topbar">
-    <span class="page-title">{{ title }}</span>
+    <span class="page-title">{{ route.name }}</span>
 
     <template v-if="isFeed">
       <div class="toggle">

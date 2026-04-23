@@ -18,11 +18,7 @@ watch(
   { immediate: true }
 )
 
-function save() {
-  if (props.activePostId != null) {
-    set(props.activePostId, text.value)
-  }
-}
+const save = () => set(props.activePostId, text.value)
 
 const isOpen = computed(() => activePanel.value === 'notes')
 </script>

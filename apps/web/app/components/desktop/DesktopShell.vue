@@ -47,7 +47,7 @@ watch(
 //   if (slug) addRecent(slug)
 // })
 
-async function nextTopic(direction: 1 | -1) {
+const nextTopic = async (direction: 1 | -1) => {
   const topics = state.topics.value
   const idx = topics.findIndex((t) => t.slug === activeTopicSlug.value)
   if (idx === -1) return
@@ -74,8 +74,8 @@ async function nextTopic(direction: 1 | -1) {
   }
 }
 
-function onKeydown(e: KeyboardEvent) {
-  if (route.path !== '/') return
+const onKeydown = (e: KeyboardEvent) => {
+  if (route.name !== 'feed') return
   if (feedMode.value !== 'focus') return
   if (activePanel.value !== null) return
 
@@ -104,7 +104,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   <div class="desktop-scope shell">
     <Rail />
     <Sidebar
-      v-if="route.path === '/'"
+      v-if="route.name === 'feed'"
       :topics="state.topics.value"
     />
 

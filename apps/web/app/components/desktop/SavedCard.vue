@@ -5,20 +5,17 @@ import { type SavedPost, useSavedPosts } from '~/composables/useSavedPosts'
 
 const props = defineProps<{ post: SavedPost }>()
 
-const router = useRouter()
 const { activeTopicSlug, pendingPostId, mode } = useFeedView()
 const { remove } = useSavedPosts()
 
-function open() {
+const open = () => {
   activeTopicSlug.value = props.post.topicSlug
   pendingPostId.value = props.post.postId
   mode.value = 'focus'
-  router.push('/')
+  navigateTo({ name: 'feed' })
 }
 
-function onRemove() {
-  remove(props.post.postId)
-}
+const onRemove = () => remove(props.post.postId)
 </script>
 
 <template>
