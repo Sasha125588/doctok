@@ -57,6 +57,7 @@ public static class InfrastructureServiceRegistration
     services.AddSingleton<PostReactionsRepository>();
     services.AddSingleton<CommentReactionsRepository>();
     services.AddSingleton<CommentsRepository>();
+    services.AddSingleton<SavedPostsRepository>();
 
     services.AddSingleton((sp) =>
     {

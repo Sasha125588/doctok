@@ -30,10 +30,14 @@ public sealed class TopicsRepository(IDbConnectionFactory dbf)
                            t.title as topic_title,
                            v.value as my_vote,
                            rd.popularity,
-                           p.created_at
+                           p.created_at,
+                           sp.post_id is not null as is_saved
                          from topics t
                          join posts p on p.topic_id = t.id
                          join raw_documents rd on rd.id = p.raw_document_id
+                         left join saved_posts sp
+                           on sp.post_id = p.id
+                           and sp.user_id = @userId
                          left join post_reactions v
                             on v.post_id = p.id
                             and v.user_id = @userId
