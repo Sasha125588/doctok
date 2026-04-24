@@ -16,7 +16,7 @@ const open = () => {
   navigateTo({ name: 'feed' })
 }
 
-const onRemove = () => remove(+props.post.postId)
+const onRemove = () => remove(props.post)
 </script>
 
 <template>

@@ -1,17 +1,15 @@
 import { useGuestSavedPosts } from './useGuestSavedPosts'
 import { useServerSavedPosts } from './useServerSavedPosts'
 
-import type { TopicPostView } from '~~/generated/api/types.gen'
+import type { SavedPostView, TopicPostView } from '~~/generated/api/types.gen'
 
 export const useSavedPosts = () => {
   const session = useSession()
-
   const guest = useGuestSavedPosts()
 
   const isAuthenticated = computed(
     () => session.isSuccess.value && Boolean(session.data.value?.userId)
   )
-
   const server = useServerSavedPosts({
     enabled: isAuthenticated,
   })
@@ -20,35 +18,35 @@ export const useSavedPosts = () => {
     isAuthenticated.value ? server.savedPosts.value : guest.savedPosts.value
   )
 
-  const isSaved = (postId: number, isSaved: boolean) => {
+  const isSaved = (post: TopicPostView) => {
     if (isAuthenticated.value) {
-      return isSaved
+      return post.isSaved
     }
 
-    return guest.isSaved(postId)
+    return guest.isSaved(+post.id)
   }
 
   const save = async (post: TopicPostView) => {
     if (isAuthenticated.value) {
-      await server.save({ postId: post.id })
+      await server.save({ postId: post.id, topicSlug: post.topicSlug })
       return
     }
 
     guest.save(post)
   }
 
-  const remove = async (postId: number) => {
+  const remove = async (post: SavedPostView) => {
     if (isAuthenticated.value) {
-      await server.remove(postId)
+      await server.remove({ postId: post.postId, topicSlug: post.topicSlug })
       return
     }
 
-    guest.remove(postId)
+    guest.remove(+post.postId)
   }
 
   const toggle = async (post: TopicPostView) => {
     if (isAuthenticated.value) {
-      await server.toggle(+post.id, post.isSaved)
+      await server.toggle({ postId: post.id, topicSlug: post.topicSlug }, post.isSaved)
       return
     }
 

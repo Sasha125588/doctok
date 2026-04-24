@@ -1,7 +1,7 @@
 import { useGuestSavedPosts } from './useGuestSavedPosts'
 import { useServerSavedPosts } from './useServerSavedPosts'
 
-export const useSavedPostsMigration = async () => {
+export const useGuestSavedPostsSync = () => {
   const session = useSession()
   const guest = useGuestSavedPosts()
 
@@ -13,39 +13,34 @@ export const useSavedPostsMigration = async () => {
     enabled: isAuthenticated,
   })
 
-  const isMigrating = useState('saved-posts:migrating', () => false)
+  const isSyncing = useState('saved-posts:syncing-guest', () => false)
 
-  const migrateGuestToServer = async () => {
+  const syncGuestToServer = async () => {
     if (!isAuthenticated.value) return
-    if (isMigrating.value) return
+    if (isSyncing.value) return
 
-    const guestPosts = guest.savedPosts.value
+    const guestPosts = [...guest.savedPosts.value]
     if (!guestPosts.length) return
 
-    isMigrating.value = true
+    isSyncing.value = true
 
     try {
       for (const post of guestPosts) {
-        await server.save({ postId: post.postId })
+        await server.save({ postId: post.postId, topicSlug: post.topicSlug })
       }
 
       guest.clear()
     } finally {
-      isMigrating.value = false
+      isSyncing.value = false
     }
   }
 
   watch(
     isAuthenticated,
     async (authed) => {
-      if (authed) return
-      await migrateGuestToServer()
+      if (!authed) return
+      await syncGuestToServer()
     },
     { immediate: true }
   )
-
-  //   return {
-  //     isMigrating,
-  //     migrateGuestToServer,
-  //   }
 }

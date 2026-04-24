@@ -362,13 +362,13 @@ export const postsReactionsToggleMutation = (
   PostsReactionsToggleResponse,
   PostsReactionsToggleError,
   Options<PostsReactionsToggleData>,
-  VoteContext
+  UseVoteContext
 > => {
   const mutationOptions: UseMutationOptions<
     PostsReactionsToggleResponse,
     PostsReactionsToggleError,
     Options<PostsReactionsToggleData>,
-    VoteContext
+    UseVoteContext
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await postsReactionsToggle({
