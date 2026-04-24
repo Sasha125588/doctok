@@ -7,6 +7,8 @@ public sealed record FeedCursor(double? Popularity, long Id, DateTimeOffset Crea
 
 public sealed record TopicPostsCursor(int? KindRank, int? Position, long? Id);
 
+public sealed record SavedPostsCursor(long? Id, DateTimeOffset? CreatedAt);
+
 public static class CursorCodec
 {
     public static string Encode<T>(T cursor)

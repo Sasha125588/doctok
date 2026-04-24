@@ -16,5 +16,6 @@ public sealed record TopicPostView(
   string TopicTitle,
   ReactionValue MyVote,
   double? Popularity,
-  DateTime CreatedAt
+  DateTime CreatedAt,
+  bool IsSaved
 );
