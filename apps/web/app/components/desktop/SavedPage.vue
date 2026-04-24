@@ -2,19 +2,18 @@
 import { AnimatePresence, motion } from 'motion-v'
 
 import SavedCard from './SavedCard.vue'
-import { useSavedPosts } from '~/composables/useSavedPosts'
 
-const { sorted } = useSavedPosts()
+const { savedPosts } = useSavedPosts()
 </script>
 
 <template>
   <section class="saved">
     <header class="header">
       <div class="title">// saved</div>
-      <div class="count">{{ sorted.length }} posts</div>
+      <div class="count">{{ savedPosts.length }} posts</div>
     </header>
     <div
-      v-if="!sorted.length"
+      v-if="!savedPosts.length"
       class="empty"
     >
       <div>// тут порожньо</div>
@@ -31,7 +30,7 @@ const { sorted } = useSavedPosts()
     >
       <AnimatePresence>
         <motion.div
-          v-for="(post, i) in sorted"
+          v-for="(post, i) in savedPosts"
           :key="post.postId"
           :initial="{ opacity: 0, y: 4 }"
           :animate="{ opacity: 1, y: 0 }"

@@ -7,7 +7,6 @@ import CardMeta from './CardMeta.vue'
 import RelatedTags from './RelatedTags.vue'
 import PostCardBody from '~/components/post/PostCardBody.vue'
 import { useNotes } from '~/composables/useNotes'
-import { useSavedPosts } from '~/composables/useSavedPosts'
 import { useVote } from '~/composables/useVote'
 
 import type { ReactionValue, TopicPostView } from '#api/types.gen'
@@ -23,7 +22,7 @@ const emit = defineEmits<{
   openComments: []
 }>()
 
-const { isSaved, toggle: toggleSave } = useSavedPosts()
+const { isSaved, toggle } = useSavedPosts()
 const { has: hasNote } = useNotes()
 
 const { functions } = useVote({
@@ -32,7 +31,7 @@ const { functions } = useVote({
 })
 
 function onToggleSave() {
-  toggleSave(props.post)
+  toggle(props.post)
 }
 
 async function onShare() {

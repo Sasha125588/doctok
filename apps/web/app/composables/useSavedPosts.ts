@@ -1,42 +1,68 @@
-import { useLocalStorage } from '@vueuse/core'
+import { useGuestSavedPosts } from './useGuestSavedPosts'
+import { useServerSavedPosts } from './useServerSavedPosts'
 
-import type { TopicPostView } from '#api/types.gen'
+import type { TopicPostView } from '~~/generated/api/types.gen'
 
-export interface SavedPost {
-  postId: number
-  topicSlug: string
-  title: string
-  kind: string
-  savedAt: number
-}
+export const useSavedPosts = () => {
+  const session = useSession()
 
-const saved = useLocalStorage<SavedPost[]>('dt:saved', [])
+  const guest = useGuestSavedPosts()
 
-export function useSavedPosts() {
-  function toggle(post: TopicPostView) {
-    const id = +post.id
-    if (isSaved(id)) {
-      remove(id)
-    } else {
-      saved.value.push({
-        postId: id,
-        topicSlug: post.topicSlug,
-        title: post.title,
-        kind: post.kind,
-        savedAt: Date.now(),
-      })
+  const isAuthenticated = computed(
+    () => session.isSuccess.value && Boolean(session.data.value?.userId)
+  )
+
+  const server = useServerSavedPosts({
+    enabled: isAuthenticated,
+  })
+
+  const savedPosts = computed(() =>
+    isAuthenticated.value ? server.savedPosts.value : guest.savedPosts.value
+  )
+
+  const isSaved = (postId: number, isSaved: boolean) => {
+    if (isAuthenticated.value) {
+      return isSaved
     }
+
+    return guest.isSaved(postId)
   }
 
-  function isSaved(postId: number) {
-    return saved.value.some((s) => s.postId === postId)
+  const save = async (post: TopicPostView) => {
+    if (isAuthenticated.value) {
+      await server.save({ postId: post.id })
+      return
+    }
+
+    guest.save(post)
   }
 
-  function remove(postId: number) {
-    saved.value = saved.value.filter((s) => s.postId !== postId)
+  const remove = async (postId: number) => {
+    if (isAuthenticated.value) {
+      await server.remove(postId)
+      return
+    }
+
+    guest.remove(postId)
   }
 
-  const sorted = computed(() => saved.value.toSorted((a, b) => (b.savedAt ?? 0) - (a.savedAt ?? 0)))
+  const toggle = async (post: TopicPostView) => {
+    if (isAuthenticated.value) {
+      await server.toggle(+post.id, post.isSaved)
+      return
+    }
 
-  return { saved, sorted, isSaved, toggle, remove }
+    guest.toggle(post)
+  }
+
+  const clear = async () => {
+    // if (isAuthenticated.value) {
+    //   await server.remove(postId)
+    //   return
+    // }
+
+    guest.clear()
+  }
+
+  return { savedPosts, isSaved, save, remove, toggle, clear }
 }

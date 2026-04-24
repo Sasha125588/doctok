@@ -159,7 +159,7 @@ export const vPreloadMdnRequest = v.object({
     ])
   ),
   prefix: v.nullish(v.string()),
-  lang: v.nullish(v.pipe(v.string(), v.minLength(0), v.maxLength(10)), 'en'),
+  lang: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(10)), 'en'),
 })
 
 export const vPreloadMdnResponse = v.object({
@@ -240,6 +240,74 @@ export const vResolveMdnResponse = v.object({
       ),
     ])
   ),
+})
+
+export const vSavedPostView = v.object({
+  postId: v.union([
+    v.pipe(
+      v.union([v.number(), v.string(), v.bigint()]),
+      v.transform((x) => BigInt(x)),
+      v.minValue(
+        BigInt('-9223372036854775808'),
+        'Invalid value: Expected int64 to be >= -9223372036854775808'
+      ),
+      v.maxValue(
+        BigInt('9223372036854775807'),
+        'Invalid value: Expected int64 to be <= 9223372036854775807'
+      )
+    ),
+    v.pipe(
+      v.union([v.number(), v.string(), v.bigint()]),
+      v.transform((x) => BigInt(x)),
+      v.minValue(
+        BigInt('-9223372036854775808'),
+        'Invalid value: Expected int64 to be >= -9223372036854775808'
+      ),
+      v.maxValue(
+        BigInt('9223372036854775807'),
+        'Invalid value: Expected int64 to be <= 9223372036854775807'
+      )
+    ),
+  ]),
+  title: v.string(),
+  kind: v.string(),
+  topicSlug: v.string(),
+  topicTitle: v.string(),
+  savedAt: v.pipe(v.string(), v.isoTimestamp()),
+})
+
+export const vSavedPostsResponse = v.object({
+  items: v.array(vSavedPostView),
+  nextCursor: v.nullable(v.string()),
+})
+
+export const vSavePostRequest = v.object({
+  postId: v.union([
+    v.pipe(
+      v.union([v.number(), v.string(), v.bigint()]),
+      v.transform((x) => BigInt(x)),
+      v.minValue(
+        BigInt('-9223372036854775808'),
+        'Invalid value: Expected int64 to be >= -9223372036854775808'
+      ),
+      v.maxValue(
+        BigInt('9223372036854775807'),
+        'Invalid value: Expected int64 to be <= 9223372036854775807'
+      )
+    ),
+    v.pipe(
+      v.union([v.number(), v.string(), v.bigint()]),
+      v.transform((x) => BigInt(x)),
+      v.minValue(
+        BigInt('-9223372036854775808'),
+        'Invalid value: Expected int64 to be >= -9223372036854775808'
+      ),
+      v.maxValue(
+        BigInt('9223372036854775807'),
+        'Invalid value: Expected int64 to be <= 9223372036854775807'
+      )
+    ),
+  ]),
 })
 
 export const vSessionMeResponse = v.object({
@@ -389,6 +457,7 @@ export const vTopicPostView = v.object({
     ])
   ),
   createdAt: v.pipe(v.string(), v.isoTimestamp()),
+  isSaved: v.boolean(),
 })
 
 export const vFeedResponse = v.object({
@@ -480,6 +549,49 @@ export const vPostsReactionsTogglePath = v.object({
  * OK
  */
 export const vPostsReactionsToggleResponse = vReactionView
+
+export const vMeSavedPostsListQuery = v.object({
+  cursor: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(512))),
+  limit: v.optional(
+    v.union([
+      v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(50)),
+      v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
+    ]),
+    20
+  ),
+})
+
+/**
+ * OK
+ */
+export const vMeSavedPostsListResponse = vSavedPostsResponse
+
+export const vMeSavedPostsCreateBody = vSavePostRequest
+
+/**
+ * No Content
+ */
+export const vMeSavedPostsCreateResponse = v.void()
+
+export const vMeSavedPostsDeletePath = v.object({
+  postId: v.pipe(
+    v.union([v.number(), v.string(), v.bigint()]),
+    v.transform((x) => BigInt(x)),
+    v.minValue(
+      BigInt('-9223372036854775808'),
+      'Invalid value: Expected int64 to be >= -9223372036854775808'
+    ),
+    v.maxValue(
+      BigInt('9223372036854775807'),
+      'Invalid value: Expected int64 to be <= 9223372036854775807'
+    )
+  ),
+})
+
+/**
+ * No Content
+ */
+export const vMeSavedPostsDeleteResponse = v.void()
 
 export const vFeedListQuery = v.object({
   cursor: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(512))),

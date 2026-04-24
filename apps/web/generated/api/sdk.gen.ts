@@ -21,6 +21,12 @@ import {
   vFeedListResponse,
   vFeedTopicsListQuery,
   vFeedTopicsListResponse,
+  vMeSavedPostsCreateBody,
+  vMeSavedPostsCreateResponse,
+  vMeSavedPostsDeletePath,
+  vMeSavedPostsDeleteResponse,
+  vMeSavedPostsListQuery,
+  vMeSavedPostsListResponse,
   vPostsCommentsCreateBody,
   vPostsCommentsCreatePath,
   vPostsCommentsCreateResponse,
@@ -63,6 +69,15 @@ import type {
   FeedTopicsListData,
   FeedTopicsListErrors,
   FeedTopicsListResponses,
+  MeSavedPostsCreateData,
+  MeSavedPostsCreateErrors,
+  MeSavedPostsCreateResponses,
+  MeSavedPostsDeleteData,
+  MeSavedPostsDeleteErrors,
+  MeSavedPostsDeleteResponses,
+  MeSavedPostsListData,
+  MeSavedPostsListErrors,
+  MeSavedPostsListResponses,
   PostsCommentsCreateData,
   PostsCommentsCreateErrors,
   PostsCommentsCreateResponses,
@@ -270,6 +285,90 @@ export const postsReactionsToggle = <ThrowOnError extends boolean = false>(
       'Content-Type': 'application/json',
       ...options.headers,
     },
+  })
+
+/**
+ * Returns paginated saved posts for the current user
+ *
+ * Returns the current user's saved posts ordered by save time descending.
+ */
+export const meSavedPostsList = <ThrowOnError extends boolean = false>(
+  options?: Options<MeSavedPostsListData, ThrowOnError>
+) =>
+  (options?.client ?? client).get<MeSavedPostsListResponses, MeSavedPostsListErrors, ThrowOnError>({
+    requestValidator: async (data) =>
+      await v.parseAsync(
+        v.object({
+          body: v.optional(v.never()),
+          path: v.optional(v.never()),
+          query: v.optional(vMeSavedPostsListQuery),
+        }),
+        data
+      ),
+    responseValidator: async (data) => await v.parseAsync(vMeSavedPostsListResponse, data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/me/saved-posts',
+    ...options,
+  })
+
+/**
+ * Saves a post for the current user
+ *
+ * Creates a saved-post entry for the current user and the specified post. Repeating the request is a successful no-op.
+ */
+export const meSavedPostsCreate = <ThrowOnError extends boolean = false>(
+  options: Options<MeSavedPostsCreateData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    MeSavedPostsCreateResponses,
+    MeSavedPostsCreateErrors,
+    ThrowOnError
+  >({
+    requestValidator: async (data) =>
+      await v.parseAsync(
+        v.object({
+          body: vMeSavedPostsCreateBody,
+          path: v.optional(v.never()),
+          query: v.optional(v.never()),
+        }),
+        data
+      ),
+    responseValidator: async (data) => await v.parseAsync(vMeSavedPostsCreateResponse, data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/me/saved-posts',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  })
+
+/**
+ * Removes a saved post for the current user
+ *
+ * Deletes the current user's saved-post entry for the specified post. Repeating the request is a successful no-op.
+ */
+export const meSavedPostsDelete = <ThrowOnError extends boolean = false>(
+  options: Options<MeSavedPostsDeleteData, ThrowOnError>
+) =>
+  (options.client ?? client).delete<
+    MeSavedPostsDeleteResponses,
+    MeSavedPostsDeleteErrors,
+    ThrowOnError
+  >({
+    requestValidator: async (data) =>
+      await v.parseAsync(
+        v.object({
+          body: v.optional(v.never()),
+          path: vMeSavedPostsDeletePath,
+          query: v.optional(v.never()),
+        }),
+        data
+      ),
+    responseValidator: async (data) => await v.parseAsync(vMeSavedPostsDeleteResponse, data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/me/saved-posts/{postId}',
+    ...options,
   })
 
 /**
