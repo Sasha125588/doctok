@@ -16,7 +16,7 @@ export function useGuestSavedPosts() {
       kind: post.kind,
       topicSlug: post.topicSlug,
       topicTitle: post.topicTitle,
-      savedAt: Date.now().toString(),
+      savedAt: new Date().toISOString(),
     })
 
   const remove = (postId: number) => (saved.value = saved.value.filter((s) => s.postId !== postId))
@@ -24,11 +24,7 @@ export function useGuestSavedPosts() {
   const clear = () => (saved.value = [])
 
   const savedPosts = computed(() =>
-    saved.value.toSorted((a, b) => {
-      const timeA = a.savedAt ? new Date(a.savedAt).getTime() : 0
-      const timeB = b.savedAt ? new Date(b.savedAt).getTime() : 0
-      return timeB - timeA
-    })
+    saved.value.toSorted((a, b) => b.savedAt.localeCompare(a.savedAt))
   )
 
   return { savedPosts, isSaved, save, remove, toggle, clear }
