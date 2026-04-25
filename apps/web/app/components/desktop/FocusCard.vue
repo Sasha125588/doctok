@@ -7,7 +7,6 @@ import CardMeta from './CardMeta.vue'
 import RelatedTags from './RelatedTags.vue'
 import PostCardBody from '~/components/post/PostCardBody.vue'
 import { useNotes } from '~/composables/useNotes'
-import { useSavedPosts } from '~/composables/useSavedPosts'
 import { useVote } from '~/composables/useVote'
 
 import type { ReactionValue, TopicPostView } from '#api/types.gen'
@@ -23,7 +22,10 @@ const emit = defineEmits<{
   openComments: []
 }>()
 
-const { isSaved, toggle: toggleSave } = useSavedPosts()
+const { copy } = useClipboard()
+const { share, isSupported: isShareSupported } = useShare()
+
+const { isSaved, toggle } = useSavedPosts()
 const { has: hasNote } = useNotes()
 
 const { functions } = useVote({
@@ -31,20 +33,25 @@ const { functions } = useVote({
   topicSlug: props.post.topicSlug,
 })
 
-function onToggleSave() {
-  toggleSave(props.post)
-}
+const onToggleSave = () => toggle(props.post)
 
 async function onShare() {
   const url = `${window.location.origin}/topic/${props.post.topicSlug}`
-  if (navigator.share) {
+
+  if (isShareSupported.value) {
     try {
-      await navigator.share({ url })
+      await share({
+        title: props.post.title,
+        text: props.post.topicTitle,
+        url,
+      })
       return
-    } catch {}
+    } catch {
+      return
+    }
   }
   try {
-    await navigator.clipboard.writeText(url)
+    await copy(url)
     toast('скопійовано')
   } catch {}
 }
@@ -80,7 +87,7 @@ async function onShare() {
         :my-vote="post.myVote"
         :like-count="+post.likeCount"
         :comment-count="+post.commentCount"
-        :is-saved="isSaved(+post.id)"
+        :is-saved="isSaved(post)"
         :has-note="hasNote(+post.id)"
         @on-vote="functions.onVote"
         @on-toggle-save="onToggleSave"

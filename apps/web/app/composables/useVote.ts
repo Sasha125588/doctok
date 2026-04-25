@@ -8,8 +8,8 @@ export interface UseVoteOptions {
   topicSlug: string
 }
 
-export interface VoteContext {
-  queryKey: any
+export interface UseVoteContext {
+  queryKey: ReturnType<typeof topicsGetPostsQueryKey>
   previousData?: TopicsGetPostsResponse
 }
 
@@ -108,7 +108,6 @@ export const useVote = (options: UseVoteOptions) => {
         }
       })
     },
-
     onError(_err, _variables, onMutateResult) {
       if (!onMutateResult?.previousData || !onMutateResult.queryKey) return
 

@@ -16,6 +16,9 @@ import {
   commentsRepliesList,
   feedList,
   feedTopicsList,
+  meSavedPostsCreate,
+  meSavedPostsDelete,
+  meSavedPostsList,
   type Options,
   postsCommentsCreate,
   postsCommentsList,
@@ -49,6 +52,15 @@ import type {
   FeedTopicsListData,
   FeedTopicsListError,
   FeedTopicsListResponse,
+  MeSavedPostsCreateData,
+  MeSavedPostsCreateError,
+  MeSavedPostsCreateResponse,
+  MeSavedPostsDeleteData,
+  MeSavedPostsDeleteError,
+  MeSavedPostsDeleteResponse,
+  MeSavedPostsListData,
+  MeSavedPostsListError,
+  MeSavedPostsListResponse,
   PostsCommentsCreateData,
   PostsCommentsCreateError,
   PostsCommentsCreateResponse,
@@ -73,7 +85,6 @@ import type {
   TopicsStreamData,
   TopicsStreamError,
 } from '../types.gen'
-import type { VoteContext } from '~/composables/useVote'
 
 /**
  * Enqueues batch MDN fetch_raw jobs (dev/admin)
@@ -351,16 +362,146 @@ export const postsReactionsToggleMutation = (
   PostsReactionsToggleResponse,
   PostsReactionsToggleError,
   Options<PostsReactionsToggleData>,
-  VoteContext
+  UseVoteContext
 > => {
   const mutationOptions: UseMutationOptions<
     PostsReactionsToggleResponse,
     PostsReactionsToggleError,
     Options<PostsReactionsToggleData>,
-    VoteContext
+    UseVoteContext
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await postsReactionsToggle({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      })
+      return data
+    },
+  }
+  return mutationOptions
+}
+
+export const meSavedPostsListQueryKey = (options?: Options<MeSavedPostsListData>) =>
+  createQueryKey('meSavedPostsList', options)
+
+/**
+ * Returns paginated saved posts for the current user
+ *
+ * Returns the current user's saved posts ordered by save time descending.
+ */
+export const meSavedPostsListOptions = (options?: Options<MeSavedPostsListData>) =>
+  queryOptions<
+    MeSavedPostsListResponse,
+    MeSavedPostsListError,
+    MeSavedPostsListResponse,
+    ReturnType<typeof meSavedPostsListQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await meSavedPostsList({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      })
+      return data
+    },
+    queryKey: meSavedPostsListQueryKey(options),
+  })
+
+export const meSavedPostsListInfiniteQueryKey = (
+  options?: Options<MeSavedPostsListData>
+): QueryKey<Options<MeSavedPostsListData>> => createQueryKey('meSavedPostsList', options, true)
+
+/**
+ * Returns paginated saved posts for the current user
+ *
+ * Returns the current user's saved posts ordered by save time descending.
+ */
+export const meSavedPostsListInfiniteOptions = (options?: Options<MeSavedPostsListData>) =>
+  infiniteQueryOptions<
+    MeSavedPostsListResponse,
+    MeSavedPostsListError,
+    InfiniteData<MeSavedPostsListResponse>,
+    QueryKey<Options<MeSavedPostsListData>>,
+    string | Pick<QueryKey<Options<MeSavedPostsListData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<MeSavedPostsListData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  cursor: pageParam,
+                },
+              }
+        const params = createInfiniteParams(queryKey, page)
+        const { data } = await meSavedPostsList({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        })
+        return data
+      },
+      queryKey: meSavedPostsListInfiniteQueryKey(options),
+    }
+  )
+
+/**
+ * Saves a post for the current user
+ *
+ * Creates a saved-post entry for the current user and the specified post. Repeating the request is a successful no-op.
+ */
+export const meSavedPostsCreateMutation = (
+  options?: Partial<Options<MeSavedPostsCreateData>>
+): UseMutationOptions<
+  MeSavedPostsCreateResponse,
+  MeSavedPostsCreateError,
+  Options<MeSavedPostsCreateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    MeSavedPostsCreateResponse,
+    MeSavedPostsCreateError,
+    Options<MeSavedPostsCreateData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await meSavedPostsCreate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      })
+      return data
+    },
+  }
+  return mutationOptions
+}
+
+/**
+ * Removes a saved post for the current user
+ *
+ * Deletes the current user's saved-post entry for the specified post. Repeating the request is a successful no-op.
+ */
+export const meSavedPostsDeleteMutation = (
+  options?: Partial<Options<MeSavedPostsDeleteData>>
+): UseMutationOptions<
+  MeSavedPostsDeleteResponse,
+  MeSavedPostsDeleteError,
+  Options<MeSavedPostsDeleteData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    MeSavedPostsDeleteResponse,
+    MeSavedPostsDeleteError,
+    Options<MeSavedPostsDeleteData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await meSavedPostsDelete({
         ...options,
         ...fnOptions,
         throwOnError: true,

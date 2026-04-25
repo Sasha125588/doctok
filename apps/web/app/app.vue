@@ -1,5 +1,9 @@
 <script setup lang="ts">
+import TopicFeed from './components/feed/TopicFeed.vue'
 import { Sonner } from './components/ui/sonner'
+import { useDesktop } from '~/composables/useDesktop'
+
+const isDesktop = useDesktop()
 </script>
 
 <template>
@@ -7,5 +11,8 @@ import { Sonner } from './components/ui/sonner'
     position="bottom-right"
     closeButton
   />
-  <NuxtPage />
+  <DesktopShell v-if="isDesktop">
+    <NuxtPage />
+  </DesktopShell>
+  <TopicFeed v-else />
 </template>

@@ -20,11 +20,11 @@ watch(
   { immediate: true }
 )
 
-function openNotes() {
+const openNotes = () => {
   activePanel.value = activePanel.value === 'notes' ? null : 'notes'
 }
 
-function openComments() {
+const openComments = () => {
   activePanel.value = activePanel.value === 'comments' ? null : 'comments'
 }
 </script>

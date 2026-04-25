@@ -1,36 +1,39 @@
 <script setup lang="ts">
 const route = useRoute()
-const router = useRouter()
+
+type RouteName = typeof route.name
 
 interface NavItem {
-  key: string
   icon: string
   title: string
-  path?: string
-  disabled: boolean
+  path: RouteName
 }
 
 const navItems: NavItem[] = [
-  { key: 'feed', icon: 'lucide:layout-grid', title: 'Стрічка', path: '/', disabled: false },
-  { key: 'search', icon: 'lucide:search', title: 'Каталог (скоро)', disabled: true },
-  { key: 'courses', icon: 'lucide:book-open', title: 'Міні-курси (скоро)', disabled: true },
-  { key: 'saved', icon: 'lucide:bookmark', title: 'Збережене', path: '/saved', disabled: false },
+  { icon: 'lucide:layout-grid', title: 'Стрічка', path: 'feed' },
+  { icon: 'lucide:search', title: 'Каталог', path: 'search' },
+  {
+    icon: 'lucide:book-open',
+    title: 'Міні-курси',
+    path: 'courses',
+  },
+  { icon: 'lucide:bookmark', title: 'Збережене', path: 'saved' },
+  { icon: 'lucide:waypoints', title: 'Карта знань', path: 'map' },
 ]
 
 const footerItem: NavItem = {
-  key: 'profile',
   icon: 'lucide:user',
-  title: 'Профіль (скоро)',
-  disabled: true,
+  title: 'Профіль',
+  path: 'profile',
 }
 
-function isActive(item: NavItem) {
-  return item.path != null && route.path === item.path
-}
+const isActive = (item: NavItem) => route.name === item.path
 
-function go(item: NavItem) {
-  if (item.disabled || !item.path || isActive(item)) return
-  router.push(item.path)
+const go = (item: NavItem) => {
+  if (isActive(item)) return
+  navigateTo({
+    name: item.path,
+  })
 }
 </script>
 
@@ -39,11 +42,10 @@ function go(item: NavItem) {
     <div class="logo">DOC</div>
     <button
       v-for="item in navItems"
-      :key="item.key"
+      :key="item.path"
       class="rail-btn"
-      :class="{ 'is-active': isActive(item), 'is-disabled': item.disabled }"
+      :class="{ 'is-active': isActive(item) }"
       :title="item.title"
-      :disabled="item.disabled"
       @click="go(item)"
     >
       <Icon
@@ -53,9 +55,10 @@ function go(item: NavItem) {
     </button>
     <div class="spacer" />
     <button
-      class="rail-btn is-disabled"
+      class="rail-btn"
+      :class="{ 'is-active': isActive(footerItem) }"
       :title="footerItem.title"
-      :disabled="footerItem.disabled"
+      @click="go(footerItem)"
     >
       <Icon
         :name="footerItem.icon"
@@ -107,10 +110,6 @@ function go(item: NavItem) {
 .rail-btn.is-active {
   background: var(--dt-rail-active-bg);
   color: var(--kind-example);
-}
-.rail-btn.is-disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
 }
 .icon {
   width: 16px;

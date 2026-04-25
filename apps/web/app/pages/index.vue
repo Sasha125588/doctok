@@ -1,15 +1,11 @@
 <script setup lang="ts">
-import DesktopShell from '~/components/desktop/DesktopShell.vue'
 import FeedPage from '~/components/desktop/FeedPage.vue'
-import TopicFeed from '~/components/feed/TopicFeed.vue'
-import { useDesktop } from '~/composables/useDesktop'
 
-const isDesktop = useDesktop()
+definePageMeta({
+  name: 'feed',
+})
 </script>
 
 <template>
-  <DesktopShell v-if="isDesktop">
-    <FeedPage />
-  </DesktopShell>
-  <TopicFeed v-else />
+  <FeedPage />
 </template>

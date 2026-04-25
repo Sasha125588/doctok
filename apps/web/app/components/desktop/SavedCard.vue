@@ -1,24 +1,22 @@
 <script setup lang="ts">
 import PostKindBadge from '~/components/post/PostKindBadge.vue'
 import { useFeedView } from '~/composables/useFeedView'
-import { type SavedPost, useSavedPosts } from '~/composables/useSavedPosts'
 
-const props = defineProps<{ post: SavedPost }>()
+import type { SavedPostView } from '~~/generated/api/types.gen'
 
-const router = useRouter()
+const props = defineProps<{ post: SavedPostView }>()
+
 const { activeTopicSlug, pendingPostId, mode } = useFeedView()
 const { remove } = useSavedPosts()
 
-function open() {
+const open = () => {
   activeTopicSlug.value = props.post.topicSlug
-  pendingPostId.value = props.post.postId
+  pendingPostId.value = +props.post.postId
   mode.value = 'focus'
-  router.push('/')
+  navigateTo({ name: 'feed' })
 }
 
-function onRemove() {
-  remove(props.post.postId)
-}
+const onRemove = () => remove(props.post)
 </script>
 
 <template>

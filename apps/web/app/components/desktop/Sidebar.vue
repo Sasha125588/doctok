@@ -11,9 +11,7 @@ const props = defineProps<{ topics: TopicFeedPageView[] }>()
 const { pinned, recent } = useTopicHistory()
 const { activeTopicSlug, sidebarHidden, activePostIndex } = useFeedView()
 
-function titleOf(slug: string) {
-  return props.topics.find((t) => t.slug === slug)?.title ?? slug
-}
+const titleOf = (slug: string) => props.topics.find((t) => t.slug === slug)?.title ?? slug
 
 const sections = computed(() => [
   { label: 'pinned', slugs: pinned.value },
@@ -23,7 +21,7 @@ const sections = computed(() => [
   },
 ])
 
-function selectTopic(slug: string) {
+const selectTopic = (slug: string) => {
   activeTopicSlug.value = slug
   activePostIndex.value = 0
 }

@@ -16,7 +16,7 @@ const queryOptions = computed(() => ({
 
 const { state } = useTopicLinks(queryOptions, enabled)
 
-function go(slug: string) {
+const go = (slug: string) => {
   activeTopicSlug.value = slug
   activePostIndex.value = 0
 }

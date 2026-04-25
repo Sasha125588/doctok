@@ -41,7 +41,7 @@ export type PreloadMdnRequest = {
   count?: null | number | string
   seed?: null | number | string
   prefix?: null | string
-  lang: null | string
+  lang: string
 }
 
 export type PreloadMdnResponse = {
@@ -69,6 +69,24 @@ export type ResolveMdnResponse = {
   topicSlug: null | string
   lang: null | string
   jobId: null | number | string
+}
+
+export type SavedPostsResponse = {
+  items: Array<SavedPostView>
+  nextCursor: null | string
+}
+
+export type SavedPostView = {
+  postId: number | string
+  title: string
+  kind: string
+  topicSlug: string
+  topicTitle: string
+  savedAt: string
+}
+
+export type SavePostRequest = {
+  postId: number | string
 }
 
 export type SessionMeResponse = {
@@ -123,6 +141,7 @@ export type TopicPostView = {
   myVote: ReactionValue
   popularity: null | number | string
   createdAt: string
+  isSaved: boolean
 }
 
 export type AdminMdnPreloadData = {
@@ -342,6 +361,108 @@ export type PostsReactionsToggleResponses = {
 
 export type PostsReactionsToggleResponse =
   PostsReactionsToggleResponses[keyof PostsReactionsToggleResponses]
+
+export type MeSavedPostsListData = {
+  body?: never
+  path?: never
+  query?: {
+    cursor?: string
+    limit?: number | string
+  }
+  url: '/api/me/saved-posts'
+}
+
+export type MeSavedPostsListErrors = {
+  /**
+   * Bad Request
+   */
+  400: HttpValidationProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+}
+
+export type MeSavedPostsListError = MeSavedPostsListErrors[keyof MeSavedPostsListErrors]
+
+export type MeSavedPostsListResponses = {
+  /**
+   * OK
+   */
+  200: SavedPostsResponse
+}
+
+export type MeSavedPostsListResponse = MeSavedPostsListResponses[keyof MeSavedPostsListResponses]
+
+export type MeSavedPostsCreateData = {
+  body: SavePostRequest
+  path?: never
+  query?: never
+  url: '/api/me/saved-posts'
+}
+
+export type MeSavedPostsCreateErrors = {
+  /**
+   * Bad Request
+   */
+  400: HttpValidationProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+}
+
+export type MeSavedPostsCreateError = MeSavedPostsCreateErrors[keyof MeSavedPostsCreateErrors]
+
+export type MeSavedPostsCreateResponses = {
+  /**
+   * No Content
+   */
+  204: void
+}
+
+export type MeSavedPostsCreateResponse =
+  MeSavedPostsCreateResponses[keyof MeSavedPostsCreateResponses]
+
+export type MeSavedPostsDeleteData = {
+  body?: never
+  path: {
+    postId: number
+  }
+  query?: never
+  url: '/api/me/saved-posts/{postId}'
+}
+
+export type MeSavedPostsDeleteErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+}
+
+export type MeSavedPostsDeleteError = MeSavedPostsDeleteErrors[keyof MeSavedPostsDeleteErrors]
+
+export type MeSavedPostsDeleteResponses = {
+  /**
+   * No Content
+   */
+  204: void
+}
+
+export type MeSavedPostsDeleteResponse =
+  MeSavedPostsDeleteResponses[keyof MeSavedPostsDeleteResponses]
 
 export type FeedListData = {
   body?: never
