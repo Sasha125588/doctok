@@ -1,5 +1,7 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import ProfilePage from '~/components/desktop/ProfilePage.vue'
+</script>
 
 <template>
-  <NuxtPage />
+  <ProfilePage />
 </template>

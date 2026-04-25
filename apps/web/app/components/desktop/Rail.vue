@@ -4,28 +4,26 @@ const route = useRoute()
 type RouteName = typeof route.name
 
 interface NavItem {
-  key: string
   icon: string
   title: string
   path: RouteName
 }
 
 const navItems: NavItem[] = [
-  { key: 'feed', icon: 'lucide:layout-grid', title: 'Стрічка', path: 'feed' },
-  { key: 'search', icon: 'lucide:search', title: 'Каталог', path: 'search' },
+  { icon: 'lucide:layout-grid', title: 'Стрічка', path: 'feed' },
+  { icon: 'lucide:search', title: 'Каталог', path: 'search' },
   {
-    key: 'courses',
     icon: 'lucide:book-open',
-    title: 'Міні-курси (скоро)',
+    title: 'Міні-курси',
     path: 'courses',
   },
-  { key: 'saved', icon: 'lucide:bookmark', title: 'Збережене', path: 'saved' },
+  { icon: 'lucide:bookmark', title: 'Збережене', path: 'saved' },
+  { icon: 'lucide:waypoints', title: 'Карта знань', path: 'map' },
 ]
 
 const footerItem: NavItem = {
-  key: 'profile',
   icon: 'lucide:user',
-  title: 'Профіль (скоро)',
+  title: 'Профіль',
   path: 'profile',
 }
 
@@ -44,7 +42,7 @@ const go = (item: NavItem) => {
     <div class="logo">DOC</div>
     <button
       v-for="item in navItems"
-      :key="item.key"
+      :key="item.path"
       class="rail-btn"
       :class="{ 'is-active': isActive(item) }"
       :title="item.title"
@@ -57,7 +55,8 @@ const go = (item: NavItem) => {
     </button>
     <div class="spacer" />
     <button
-      class="rail-btn is-disabled"
+      class="rail-btn"
+      :class="{ 'is-active': isActive(footerItem) }"
       :title="footerItem.title"
       @click="go(footerItem)"
     >
