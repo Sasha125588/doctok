@@ -5,12 +5,13 @@ import DesktopSidePanel from './DesktopSidePanel.vue'
 import { useComments } from '~/composables/useComments'
 import { useFeedView } from '~/composables/useFeedView'
 
-const props = defineProps<{ activePostId: number }>()
+const props = defineProps<{ activePostId: number; topicSlug: string }>()
 
 const { activePanel } = useFeedView()
 
 const activePostId = computed(() => props.activePostId)
-const { comments, isLoading, isSending, send } = useComments(activePostId)
+const topicSlug = computed(() => props.topicSlug)
+const { comments, isLoading, isSending, send } = useComments(activePostId, topicSlug)
 
 const draft = ref('')
 const isOpen = computed(() => activePanel.value === 'comments')

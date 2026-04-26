@@ -60,6 +60,7 @@ const slugKey = computed(() => `$slug:${activeTopicSlug.value}`)
       v-if="activePost"
       :key="`comments-${slugKey}`"
       :active-post-id="+activePost.id"
+      :topic-slug="activePost.topicSlug"
     />
     <NotesPanel
       v-if="activePost"

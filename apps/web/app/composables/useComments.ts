@@ -2,11 +2,15 @@ import {
   postsCommentsCreateMutation,
   postsCommentsListOptions,
   postsCommentsListQueryKey,
+  topicsGetPostsQueryKey,
 } from '#api/@tanstack/vue-query.gen'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 
-export function useComments(postId: Ref<number>) {
+import type { TopicsGetPostsResponse } from '~~/generated/api/types.gen'
+
+export function useComments(postId: Ref<number>, topicSlug: Ref<string>) {
   const queryClient = useQueryClient()
+  const { lang } = useLang()
 
   const listOptions = computed(() => ({
     ...postsCommentsListOptions({
@@ -22,6 +26,25 @@ export function useComments(postId: Ref<number>) {
       queryClient.invalidateQueries({
         queryKey: postsCommentsListQueryKey({ path: { postId: variables.path.postId } }),
       })
+
+      queryClient.setQueryData<TopicsGetPostsResponse>(
+        topicsGetPostsQueryKey({
+          query: {
+            slug: topicSlug.value,
+            lang: lang.value,
+          },
+        }),
+        (oldData) => {
+          if (!oldData) return oldData
+
+          return {
+            ...oldData,
+            items: oldData.items.map((post) =>
+              +post.id === postId.value ? { ...post, commentCount: +post.commentCount + 1 } : post
+            ),
+          }
+        }
+      )
     },
   })
 

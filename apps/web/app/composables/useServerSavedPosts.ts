@@ -76,7 +76,9 @@ export const useServerSavedPosts = ({ enabled }: UseServerSavedPostsOptions) => 
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: meSavedPostsListInfiniteQueryKey() })
+      queryClient.invalidateQueries({
+        queryKey: meSavedPostsListInfiniteQueryKey({ query: { limit: savedPostsPageSize } }),
+      })
     },
     onError(_err, _variables, onMutateResult) {
       rollbackPostSavedInTopicCache(queryClient, onMutateResult?.patch ?? null)
@@ -105,7 +107,9 @@ export const useServerSavedPosts = ({ enabled }: UseServerSavedPostsOptions) => 
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: meSavedPostsListInfiniteQueryKey() })
+      queryClient.invalidateQueries({
+        queryKey: meSavedPostsListInfiniteQueryKey({ query: { limit: savedPostsPageSize } }),
+      })
     },
     onError(_err, _variables, onMutateResult) {
       rollbackPostSavedInTopicCache(queryClient, onMutateResult?.patch ?? null)
