@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -10,15 +11,6 @@ using Microsoft.Extensions.Options;
 
 namespace Infrastructure.PostGeneration.Llm;
 
-/// <summary>
-/// Генерує структуровані пости (summary, concept, example, tip) на основі вхідного контенту,
-/// використовуючи LLM через абстракцію <see cref="ILlmRouter"/>.
-///
-/// Формує prompt із заголовком, контентом і мовою, викликає модель,
-/// а потім парсить відповідь у список <see cref="GeneratedPost"/>.
-///
-/// Обробляє таймаути, обрізання контенту, валідацію відповіді та фільтрацію некоректних даних.
-/// </summary>
 public sealed class LlmPostGenerator(
     ILlmRouter llmRouter,
     IOptions<LlmProfilesOptions> opts,
@@ -71,12 +63,80 @@ public sealed class LlmPostGenerator(
         return ParseResponse(response, title);
     }
 
+    public async Task<RewrittenPost?> RewriteVariantAsync(
+        string? originalTitle,
+        string originalBody,
+        string kind,
+        string variantCode,
+        string lang,
+        CancellationToken ct)
+    {
+        var profile = opts.Value.PostGeneration;
+        var langName = LanguageHelpers.ToLangName(lang);
+
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        cts.CancelAfter(TimeSpan.FromSeconds(profile.TimeoutSeconds));
+
+        var truncated = originalBody.Length > profile.MaxContentLength
+            ? originalBody[..profile.MaxContentLength] + "\n\n[content truncated]"
+            : originalBody;
+
+        var prompt = string.Create(
+            CultureInfo.InvariantCulture,
+            $$"""
+            Rewrite this existing developer learning card in {{langName}}.
+            Variant: {{variantCode}}
+            Keep the same meaning. Do not add unsupported facts.
+            Return ONLY JSON:
+            { "title": "...", "body": "..." }
+
+            Original title: {{originalTitle ?? string.Empty}}
+            Original kind: {{kind}}
+            Original body:
+            {{truncated}}
+            """);
+
+        var response = await llmRouter.CompleteChatAsync(
+            profile,
+            userMessage: prompt,
+            ct:          cts.Token);
+
+        if (string.IsNullOrWhiteSpace(response))
+        {
+            logger.LogWarning(
+                "LLM returned empty response for variant={Variant} title={Title}",
+                variantCode,
+                originalTitle);
+            return null;
+        }
+
+        try
+        {
+            var json = ExtractJsonObject(response.Trim());
+            var item = JsonSerializer.Deserialize<LlmPostItem>(json, _jsonOptions);
+
+            if (item is null || string.IsNullOrWhiteSpace(item.Body))
+                return null;
+
+            return new RewrittenPost(item.Title?.Trim('"').Trim(), item.Body.Trim());
+        }
+        catch (JsonException ex)
+        {
+            logger.LogError(
+                ex,
+                "Failed to parse LLM JSON for variant={Variant} title={Title}. Length={Length}",
+                variantCode,
+                originalTitle,
+                response.Length);
+            return null;
+        }
+    }
+
     private IReadOnlyList<GeneratedPost> ParseResponse(string raw, string docTitle)
     {
         try
         {
-            // var json  = ExtractJsonArray(raw.Trim());
-            var json  = raw.Trim();
+            var json  = ExtractJsonArray(raw.Trim());
 
             var items = JsonSerializer.Deserialize<List<LlmPostItem>>(json, _jsonOptions);
 
@@ -109,10 +169,6 @@ public sealed class LlmPostGenerator(
         }
     }
 
-    /// <summary>
-    /// Strips an optional <c>```json/markdown … ```</c> fence that some LLMs add
-    /// even when asked not to.
-    /// </summary>
     private static string ExtractJsonArray(string s)
     {
         if (s.StartsWith("```json", StringComparison.OrdinalIgnoreCase))
@@ -138,6 +194,26 @@ public sealed class LlmPostGenerator(
         return s;
     }
 
+    private static string ExtractJsonObject(string s)
+    {
+        if (s.StartsWith("```json", StringComparison.OrdinalIgnoreCase))
+        {
+            var end = s.LastIndexOf("```", StringComparison.Ordinal);
+            s = end > 7 ? s[7..end].Trim() : s[7..].Trim();
+        }
+        else if (s.StartsWith("```", StringComparison.Ordinal))
+        {
+            var end = s.LastIndexOf("```", StringComparison.Ordinal);
+            s = end > 3 ? s[3..end].Trim() : s[3..].Trim();
+        }
+
+        var objectStart = s.IndexOf('{');
+        if (objectStart > 0)
+            s = s[objectStart..];
+
+        return s;
+    }
+
     private static string LoadPrompt()
     {
         var assembly     = Assembly.GetExecutingAssembly();
@@ -157,3 +233,5 @@ public sealed class LlmPostGenerator(
         [property: JsonPropertyName("title")] string? Title,
         [property: JsonPropertyName("body")]  string? Body);
 }
+
+public sealed record RewrittenPost(string? Title, string Body);

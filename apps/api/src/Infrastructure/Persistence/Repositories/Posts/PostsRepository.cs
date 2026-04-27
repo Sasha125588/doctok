@@ -169,6 +169,67 @@ public sealed class PostsRepository(IDbConnectionFactory dbf)
         await tx.CommitAsync(ct);
     }
 
+    public async Task<IReadOnlyList<PostOriginalForVariant>> GetOriginalVariantsForDocument(
+        long rawDocumentId,
+        string lang,
+        CancellationToken ct)
+    {
+        const string sql = """
+                           select p.id as post_id,
+                                  p.kind,
+                                  p.position,
+                                  v.title,
+                                  v.body
+                           from public.posts p
+                           join public.post_content_variants v
+                             on v.post_id = p.id
+                            and v.variant_code = 'original'
+                           where p.raw_document_id = @rawDocumentId
+                             and p.lang = @lang
+                             and p.is_active = true
+                           order by p.position, p.id
+                           """;
+
+        using var db = dbf.Create();
+        return (await db.QueryAsync<PostOriginalForVariant>(
+            new CommandDefinition(sql, new { rawDocumentId, lang }, cancellationToken: ct))).ToList();
+    }
+
+    public async Task UpsertContentVariant(
+        long postId,
+        string variantCode,
+        string? title,
+        string body,
+        string bodyHtml,
+        string? provider,
+        string? model,
+        string promptVersion,
+        CancellationToken ct)
+    {
+        const string sql = """
+                           insert into public.post_content_variants(
+                             post_id, variant_code, title, body, body_html, provider, model, prompt_version
+                           )
+                           values (
+                             @postId, @variantCode, @title, @body, @bodyHtml, @provider, @model, @promptVersion
+                           )
+                           on conflict (post_id, variant_code) do update set
+                             title = excluded.title,
+                             body = excluded.body,
+                             body_html = excluded.body_html,
+                             provider = excluded.provider,
+                             model = excluded.model,
+                             prompt_version = excluded.prompt_version,
+                             updated_at = now()
+                           """;
+
+        using var db = dbf.Create();
+        await db.ExecuteAsync(new CommandDefinition(
+            sql,
+            new { postId, variantCode, title, body, bodyHtml, provider, model, promptVersion },
+            cancellationToken: ct));
+    }
+
     public async Task<int> GetMinGenerationLevel(long rawDocumentId, string lang, CancellationToken ct)
     {
         const string sql = """
@@ -199,3 +260,10 @@ public sealed record OriginalPostInsert(
     string Body,
     string BodyHtml,
     int Position);
+
+public sealed record PostOriginalForVariant(
+    long PostId,
+    string Kind,
+    int Position,
+    string? Title,
+    string Body);

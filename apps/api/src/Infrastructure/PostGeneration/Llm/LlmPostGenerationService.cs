@@ -10,6 +10,10 @@ public sealed class LlmPostGenerationService(
     MarkdownHtmlRenderer mdnRenderer,
     ILogger<LlmPostGenerationService> logger)
 {
+    private const string PromptVersion = "ai-rewrite-v1";
+
+    private static readonly string[] _variantCodes = ["ai_simple", "ai_senior"];
+
     public async Task EnhanceAsync(
         int sourceId,
         string sourceCode,
@@ -21,41 +25,58 @@ public sealed class LlmPostGenerationService(
                   ?? throw new InvalidOperationException(
                       $"Raw document not found: source={sourceCode}, lang={lang}, ref={externalRef}");
 
-        var currentLevel = await postsRepo.GetMinGenerationLevel(rawDocument.Id, lang, ct);
-        if (currentLevel >= 2)
+        var originals = await postsRepo.GetOriginalVariantsForDocument(rawDocument.Id, lang, ct);
+        if (originals.Count == 0)
         {
-            logger.LogInformation(
-                "Skipping LLM enhancement — already Level 2: doc={ExternalRef} lang={Lang}",
-                externalRef, lang);
+            logger.LogWarning(
+                "No original posts to rewrite: doc={ExternalRef} lang={Lang}",
+                externalRef,
+                lang);
             return;
         }
 
-        var llmPosts = await llmPostGen.GenerateAsync(
-            rawDocument.Content,
-            rawDocument.Title,
-            lang,
-            ct);
-
-        if (llmPosts.Count == 0)
+        var generated = 0;
+        foreach (var original in originals)
         {
-            throw new InvalidOperationException(
-                $"LLM returned no valid posts for doc={externalRef} lang={lang}");
+            foreach (var variantCode in _variantCodes)
+            {
+                var rewritten = await llmPostGen.RewriteVariantAsync(
+                    original.Title,
+                    original.Body,
+                    original.Kind,
+                    variantCode,
+                    lang,
+                    ct);
+
+                if (rewritten is null)
+                {
+                    logger.LogWarning(
+                        "LLM returned no content for variant={Variant} postId={PostId}",
+                        variantCode,
+                        original.PostId);
+                    continue;
+                }
+
+                await postsRepo.UpsertContentVariant(
+                    postId: original.PostId,
+                    variantCode: variantCode,
+                    title: rewritten.Title,
+                    body: rewritten.Body,
+                    bodyHtml: mdnRenderer.Render(rewritten.Body),
+                    provider: null,
+                    model: null,
+                    promptVersion: PromptVersion,
+                    ct: ct);
+
+                generated++;
+            }
         }
 
-        var posts = llmPosts
-            .Select(p => new PostInsert(
-                Kind:            p.Kind,
-                Title:           p.Title ?? rawDocument.Title,
-                Body:            p.Body,
-                BodyHtml:        mdnRenderer.Render(p.Body),
-                Position:        p.Position,
-                GenerationLevel: 2))
-            .ToList();
-
-        await postsRepo.ReplaceForDocument(rawDocument.Id, rawDocument.TopicId, lang, posts, ct);
-
         logger.LogInformation(
-            "LLM enhancement complete: {Count} posts for doc={ExternalRef} lang={Lang}",
-            posts.Count, externalRef, lang);
+            "LLM variants generated: {Count} variants for {Posts} posts (doc={ExternalRef} lang={Lang})",
+            generated,
+            originals.Count,
+            externalRef,
+            lang);
     }
 }
