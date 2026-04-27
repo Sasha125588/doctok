@@ -8,7 +8,9 @@
     <PackageReference Include="Dapper" />
     <PackageReference Include="Google.GenAI" />
     <PackageReference Include="HtmlAgilityPack" />
+    <PackageReference Include="HtmlSanitizer" />
     <PackageReference Include="Markdig" />
+    <PackageReference Include="ReverseMarkdown" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" />
