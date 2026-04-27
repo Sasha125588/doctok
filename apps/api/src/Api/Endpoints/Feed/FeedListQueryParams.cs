@@ -15,4 +15,8 @@ public sealed class FeedListQueryParams : LangQueryParams
   [Range(1, 50)]
   [DefaultValue(20)]
   public int? Limit { get; init; }
+
+  [FromQuery(Name = "variant")]
+  [StringLength(64)]
+  public string? Variant { get; init; }
 }

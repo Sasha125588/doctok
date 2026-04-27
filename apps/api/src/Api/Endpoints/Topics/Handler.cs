@@ -14,10 +14,11 @@ public sealed class Handler(TopicsRepository topicRepo) : IHandler
         var take = Math.Clamp(query.Limit ?? 5, 1, 50);
         var slug = ExternalRefHelpers.Normalize(query.Slug);
         var lang = LanguageHelpers.NormalizeLang(query.Lang);
+        var variant = NormalizeVariant(query.Variant);
 
         var cursor = CursorCodec.Decode<TopicPostsCursor>(query.Cursor);
 
-        var page = await topicRepo.GetPosts(cursor, slug, lang, query.UserId, take + 1, ct);
+        var page = await topicRepo.GetPosts(cursor, slug, lang, variant, query.UserId, take + 1, ct);
 
         if (page.Count == 0)
         {
@@ -35,6 +36,11 @@ public sealed class Handler(TopicsRepository topicRepo) : IHandler
 
         return new TopicPostsResponse(items, nextCursor);
     }
+
+    private static string NormalizeVariant(string? variant)
+        => string.IsNullOrWhiteSpace(variant)
+            ? "original"
+            : variant.Trim().ToLowerInvariant();
 
     private static TopicPostsCursor ToCursor(TopicPostView item)
       => new(GetKindRank(item.Kind), item.Position, item.Id);

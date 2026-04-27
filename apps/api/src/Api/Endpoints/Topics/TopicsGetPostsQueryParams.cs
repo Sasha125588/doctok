@@ -20,4 +20,8 @@ public sealed class TopicsGetPostsQueryParams : LangQueryParams
   [FromQuery(Name = "cursor")]
   [StringLength(512)]
   public string? Cursor { get; init; }
+
+  [FromQuery(Name = "variant")]
+  [StringLength(64)]
+  public string? Variant { get; init; }
 }

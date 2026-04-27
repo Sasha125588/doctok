@@ -11,9 +11,10 @@ public sealed class Handler(FeedRepository feedRepo) : IHandler
     {
         var take = Math.Clamp(query.Limit ?? 20, 1, 50);
         var lang = LanguageHelpers.NormalizeLang(query.Lang);
+        var variant = NormalizeVariant(query.Variant);
         var cursor = CursorCodec.Decode<FeedCursor>(query.Cursor);
 
-        var page = await feedRepo.GetPage(cursor, query.UserId, lang, take + 1, ct);
+        var page = await feedRepo.GetPage(cursor, query.UserId, lang, variant, take + 1, ct);
 
         var hasNextPage = page.Count > take;
         var items = hasNextPage ? page.Take(take).ToList() : page;
@@ -24,6 +25,11 @@ public sealed class Handler(FeedRepository feedRepo) : IHandler
 
         return new FeedResponse(items, nextCursor);
     }
+
+    private static string NormalizeVariant(string? variant)
+        => string.IsNullOrWhiteSpace(variant)
+            ? "original"
+            : variant.Trim().ToLowerInvariant();
 
     private static FeedCursor ToCursor(TopicPostView item)
       => new(item.Popularity, item.Id, item.CreatedAt);
