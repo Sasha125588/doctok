@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Domain.Jobs;
 using Domain.Mdn;
 using Domain.Shared;
@@ -29,6 +30,7 @@ public sealed class MdnIngestionService(
 
         MdnDocument doc = await apiClient.FetchAsync(lang, externalRef, ct);
         var (text, links) = converter.Convert(doc);
+        var sectionsJson = JsonSerializer.Serialize(doc.Sections);
 
         var canonicalExternalRef = ExternalRefHelpers.Normalize(doc.Slug);
 
@@ -40,6 +42,7 @@ public sealed class MdnIngestionService(
             externalRef: canonicalExternalRef,
             title: doc.Title,
             content: text,
+            sectionsJson: sectionsJson,
             pageType: doc.PageType,
             popularity: doc.Popularity ?? 0,
             sourceModifiedAt: doc.SourceModifiedAt,

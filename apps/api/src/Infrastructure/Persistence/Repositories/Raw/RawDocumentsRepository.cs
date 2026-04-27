@@ -11,6 +11,7 @@ public sealed class RawDocumentsRepository(IDbConnectionFactory dbf)
         string externalRef,
         string? title,
         string content,
+        string sectionsJson,
         string? pageType,
         double popularity,
         DateTimeOffset? sourceModifiedAt,
@@ -18,11 +19,18 @@ public sealed class RawDocumentsRepository(IDbConnectionFactory dbf)
         CancellationToken ct)
     {
         const string query = """
-                             insert into public.raw_documents(source_id, lang, external_ref, title, content, page_type, popularity, source_modified_at, other_locales)
-                             values (@sourceId, @lang, @externalRef, @title, @content, @pageType, @popularity, @sourceModifiedAt, @otherLocales)
+                             insert into public.raw_documents(
+                               source_id, lang, external_ref, title, content, sections_jsonb,
+                               page_type, popularity, source_modified_at, other_locales
+                             )
+                             values (
+                               @sourceId, @lang, @externalRef, @title, @content, cast(@sectionsJson as jsonb),
+                               @pageType, @popularity, @sourceModifiedAt, @otherLocales
+                             )
                              on conflict (source_id, lang, external_ref) do update
                                set title = excluded.title,
                                    content = excluded.content,
+                                   sections_jsonb = excluded.sections_jsonb,
                                    page_type = excluded.page_type,
                                    popularity = excluded.popularity,
                                    source_modified_at = excluded.source_modified_at,
@@ -35,7 +43,7 @@ public sealed class RawDocumentsRepository(IDbConnectionFactory dbf)
         return await db.ExecuteScalarAsync<long>(
             new CommandDefinition(
                 query,
-                new { sourceId, lang, externalRef, title, content, pageType, popularity, sourceModifiedAt, otherLocales },
+                new { sourceId, lang, externalRef, title, content, sectionsJson, pageType, popularity, sourceModifiedAt, otherLocales },
                 cancellationToken: ct));
     }
 
@@ -46,7 +54,7 @@ public sealed class RawDocumentsRepository(IDbConnectionFactory dbf)
         CancellationToken ct)
     {
         const string query = """
-                             select rd.id, rd.title, rd.content, td.topic_id
+                             select rd.id, rd.title, rd.content, rd.sections_jsonb::text as sections_json, td.topic_id
                              from raw_documents rd
                              join topic_documents td on td.raw_document_id = rd.id
                              where rd.source_id = @sourceId
@@ -59,5 +67,10 @@ public sealed class RawDocumentsRepository(IDbConnectionFactory dbf)
             new CommandDefinition(query, new { sourceId, lang, externalRef }, cancellationToken: ct));
     }
 
-    public sealed record RawDocumentForPosts(long Id, string Title, string Content, long TopicId);
+    public sealed record RawDocumentForPosts(
+        long Id,
+        string Title,
+        string Content,
+        string SectionsJson,
+        long TopicId);
 }
