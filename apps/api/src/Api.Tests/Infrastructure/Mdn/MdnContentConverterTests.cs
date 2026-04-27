@@ -1,3 +1,4 @@
+using Domain.Mdn;
 using Infrastructure.Sources.Mdn;
 using Xunit;
 
@@ -8,7 +9,7 @@ public sealed class MdnContentConverterTests
     private static readonly string[] OtherLocales = ["ru", "fr"];
     private readonly MdnContentConverter _converter = new();
 
-    private static MdnApiDoc MakeDoc(params MdnApiSection[] sections)
+    private static MdnDocument MakeDoc(params MdnSection[] sections)
         => new("Test", "Web/API/Test", sections, null, null, null, Array.Empty<string>());
 
     // ─── Basic prose conversion ──────────────────────────────────────
@@ -16,7 +17,7 @@ public sealed class MdnContentConverterTests
     [Fact]
     public void SimpleParagraphConvertsToPlainText()
     {
-        var doc = MakeDoc(new MdnApiSection(null, null, false, "<p>Hello world</p>"));
+        var doc = MakeDoc(new MdnSection(null, null, false, "<p>Hello world</p>"));
         var (text, _) = _converter.Convert(doc);
 
         Assert.Equal("Hello world", text);
@@ -25,7 +26,7 @@ public sealed class MdnContentConverterTests
     [Fact]
     public void SectionTitleRendersAsH2()
     {
-        var doc = MakeDoc(new MdnApiSection("intro", "Introduction", false, "<p>Content here</p>"));
+        var doc = MakeDoc(new MdnSection("intro", "Introduction", false, "<p>Content here</p>"));
         var (text, _) = _converter.Convert(doc);
 
         Assert.StartsWith("## Introduction", text);
@@ -35,7 +36,7 @@ public sealed class MdnContentConverterTests
     [Fact]
     public void IsH3SectionRendersAsH3()
     {
-        var doc = MakeDoc(new MdnApiSection("sub", "Sub Section", true, "<p>Body</p>"));
+        var doc = MakeDoc(new MdnSection("sub", "Sub Section", true, "<p>Body</p>"));
         var (text, _) = _converter.Convert(doc);
 
         Assert.StartsWith("### Sub Section", text);
@@ -44,7 +45,7 @@ public sealed class MdnContentConverterTests
     [Fact]
     public void EmptyContentSectionRendersHeadingOnly()
     {
-        var doc = MakeDoc(new MdnApiSection("empty", "Empty Section", false, ""));
+        var doc = MakeDoc(new MdnSection("empty", "Empty Section", false, ""));
         var (text, _) = _converter.Convert(doc);
 
         Assert.Equal("## Empty Section", text);
@@ -55,7 +56,7 @@ public sealed class MdnContentConverterTests
     [Fact]
     public void InlineCodeRendersWithBackticks()
     {
-        var doc = MakeDoc(new MdnApiSection(null, null, false, "<p>Use <code>fetch()</code> here</p>"));
+        var doc = MakeDoc(new MdnSection(null, null, false, "<p>Use <code>fetch()</code> here</p>"));
         var (text, _) = _converter.Convert(doc);
 
         Assert.Contains("`fetch()`", text);
@@ -64,7 +65,7 @@ public sealed class MdnContentConverterTests
     [Fact]
     public void StrongRendersWithDoubleAsterisks()
     {
-        var doc = MakeDoc(new MdnApiSection(null, null, false, "<p><strong>bold</strong> text</p>"));
+        var doc = MakeDoc(new MdnSection(null, null, false, "<p><strong>bold</strong> text</p>"));
         var (text, _) = _converter.Convert(doc);
 
         Assert.Contains("**bold**", text);
@@ -73,7 +74,7 @@ public sealed class MdnContentConverterTests
     [Fact]
     public void EmRendersWithSingleAsterisk()
     {
-        var doc = MakeDoc(new MdnApiSection(null, null, false, "<p><em>italic</em> text</p>"));
+        var doc = MakeDoc(new MdnSection(null, null, false, "<p><em>italic</em> text</p>"));
         var (text, _) = _converter.Convert(doc);
 
         Assert.Contains("*italic*", text);
@@ -85,7 +86,7 @@ public sealed class MdnContentConverterTests
     public void UnorderedListRendersWithDashes()
     {
         var html = "<ul><li>One</li><li>Two</li></ul>";
-        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var doc = MakeDoc(new MdnSection(null, null, false, html));
         var (text, _) = _converter.Convert(doc);
 
         Assert.Contains("- One", text);
@@ -96,7 +97,7 @@ public sealed class MdnContentConverterTests
     public void OrderedListRendersWithNumbers()
     {
         var html = "<ol><li>First</li><li>Second</li></ol>";
-        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var doc = MakeDoc(new MdnSection(null, null, false, html));
         var (text, _) = _converter.Convert(doc);
 
         Assert.Contains("1. First", text);
@@ -107,7 +108,7 @@ public sealed class MdnContentConverterTests
     public void ParagraphInsideLiDoesNotProduceDoubleNewlines()
     {
         var html = "<ul><li><p>Item one</p></li><li><p>Item two</p></li></ul>";
-        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var doc = MakeDoc(new MdnSection(null, null, false, html));
         var (text, _) = _converter.Convert(doc);
 
         // Should not have triple+ newlines (NormalizeText collapses them,
@@ -123,7 +124,7 @@ public sealed class MdnContentConverterTests
     public void DefinitionListRendersCorrectly()
     {
         var html = "<dl><dt>Term</dt><dd><p>Definition text</p></dd></dl>";
-        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var doc = MakeDoc(new MdnSection(null, null, false, html));
         var (text, _) = _converter.Convert(doc);
 
         Assert.Contains("**Term**", text);
@@ -134,7 +135,7 @@ public sealed class MdnContentConverterTests
     public void ParagraphInsideDdDoesNotProduceDoubleNewlines()
     {
         var html = "<dl><dt>T1</dt><dd><p>D1</p></dd><dt>T2</dt><dd><p>D2</p></dd></dl>";
-        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var doc = MakeDoc(new MdnSection(null, null, false, html));
         var (text, _) = _converter.Convert(doc);
 
         Assert.DoesNotContain("\n\n\n", text);
@@ -157,7 +158,7 @@ public sealed class MdnContentConverterTests
             </dd>
             </dl>
             """;
-        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var doc = MakeDoc(new MdnSection(null, null, false, html));
         var (text, _) = _converter.Convert(doc);
 
         Assert.Contains("**`foo()`**", text);
@@ -184,7 +185,7 @@ public sealed class MdnContentConverterTests
             <dd><p>Third definition.</p></dd>
             </dl>
             """;
-        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var doc = MakeDoc(new MdnSection(null, null, false, html));
         var (text, _) = _converter.Convert(doc);
 
         Assert.Contains("**Alpha**", text);
@@ -213,7 +214,7 @@ public sealed class MdnContentConverterTests
             <dd><p>Creates a Text node.</p></dd>
             </dl>
             """;
-        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var doc = MakeDoc(new MdnSection(null, null, false, html));
         var (text, _) = _converter.Convert(doc);
 
         // Screen-reader text must not appear in the output
@@ -240,7 +241,7 @@ public sealed class MdnContentConverterTests
             </dd>
             </dl>
             """;
-        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var doc = MakeDoc(new MdnSection(null, null, false, html));
         var (text, _) = _converter.Convert(doc);
 
         // Badge text IS useful (unlike visually-hidden), so it must appear
@@ -260,7 +261,7 @@ public sealed class MdnContentConverterTests
     public void PreCodeBlockRendersAsFencedCode()
     {
         var html = """<pre><code class="language-js">console.log("hi");</code></pre>""";
-        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var doc = MakeDoc(new MdnSection(null, null, false, html));
         var (text, _) = _converter.Convert(doc);
 
         Assert.Contains("```js", text);
@@ -272,7 +273,7 @@ public sealed class MdnContentConverterTests
     public void PreWithoutCodeRendersAsFencedBlock()
     {
         var html = "<pre>plain preformatted</pre>";
-        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var doc = MakeDoc(new MdnSection(null, null, false, html));
         var (text, _) = _converter.Convert(doc);
 
         Assert.Contains("```\nplain preformatted\n```", text);
@@ -284,7 +285,7 @@ public sealed class MdnContentConverterTests
     public void InternalMdnLinkExtractsSlugAndLang()
     {
         var html = """<p><a href="/en-US/docs/Web/API/Fetch_API">Fetch API</a></p>""";
-        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var doc = MakeDoc(new MdnSection(null, null, false, html));
         var (text, links) = _converter.Convert(doc);
 
         Assert.Contains("[Fetch API](mdn/web/api/fetch_api)", text);
@@ -299,7 +300,7 @@ public sealed class MdnContentConverterTests
     public void InternalLinkWithLocalizedPathExtractsCorrectLang()
     {
         var html = """<p><a href="/ru/docs/Web/API/SpeechRecognition">SpeechRecognition</a></p>""";
-        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var doc = MakeDoc(new MdnSection(null, null, false, html));
         var (_, links) = _converter.Convert(doc);
 
         var link = Assert.Single(links, l => l.Kind == "internal");
@@ -310,7 +311,7 @@ public sealed class MdnContentConverterTests
     public void ExternalLinkIsPreserved()
     {
         var html = """<p><a href="https://www.w3.org/TR/jsgf/" class="external">JSGF</a></p>""";
-        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var doc = MakeDoc(new MdnSection(null, null, false, html));
         var (text, links) = _converter.Convert(doc);
 
         Assert.Contains("[JSGF](https://www.w3.org/TR/jsgf/)", text);
@@ -323,7 +324,7 @@ public sealed class MdnContentConverterTests
     public void HashOnlyLinkRendersAsPlainText()
     {
         var html = """<p><a href="#section">Jump</a></p>""";
-        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var doc = MakeDoc(new MdnSection(null, null, false, html));
         var (text, links) = _converter.Convert(doc);
 
         Assert.Contains("Jump", text);
@@ -335,7 +336,7 @@ public sealed class MdnContentConverterTests
     public void LinkWithHashFragmentStripsFragment()
     {
         var html = """<p><a href="/en-US/docs/Web/API/Fetch_API#examples">Fetch examples</a></p>""";
-        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var doc = MakeDoc(new MdnSection(null, null, false, html));
         var (_, links) = _converter.Convert(doc);
 
         var link = Assert.Single(links, l => l.Kind == "internal");
@@ -346,7 +347,7 @@ public sealed class MdnContentConverterTests
     public void RelativeNonDocsUrlResolvesAgainstMdnBase()
     {
         var html = """<p><a href="/media/diagram.png">Diagram</a></p>""";
-        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var doc = MakeDoc(new MdnSection(null, null, false, html));
         var (text, links) = _converter.Convert(doc);
 
         Assert.Contains("[Diagram](https://developer.mozilla.org/media/diagram.png)", text);
@@ -358,7 +359,7 @@ public sealed class MdnContentConverterTests
     public void AnchorWithoutHrefRendersPlainText()
     {
         var html = "<p><a>no href</a></p>";
-        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var doc = MakeDoc(new MdnSection(null, null, false, html));
         var (text, _) = _converter.Convert(doc);
 
         Assert.Contains("no href", text);
@@ -371,7 +372,7 @@ public sealed class MdnContentConverterTests
     public void SimpleTableRendersAsMarkdownTable()
     {
         var html = "<table><thead><tr><th>Header</th></tr></thead><tbody><tr><td>Cell</td></tr></tbody></table>";
-        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var doc = MakeDoc(new MdnSection(null, null, false, html));
         var (text, _) = _converter.Convert(doc);
 
         Assert.Contains("| Header |", text);
@@ -390,7 +391,7 @@ public sealed class MdnContentConverterTests
                 <a href="/en-US/docs/Web/API/Fetch_API">Fetch again</a>
             </p>
             """;
-        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var doc = MakeDoc(new MdnSection(null, null, false, html));
         var (_, links) = _converter.Convert(doc);
 
         Assert.Single(links, l => l.Kind == "internal");
@@ -401,14 +402,14 @@ public sealed class MdnContentConverterTests
     [Fact]
     public void MultipleSectionsProduceCoherentOutput()
     {
-        var sections = new MdnApiSection[]
+        var sections = new MdnSection[]
         {
             new(null, null, false, "<p>Web Speech API enables voice interfaces.</p>"),
             new("concepts", "Concepts", false, "<p>Two components: <a href=\"/en-US/docs/Web/API/SpeechRecognition\"><code>SpeechRecognition</code></a> and synthesis.</p>"),
             new("interfaces", "Interfaces", false, ""),
             new("recognition", "Speech Recognition", true, "<dl><dt><a href=\"/en-US/docs/Web/API/SpeechRecognition\"><code>SpeechRecognition</code></a></dt><dd><p>Controller interface.</p></dd></dl>"),
         };
-        var doc = new MdnApiDoc(
+        var doc = new MdnDocument(
             "Web Speech API",
             "Web/API/Web_Speech_API",
             sections,
@@ -436,9 +437,9 @@ public sealed class MdnContentConverterTests
     public void TripleNewlinesAreCollapsedToDouble()
     {
         var doc = MakeDoc(
-            new MdnApiSection(null, null, false, "<p>Before</p>"),
-            new MdnApiSection("s", "Section", false, ""),
-            new MdnApiSection(null, null, false, "<p>After</p>"));
+            new MdnSection(null, null, false, "<p>Before</p>"),
+            new MdnSection("s", "Section", false, ""),
+            new MdnSection(null, null, false, "<p>After</p>"));
 
         var (text, _) = _converter.Convert(doc);
 
@@ -450,7 +451,7 @@ public sealed class MdnContentConverterTests
     [Fact]
     public void HtmlEntitiesAreDecoded()
     {
-        var doc = MakeDoc(new MdnApiSection(null, null, false, "<p>A &amp; B &lt; C</p>"));
+        var doc = MakeDoc(new MdnSection(null, null, false, "<p>A &amp; B &lt; C</p>"));
         var (text, _) = _converter.Convert(doc);
 
         Assert.Contains("A & B < C", text);
@@ -461,7 +462,7 @@ public sealed class MdnContentConverterTests
     [Fact]
     public void ImageAltTextIsRendered()
     {
-        var doc = MakeDoc(new MdnApiSection(
+        var doc = MakeDoc(new MdnSection(
             null,
             null,
             false,
@@ -491,7 +492,7 @@ public sealed class MdnContentConverterTests
               <pre class="brush: js notranslate"><code>const x = 1;</code></pre>
             </div>
             """;
-        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var doc = MakeDoc(new MdnSection(null, null, false, html));
         var (text, _) = _converter.Convert(doc);
 
         Assert.Contains("```js", text);
@@ -508,7 +509,7 @@ public sealed class MdnContentConverterTests
     {
         // When <code> has no class, the language must come from <pre class="brush: css …">
         var html = """<pre class="brush: css notranslate"><code>body { margin: 0; }</code></pre>""";
-        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var doc = MakeDoc(new MdnSection(null, null, false, html));
         var (text, _) = _converter.Convert(doc);
 
         Assert.Contains("```css", text);
@@ -537,7 +538,7 @@ public sealed class MdnContentConverterTests
               <pre class="brush: js notranslate"><code>const c = 3;</code></pre>
             </div>
             """;
-        var doc = MakeDoc(new MdnApiSection(null, null, false, html));
+        var doc = MakeDoc(new MdnSection(null, null, false, html));
         var (text, _) = _converter.Convert(doc);
 
         // Every block must open with ```js (not js```)

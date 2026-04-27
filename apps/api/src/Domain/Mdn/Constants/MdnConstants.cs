@@ -1,4 +1,4 @@
-namespace Infrastructure.Sources.Mdn;
+namespace Domain.Mdn;
 
 public static class MdnConstants
 {

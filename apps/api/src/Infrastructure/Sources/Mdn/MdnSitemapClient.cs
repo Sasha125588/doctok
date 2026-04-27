@@ -1,5 +1,6 @@
 ﻿using System.IO.Compression;
 using System.Xml;
+using Domain.Mdn;
 
 namespace Infrastructure.Sources.Mdn;
 

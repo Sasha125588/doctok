@@ -3,16 +3,11 @@ using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.PostGeneration.Llm;
 
-/// <summary>
-/// Generates Level-2 posts via LLM and replaces the existing Level-0 posts.
-/// If the LLM is unavailable or returns an unusable response the exception
-/// propagates so the job runner can retry later — Level-0 posts remain intact.
-/// </summary>
 public sealed class LlmPostGenerationService(
     RawDocumentsRepository rawDocsRepo,
     PostsRepository postsRepo,
     LlmPostGenerator llmPostGen,
-    MarkdownHtmlRenderer mdRenderer,
+    MarkdownHtmlRenderer mdnRenderer,
     ILogger<LlmPostGenerationService> logger)
 {
     public async Task EnhanceAsync(
@@ -52,7 +47,7 @@ public sealed class LlmPostGenerationService(
                 Kind:            p.Kind,
                 Title:           p.Title ?? rawDocument.Title,
                 Body:            p.Body,
-                BodyHtml:        mdRenderer.Render(p.Body),
+                BodyHtml:        mdnRenderer.Render(p.Body),
                 Position:        p.Position,
                 GenerationLevel: 2))
             .ToList();

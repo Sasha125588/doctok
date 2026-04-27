@@ -1,4 +1,5 @@
 using Domain.Jobs;
+using Domain.Mdn;
 using Domain.Shared;
 using Domain.Sources;
 using Infrastructure.Persistence.Repositories;
@@ -26,7 +27,7 @@ public sealed class MdnIngestionService(
         logger.LogInformation(
             "Ingesting MDN doc lang={Lang} ref={ExternalRef}", lang, externalRef);
 
-        MdnApiDoc doc = await apiClient.FetchAsync(lang, externalRef, ct);
+        MdnDocument doc = await apiClient.FetchAsync(lang, externalRef, ct);
         var (text, links) = converter.Convert(doc);
 
         var canonicalExternalRef = ExternalRefHelpers.Normalize(doc.Slug);

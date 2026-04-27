@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Domain.Mdn;
 using Domain.Shared;
 using Microsoft.Extensions.Logging;
 
@@ -6,7 +7,7 @@ namespace Infrastructure.Sources.Mdn;
 
 public sealed class MdnApiClient(HttpClient http, ILogger<MdnApiClient> logger)
 {
-  public async Task<MdnApiDoc> FetchAsync(string lang, string slug, CancellationToken ct)
+  public async Task<MdnDocument> FetchAsync(string lang, string slug, CancellationToken ct)
   {
     var mdnLang = LanguageHelpers.ToMdnLang(lang);
     var url = $"{MdnConstants.BaseUrl}/{mdnLang}/docs/{slug}/index.json";
@@ -46,7 +47,7 @@ public sealed class MdnApiClient(HttpClient http, ILogger<MdnApiClient> logger)
       }
     }
 
-    var sections = new List<MdnApiSection>();
+    var sections = new List<MdnSection>();
 
     if (doc.TryGetProperty("body", out var bodyEl) && bodyEl.ValueKind == JsonValueKind.Array)
     {
@@ -66,7 +67,7 @@ public sealed class MdnApiClient(HttpClient http, ILogger<MdnApiClient> logger)
           ? contentEl.GetString() ?? ""
           : "";
 
-        sections.Add(new MdnApiSection(id, sectionTitle, isH3, content));
+        sections.Add(new MdnSection(id, sectionTitle, isH3, content));
       }
     }
 
@@ -82,6 +83,6 @@ public sealed class MdnApiClient(HttpClient http, ILogger<MdnApiClient> logger)
       slugValue,
       sections.Count);
 
-    return new MdnApiDoc(title, slugValue, sections, pageType, popularity, sourceModifiedAt, otherLocales);
+    return new MdnDocument(title, slugValue, sections, pageType, popularity, sourceModifiedAt, otherLocales);
   }
 }

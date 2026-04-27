@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using Domain.Mdn;
 using Domain.Shared;
 using Domain.Sources;
 using HtmlAgilityPack;
@@ -38,7 +39,7 @@ public sealed class MdnContentConverter
         "java", "ruby", "go", "rust", "swift", "kotlin",
     };
 
-    public (string Text, IReadOnlyList<ExtractedLink> Links) Convert(MdnApiDoc doc)
+    public (string Text, IReadOnlyList<ExtractedLink> Links) Convert(MdnDocument doc)
     {
         var links = new List<ExtractedLink>();
         var sb = new StringBuilder();
