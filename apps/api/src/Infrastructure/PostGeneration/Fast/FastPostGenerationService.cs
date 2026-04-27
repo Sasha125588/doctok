@@ -1,5 +1,8 @@
+using System.Text.Json;
 using Domain.Jobs;
+using Domain.Mdn;
 using Infrastructure.Persistence.Repositories;
+using Infrastructure.Sources.Mdn;
 
 namespace Infrastructure.PostGeneration.Fast;
 
@@ -8,6 +11,7 @@ public sealed class FastPostGenerationService(
     PostsRepository postsRepo,
     FastPostGenerator postGen,
     MarkdownHtmlRenderer mdnRenderer,
+    MdnMarkdownConverter mdnMarkdownConverter,
     JobsRepository jobs)
 {
     public async Task GenerateAsync(
@@ -21,7 +25,14 @@ public sealed class FastPostGenerationService(
                   ?? throw new InvalidOperationException(
                       $"Raw document not found: source={sourceCode}, lang={lang}, ref={externalRef}");
 
-        var rawPosts = postGen.Generate(rawDocument.Content);
+        var rawSections = JsonSerializer.Deserialize<IReadOnlyList<MdnSection>>(rawDocument.SectionsJson)
+                          ?? [];
+
+        var markdownSections = rawSections
+            .Select(s => s with { Content = mdnMarkdownConverter.ConvertHtml(s.Content).Markdown })
+            .ToList();
+
+        var rawPosts = postGen.Generate(markdownSections);
 
         var posts = rawPosts
             .Select(p => new PostInsert(

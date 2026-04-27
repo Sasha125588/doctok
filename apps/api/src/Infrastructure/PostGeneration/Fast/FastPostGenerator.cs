@@ -1,13 +1,14 @@
+using System.Globalization;
 using System.Text;
+using Domain.Mdn;
 using Domain.Posts;
 
 namespace Infrastructure.PostGeneration.Fast;
 
 /// <summary>
-/// Level-0 post generator: each H2 section in the markdown becomes one post.
-/// No LLM is involved — this runs instantly and always succeeds.
-/// Posts generated here use <c>GenerationLevel = 0</c> and are later
-/// replaced by Level-2 LLM posts once the LLM job completes.
+/// Generates original posts from MDN sections.
+/// Each H2 section becomes one post; H3 sections attach to the preceding H2.
+/// Skipped sections (browser compat, specifications, see also) are not emitted.
 /// </summary>
 public sealed class FastPostGenerator
 {
@@ -72,29 +73,90 @@ public sealed class FastPostGenerator
         "exemplo",
     ];
 
-    public IReadOnlyList<GeneratedPost> Generate(string markdown)
+    public IReadOnlyList<OriginalPost> Generate(IReadOnlyList<MdnSection> sections)
     {
-        ArgumentNullException.ThrowIfNull(markdown);
+        ArgumentNullException.ThrowIfNull(sections);
 
-        var sections = SplitH2Sections(markdown);
-        var posts    = new List<GeneratedPost>();
-        var pos      = 0;
+        var posts = new List<OriginalPost>();
+        OriginalPostBuilder? current = null;
+        var pos = 0;
 
-        foreach (var (title, body) in sections)
+        for (var i = 0; i < sections.Count; i++)
         {
-            var trimmedBody = body.Trim();
-            if (string.IsNullOrWhiteSpace(trimmedBody)) continue;
-            if (title is not null && ShouldSkip(title)) continue;
+            var section = sections[i];
 
-            var kind = ClassifySection(title, pos);
-            posts.Add(new GeneratedPost(kind, title, trimmedBody, pos++));
+            if (section.IsH3)
+            {
+                if (current is not null)
+                    AppendH3(current, section);
+                continue;
+            }
+
+            FlushCurrent(posts, current, ref pos);
+            current = null;
+
+            if (ShouldSkip(section.SectionTitle))
+                continue;
+
+            current = StartNewPost(section, i, pos);
         }
 
+        FlushCurrent(posts, current, ref pos);
         return posts;
     }
 
-    private static bool ShouldSkip(string title)
+    private static OriginalPostBuilder StartNewPost(MdnSection section, int index, int position)
     {
+        var kind = ClassifySection(section.SectionTitle, position);
+        var key = SourceKeyFor(section, index);
+        var body = new StringBuilder();
+        if (!string.IsNullOrWhiteSpace(section.Content))
+        {
+            body.Append(section.Content.Trim());
+        }
+
+        return new OriginalPostBuilder(key, kind, section.SectionTitle, body);
+    }
+
+    private static void AppendH3(OriginalPostBuilder builder, MdnSection section)
+    {
+        if (builder.Body.Length > 0)
+        {
+            builder.Body.AppendLine();
+            builder.Body.AppendLine();
+        }
+
+        if (!string.IsNullOrWhiteSpace(section.SectionTitle))
+        {
+            builder.Body.Append(CultureInfo.InvariantCulture, $"### {section.SectionTitle}");
+            builder.Body.AppendLine();
+            builder.Body.AppendLine();
+        }
+
+        if (!string.IsNullOrWhiteSpace(section.Content))
+        {
+            builder.Body.Append(section.Content.Trim());
+        }
+    }
+
+    private static void FlushCurrent(List<OriginalPost> posts, OriginalPostBuilder? builder, ref int position)
+    {
+        if (builder is null)
+            return;
+
+        var body = builder.Body.ToString().Trim();
+        if (string.IsNullOrWhiteSpace(body))
+            return;
+
+        posts.Add(new OriginalPost(builder.Key, builder.Kind, builder.Title, body, position));
+        position++;
+    }
+
+    private static bool ShouldSkip(string? title)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+            return false;
+
         if (SkipSections.Contains(title))
             return true;
 
@@ -104,7 +166,9 @@ public sealed class FastPostGenerator
 
     private static PostKind ClassifySection(string? title, int position)
     {
-        if (position == 0 || title is null)
+        _ = position;
+
+        if (string.IsNullOrWhiteSpace(title))
             return PostKind.Summary;
 
         var lower = title.ToLowerInvariant();
@@ -115,43 +179,14 @@ public sealed class FastPostGenerator
         return PostKind.Concept;
     }
 
-    /// <summary>
-    /// Splits markdown by H2 headings (<c>## Title</c>).
-    /// The preamble before the first H2 becomes a section with a null title.
-    /// Each section body includes all content up to (but not including) the next H2,
-    /// so H3 subsections stay together with their parent H2.
-    /// </summary>
-    private static List<(string? Title, string Body)> SplitH2Sections(string markdown)
-    {
-        var result       = new List<(string?, string)>();
-        var currentTitle = (string?)null;
-        var currentBody  = new StringBuilder();
+    private static string SourceKeyFor(MdnSection section, int index)
+        => !string.IsNullOrWhiteSpace(section.Id)
+            ? section.Id.Trim().ToLowerInvariant()
+            : $"section-{index.ToString(CultureInfo.InvariantCulture)}";
 
-        foreach (var line in markdown.Split('\n'))
-        {
-            if (line.StartsWith("## ", StringComparison.Ordinal))
-            {
-                FlushSection(result, currentTitle, currentBody);
-                currentTitle = line[3..].Trim();
-                currentBody.Clear();
-            }
-            else
-            {
-                currentBody.AppendLine(line);
-            }
-        }
-
-        FlushSection(result, currentTitle, currentBody);
-        return result;
-    }
-
-    private static void FlushSection(
-        List<(string?, string)> result,
-        string? title,
-        StringBuilder body)
-    {
-        var text = body.ToString().Trim();
-        if (!string.IsNullOrWhiteSpace(text))
-            result.Add((title, text));
-    }
+    private sealed record OriginalPostBuilder(
+        string Key,
+        PostKind Kind,
+        string? Title,
+        StringBuilder Body);
 }
