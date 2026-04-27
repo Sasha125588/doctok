@@ -35,16 +35,16 @@ public sealed class FastPostGenerationService(
         var rawPosts = postGen.Generate(markdownSections);
 
         var posts = rawPosts
-            .Select(p => new PostInsert(
-                Kind:            p.Kind,
-                Title:           p.Title ?? rawDocument.Title,
-                Body:            p.Body,
-                BodyHtml:        mdnRenderer.Render(p.Body),
-                Position:        p.Position,
-                GenerationLevel: 0))
+            .Select(p => new OriginalPostInsert(
+                SourceSectionKey: p.SourceSectionKey,
+                Kind:             p.Kind,
+                Title:            p.Title ?? rawDocument.Title,
+                Body:             p.Body,
+                BodyHtml:         mdnRenderer.Render(p.Body),
+                Position:         p.Position))
             .ToList();
 
-        await postsRepo.ReplaceForDocument(rawDocument.Id, rawDocument.TopicId, lang, posts, ct);
+        await postsRepo.UpsertOriginalVariantsForDocument(rawDocument.Id, rawDocument.TopicId, lang, posts, ct);
 
         var jobKey = $"{JobTypes.GenerateLlm}:{sourceCode}:{lang}:{externalRef}";
         await jobs.Enqueue(
