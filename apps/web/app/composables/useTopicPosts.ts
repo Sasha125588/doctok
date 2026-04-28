@@ -22,8 +22,18 @@ export function useTopicPosts(options: Ref<Options<TopicsGetPostsData>>) {
     () => Boolean(options.value.query.slug?.trim()) && Boolean(options.value.query.lang?.trim())
   )
 
+  const { variant } = usePostContentVariant()
+
+  const queryOptions = computed(() => ({
+    ...options.value,
+    query: {
+      ...options.value.query,
+      variant: variant.value,
+    } as TopicsGetPostsData['query'] & { variant: string },
+  }))
+
   const query = useQuery(() => ({
-    ...topicsGetPostsOptions(options.value),
+    ...topicsGetPostsOptions(queryOptions.value),
     enabled: canFetch.value,
   }))
 
