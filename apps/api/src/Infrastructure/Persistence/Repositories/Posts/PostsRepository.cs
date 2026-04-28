@@ -31,11 +31,11 @@ public sealed class PostsRepository(IDbConnectionFactory dbf)
         const string upsertPostSql = """
                                      insert into public.posts(
                                        topic_id, raw_document_id, lang, source_section_key, kind,
-                                       title, body, body_html, position, generation_level, is_active
+                                       title, body, body_html, position, is_active
                                      )
                                      values (
                                        @topicId, @rawDocumentId, @lang, @sourceSectionKey, @kind,
-                                       @title, @body, @bodyHtml, @position, 0, true
+                                       @title, @body, @bodyHtml, @position, true
                                      )
                                      on conflict (raw_document_id, lang, source_section_key)
                                        where source_section_key <> ''
@@ -45,7 +45,6 @@ public sealed class PostsRepository(IDbConnectionFactory dbf)
                                        body = excluded.body,
                                        body_html = excluded.body_html,
                                        position = excluded.position,
-                                       generation_level = 0,
                                        is_active = true
                                      returning id
                                      """;
@@ -188,20 +187,6 @@ public sealed class PostsRepository(IDbConnectionFactory dbf)
             sql,
             new { postId, variantCode, title, body, bodyHtml, provider, model, promptVersion },
             cancellationToken: ct));
-    }
-
-    public async Task<int> GetMinGenerationLevel(long rawDocumentId, string lang, CancellationToken ct)
-    {
-        const string sql = """
-                           select coalesce(min(generation_level), -1)
-                           from public.posts
-                           where raw_document_id = @rawDocumentId
-                             and lang = @lang
-                           """;
-
-        using var db = dbf.Create();
-        return await db.ExecuteScalarAsync<int>(
-            new CommandDefinition(sql, new { rawDocumentId, lang }, cancellationToken: ct));
     }
 }
 
