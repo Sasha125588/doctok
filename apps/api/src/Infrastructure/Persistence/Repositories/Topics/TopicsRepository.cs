@@ -106,6 +106,7 @@ public sealed class TopicsRepository(IDbConnectionFactory dbf)
                           join topics t on t.id = p.topic_id
                           where t.slug = @slug
                           and p.lang = @lang
+                          and p.is_active = true
                          )
                          """;
 
