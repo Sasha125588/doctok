@@ -12,7 +12,7 @@ namespace Infrastructure.PostGeneration.Fast;
 /// </summary>
 public sealed class FastPostGenerator
 {
-    private static readonly HashSet<string> SkipSections = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> _skipSections = new(StringComparer.OrdinalIgnoreCase)
     {
         "see also",
         "browser compatibility",
@@ -49,7 +49,7 @@ public sealed class FastPostGenerator
         "especificações",
     };
 
-    private static readonly string[] SkipContains =
+    private static readonly string[] _skipContains =
     [
         "browser compat",
         "совместимость",
@@ -59,7 +59,7 @@ public sealed class FastPostGenerator
         "瀏覽器相容",
     ];
 
-    private static readonly string[] ExampleKeywords =
+    private static readonly string[] _exampleKeywords =
     [
         "example",
         "пример",
@@ -71,6 +71,47 @@ public sealed class FastPostGenerator
         "beispiel",
         "ejemplo",
         "exemplo",
+    ];
+
+    private static readonly string[] _tipKeywords =
+    [
+        "tip",
+        "tips",
+        "note",
+        "notes",
+        "usage notes",
+        "best practice",
+        "best practices",
+        "security considerations",
+        "accessibility considerations",
+        "performance considerations",
+        "совет",
+        "советы",
+        "примечание",
+        "примечания",
+        "заметка",
+        "заметки",
+        "лучшие практики",
+        "注意",
+        "注記",
+        "备注",
+        "注意事项",
+        "참고",
+        "주의",
+        "remarque",
+        "remarques",
+        "conseil",
+        "conseils",
+        "hinweis",
+        "hinweise",
+        "tipp",
+        "tipps",
+        "nota",
+        "notas",
+        "consejo",
+        "consejos",
+        "dica",
+        "dicas",
     ];
 
     public IReadOnlyList<OriginalPost> Generate(IReadOnlyList<MdnSection> sections)
@@ -95,19 +136,19 @@ public sealed class FastPostGenerator
             FlushCurrent(posts, current, ref pos);
             current = null;
 
-            if (ShouldSkip(section.SectionTitle))
+            if (ShouldSkip(section.Title))
                 continue;
 
-            current = StartNewPost(section, i, pos);
+            current = StartNewPost(section, i);
         }
 
         FlushCurrent(posts, current, ref pos);
         return posts;
     }
 
-    private static OriginalPostBuilder StartNewPost(MdnSection section, int index, int position)
+    private static OriginalPostBuilder StartNewPost(MdnSection section, int index)
     {
-        var kind = ClassifySection(section.SectionTitle, position);
+        var kind = ClassifySection(section.Title);
         var key = SourceKeyFor(section, index);
         var body = new StringBuilder();
         if (!string.IsNullOrWhiteSpace(section.Content))
@@ -115,7 +156,7 @@ public sealed class FastPostGenerator
             body.Append(section.Content.Trim());
         }
 
-        return new OriginalPostBuilder(key, kind, section.SectionTitle, body);
+        return new OriginalPostBuilder(key, kind, section.Title, body);
     }
 
     private static void AppendH3(OriginalPostBuilder builder, MdnSection section)
@@ -126,9 +167,9 @@ public sealed class FastPostGenerator
             builder.Body.AppendLine();
         }
 
-        if (!string.IsNullOrWhiteSpace(section.SectionTitle))
+        if (!string.IsNullOrWhiteSpace(section.Title))
         {
-            builder.Body.Append(CultureInfo.InvariantCulture, $"### {section.SectionTitle}");
+            builder.Body.Append(CultureInfo.InvariantCulture, $"### {section.Title}");
             builder.Body.AppendLine();
             builder.Body.AppendLine();
         }
@@ -157,24 +198,25 @@ public sealed class FastPostGenerator
         if (string.IsNullOrWhiteSpace(title))
             return false;
 
-        if (SkipSections.Contains(title))
+        if (_skipSections.Contains(title))
             return true;
 
         var lower = title.ToLowerInvariant();
-        return SkipContains.Any(k => lower.Contains(k, StringComparison.OrdinalIgnoreCase));
+        return _skipContains.Any(k => lower.Contains(k, StringComparison.OrdinalIgnoreCase));
     }
 
-    private static PostKind ClassifySection(string? title, int position)
+    private static PostKind ClassifySection(string? title)
     {
-        _ = position;
-
         if (string.IsNullOrWhiteSpace(title))
             return PostKind.Summary;
 
         var lower = title.ToLowerInvariant();
 
-        if (ExampleKeywords.Any(k => lower.Contains(k, StringComparison.OrdinalIgnoreCase)))
+        if (_exampleKeywords.Any(k => lower.Contains(k, StringComparison.OrdinalIgnoreCase)))
             return PostKind.Example;
+
+        if (_tipKeywords.Any(k => lower.Contains(k, StringComparison.OrdinalIgnoreCase)))
+            return PostKind.Tip;
 
         return PostKind.Concept;
     }

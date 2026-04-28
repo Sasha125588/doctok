@@ -21,8 +21,6 @@
     <EmbeddedResource Include="PostGeneration\Llm\Prompts\rewrite_base.md" />
     <EmbeddedResource Include="PostGeneration\Llm\Prompts\style_ai_simple.md" />
     <EmbeddedResource Include="PostGeneration\Llm\Prompts\style_ai_senior.md" />
-    <EmbeddedResource Include="PostGeneration\Title\Prompts\title_example.md" />
-    <EmbeddedResource Include="PostGeneration\Title\Prompts\title_summary.md" />
   </ItemGroup>
   
 </Project>

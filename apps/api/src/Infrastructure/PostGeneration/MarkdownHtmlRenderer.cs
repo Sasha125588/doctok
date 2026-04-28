@@ -3,10 +3,6 @@ using Markdig;
 
 namespace Infrastructure.PostGeneration;
 
-/// <summary>
-/// Converts a Markdown string to a sanitized HTML fragment safe for v-html.
-/// Thread-safe — pipeline and sanitizer are built once and reused.
-/// </summary>
 public sealed class MarkdownHtmlRenderer
 {
     private readonly MarkdownPipeline _pipeline = new MarkdownPipelineBuilder()

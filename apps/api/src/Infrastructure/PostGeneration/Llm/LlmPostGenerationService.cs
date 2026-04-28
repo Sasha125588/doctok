@@ -40,7 +40,7 @@ public sealed class LlmPostGenerationService(
         {
             foreach (var variantCode in _variantCodes)
             {
-                var rewritten = await llmPostGen.RewriteVariantAsync(
+                var rewritten = await llmPostGen.GenerateAsync(
                     original.Title,
                     original.Body,
                     original.Kind,

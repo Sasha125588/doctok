@@ -9,11 +9,6 @@ using Microsoft.Extensions.Options;
 
 namespace Infrastructure.PostGeneration.Llm;
 
-/// <summary>
-/// Rewrites an existing original post into a styled variant via LLM.
-/// Loads prompts from embedded .md resources: a shared base template plus
-/// a per-variant style file.
-/// </summary>
 public sealed class LlmPostGenerator(
     ILlmRouter llmRouter,
     IOptions<LlmProfilesOptions> opts,
@@ -32,7 +27,7 @@ public sealed class LlmPostGenerator(
         PropertyNameCaseInsensitive = true,
     };
 
-    public async Task<RewrittenPost?> RewriteVariantAsync(
+    public async Task<RewrittenPost?> GenerateAsync(
         string? originalTitle,
         string originalBody,
         string kind,

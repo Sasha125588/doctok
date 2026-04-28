@@ -340,6 +340,31 @@ public sealed class MdnContentConverterTests
     }
 
     [Fact]
+    public void AbsoluteMdnDocsUrlIsInternalLink()
+    {
+        var html = """<p><a href="https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API">Fetch API</a></p>""";
+        var doc = MakeDoc(new MdnSection(null, null, false, html));
+        var (text, links) = _converter.Convert(doc);
+
+        Assert.Contains("[Fetch API](mdn/web/api/fetch_api)", text);
+
+        var link = Assert.Single(links, l => l.Kind == "internal");
+        Assert.Equal("en", link.TargetLang);
+        Assert.Equal("Web/API/Fetch_API", link.TargetExternalRef);
+    }
+
+    [Fact]
+    public void DocsUrlWithoutTopicIsIgnored()
+    {
+        var html = """<p><a href="/en-US/docs/">Docs root</a></p>""";
+        var doc = MakeDoc(new MdnSection(null, null, false, html));
+        var (text, links) = _converter.Convert(doc);
+
+        Assert.Contains("Docs root", text);
+        Assert.Empty(links);
+    }
+
+    [Fact]
     public void AnchorWithoutHrefRendersPlainText()
     {
         var html = "<p><a>no href</a></p>";

@@ -22,7 +22,10 @@ public sealed class MdnMarkdownConverter
         if (string.IsNullOrWhiteSpace(html))
             return (string.Empty, []);
 
-        var doc = new HtmlDocument();
+        var doc = new HtmlDocument
+        {
+            OptionEmptyCollection = true
+        };
         doc.LoadHtml(html);
 
         RemoveNodes(doc, "//*[contains(concat(' ', normalize-space(@class), ' '), ' example-header ')]");
@@ -36,7 +39,7 @@ public sealed class MdnMarkdownConverter
 
     private static void RemoveNodes(HtmlDocument doc, string xpath)
     {
-        foreach (var node in doc.DocumentNode.SelectNodes(xpath) ?? Enumerable.Empty<HtmlNode>())
+        foreach (var node in doc.DocumentNode.SelectNodes(xpath))
             node.Remove();
     }
 
@@ -44,7 +47,7 @@ public sealed class MdnMarkdownConverter
     {
         var result = new List<ExtractedLink>();
 
-        foreach (var anchor in doc.DocumentNode.SelectNodes("//a[@href]") ?? Enumerable.Empty<HtmlNode>())
+        foreach (var anchor in doc.DocumentNode.SelectNodes("//a[@href]"))
         {
             var href = anchor.GetAttributeValue("href", "");
             var label = WebUtility.HtmlDecode(anchor.InnerText).Trim();
@@ -76,27 +79,28 @@ public sealed class MdnMarkdownConverter
     private static ParsedUrl? ParseUrl(string href)
     {
         var url = href.Trim();
-        var hash = url.IndexOf('#');
-        if (hash >= 0)
-            url = url[..hash];
+        var hashIdx = url.IndexOf('#'); // en-US/docs/Web/API/Fetch_API#examples
+        if (hashIdx >= 0)
+            url = url[..hashIdx];
+
         if (string.IsNullOrWhiteSpace(url))
             return null;
 
         if (url.StartsWith(MdnConstants.BaseUrl, StringComparison.OrdinalIgnoreCase))
             url = new Uri(url).AbsolutePath;
 
-        var docsIdx = url.IndexOf("/docs/", StringComparison.OrdinalIgnoreCase);
-        if (docsIdx >= 0)
+        var parts = url.Split("/docs/", 2);
+        if (parts.Length == 2)
         {
-            var prefix = url[..docsIdx];
-            var parts = prefix.Split('/', StringSplitOptions.RemoveEmptyEntries);
-            var langRaw = parts.LastOrDefault() ?? "en-US";
+            var langRaw = parts[0]
+                .Split('/', StringSplitOptions.RemoveEmptyEntries)
+                .LastOrDefault();
             var lang = LanguageHelpers.NormalizeLang(langRaw);
-            var externalRef = url[(docsIdx + "/docs/".Length)..].Trim('/');
+            var topicRef = parts[1].Trim('/');
 
-            return string.IsNullOrWhiteSpace(externalRef)
+            return string.IsNullOrWhiteSpace(topicRef)
                 ? null
-                : new ParsedUrl(true, lang, externalRef, null);
+                : new ParsedUrl(true, lang, topicRef, null);
         }
 
         if (url.StartsWith('/'))
@@ -105,8 +109,8 @@ public sealed class MdnMarkdownConverter
             return new ParsedUrl(false, null, null, absolute);
         }
 
-        return Uri.TryCreate(href, UriKind.Absolute, out _)
-            ? new ParsedUrl(false, null, null, href)
+        return Uri.TryCreate(url, UriKind.Absolute, out _)
+            ? new ParsedUrl(false, null, null, url)
             : null;
     }
 }

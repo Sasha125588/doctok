@@ -5,10 +5,6 @@ using Domain.Mdn;
 
 namespace Infrastructure.Sources.Mdn;
 
-/// <summary>
-/// Extracted link from an MDN article.
-/// Kind: "internal" — link to another MDN doc; "external" — link to an outside URL.
-/// </summary>
 public sealed record ExtractedLink(
     string Kind,
     string? TargetLang,
@@ -18,7 +14,7 @@ public sealed record ExtractedLink(
 
 public sealed class MdnContentConverter(MdnMarkdownConverter markdownConverter)
 {
-    private static readonly Regex MultipleNewlines = new(@"\n{3,}", RegexOptions.Compiled);
+    private static readonly Regex _multipleNewlines = new(@"\n{3,}", RegexOptions.Compiled);
 
     public (string Text, IReadOnlyList<ExtractedLink> Links) Convert(MdnDocument doc)
     {
@@ -27,10 +23,10 @@ public sealed class MdnContentConverter(MdnMarkdownConverter markdownConverter)
 
         foreach (var section in doc.Sections)
         {
-            if (!string.IsNullOrWhiteSpace(section.SectionTitle))
+            if (!string.IsNullOrWhiteSpace(section.Title))
             {
                 var heading = section.IsH3 ? "###" : "##";
-                sb.AppendLine(CultureInfo.InvariantCulture, $"{heading} {section.SectionTitle}");
+                sb.AppendLine(CultureInfo.InvariantCulture, $"{heading} {section.Title}");
                 sb.AppendLine();
             }
 
@@ -44,7 +40,7 @@ public sealed class MdnContentConverter(MdnMarkdownConverter markdownConverter)
             }
         }
 
-        var text = MultipleNewlines.Replace(sb.ToString(), "\n\n").Trim();
+        var text = _multipleNewlines.Replace(sb.ToString(), "\n\n").Trim();
 
         var distinct = links
             .DistinctBy(l => (l.Kind, l.TargetLang, l.TargetExternalRef, l.Url))
