@@ -16,14 +16,9 @@ public sealed class Handler(FeedRepository feedRepo) : IHandler
 
         var page = await feedRepo.GetPage(cursor, query.UserId, lang, variant, take + 1, ct);
 
-        var hasNextPage = page.Count > take;
-        var items = hasNextPage ? page.Take(take).ToList() : page;
+        var pageResult = CursorPage.From(page, take, ToCursor);
 
-        var nextCursor = hasNextPage
-          ? CursorCodec.Encode(ToCursor(items[^1]))
-          : null;
-
-        return new FeedResponse(items, nextCursor);
+        return new FeedResponse(pageResult.Items, pageResult.NextCursor);
     }
 
     private static string NormalizeVariant(string? variant)

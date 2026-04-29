@@ -18,14 +18,9 @@ public sealed class Handler(SavedPostsRepository savedPostsRepository) : IHandle
       take + 1,
       ct);
 
-    var hasNextPage = page.Count > take;
-    var items = hasNextPage ? page.Take(take).ToList() : page;
+    var pageResult = CursorPage.From(page, take, ToCursor);
 
-    var nextCursor = hasNextPage
-      ? CursorCodec.Encode(ToCursor(items[^1]))
-      : null;
-
-    return new SavedPostsResponse(items, nextCursor);
+    return new SavedPostsResponse(pageResult.Items, pageResult.NextCursor);
   }
 
   private static SavedPostsCursor ToCursor(SavedPostView item)

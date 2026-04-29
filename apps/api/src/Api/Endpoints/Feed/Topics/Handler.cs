@@ -15,14 +15,9 @@ public sealed class Handler(TopicFeedRepository topicFeedRepo) : IHandler
 
     var page = await topicFeedRepo.GetPage(cursor, lang, take + 1, ct);
 
-    var hasNextPage = page.Count > take;
-    var items = hasNextPage ? page.Take(take).ToList() : page;
+    var pageResult = CursorPage.From(page, take, ToCursor);
 
-    var nextCursor = hasNextPage
-      ? CursorCodec.Encode(ToCursor(items[^1]))
-      : null;
-
-    return new TopicFeedResponse(items, nextCursor);
+    return new TopicFeedResponse(pageResult.Items, pageResult.NextCursor);
   }
 
   private static FeedCursor ToCursor(TopicFeedPageView item)

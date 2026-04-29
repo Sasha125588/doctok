@@ -18,13 +18,9 @@ public sealed class Endpoint : IEndpoint
         var take = Math.Clamp(query.Limit ?? 20, 1, 50);
         var cursor = CursorCodec.Decode<CommentsCursor>(query.Cursor);
         var page = await commentsRepo.ListReplies(commentId, cursor, take + 1, ct);
-        var hasNextPage = page.Count > take;
-        var items = hasNextPage ? page.Take(take).ToList() : page;
-        var nextCursor = hasNextPage
-          ? CursorCodec.Encode(ToCursor(items[^1]))
-          : null;
+        var pageResult = CursorPage.From(page, take, ToCursor);
 
-        return Results.Ok(new CommentsResponse(items, nextCursor));
+        return Results.Ok(new CommentsResponse(pageResult.Items, pageResult.NextCursor));
       })
       .WithTags("Comments")
       .WithSummary("Returns replies for a comment")
