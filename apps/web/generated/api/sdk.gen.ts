@@ -33,6 +33,9 @@ import {
   vPostsCommentsListPath,
   vPostsCommentsListQuery,
   vPostsCommentsListResponse,
+  vPostsGetContentPath,
+  vPostsGetContentQuery,
+  vPostsGetContentResponse,
   vPostsReactionsToggleBody,
   vPostsReactionsTogglePath,
   vPostsReactionsToggleResponse,
@@ -84,6 +87,9 @@ import type {
   PostsCommentsListData,
   PostsCommentsListErrors,
   PostsCommentsListResponses,
+  PostsGetContentData,
+  PostsGetContentErrors,
+  PostsGetContentResponses,
   PostsReactionsToggleData,
   PostsReactionsToggleErrors,
   PostsReactionsToggleResponses,
@@ -288,6 +294,27 @@ export const postsReactionsToggle = <ThrowOnError extends boolean = false>(
   })
 
 /**
+ * Returns content for a post variant
+ */
+export const postsGetContent = <ThrowOnError extends boolean = false>(
+  options: Options<PostsGetContentData, ThrowOnError>
+) =>
+  (options.client ?? client).get<PostsGetContentResponses, PostsGetContentErrors, ThrowOnError>({
+    requestValidator: async (data) =>
+      await v.parseAsync(
+        v.object({
+          body: v.optional(v.never()),
+          path: vPostsGetContentPath,
+          query: v.optional(vPostsGetContentQuery),
+        }),
+        data
+      ),
+    responseValidator: async (data) => await v.parseAsync(vPostsGetContentResponse, data),
+    url: '/api/posts/{postId}/content',
+    ...options,
+  })
+
+/**
  * Returns paginated saved posts for the current user
  *
  * Returns the current user's saved posts ordered by save time descending.
@@ -414,7 +441,7 @@ export const feedTopicsList = <ThrowOnError extends boolean = false>(
   })
 
 /**
- * Returns replies for a root comment
+ * Returns replies for a comment
  */
 export const commentsRepliesList = <ThrowOnError extends boolean = false>(
   options: Options<CommentsRepliesListData, ThrowOnError>
@@ -439,7 +466,7 @@ export const commentsRepliesList = <ThrowOnError extends boolean = false>(
   })
 
 /**
- * Adds a reply to a root comment
+ * Adds a reply to a comment
  */
 export const commentsRepliesCreate = <ThrowOnError extends boolean = false>(
   options: Options<CommentsRepliesCreateData, ThrowOnError>

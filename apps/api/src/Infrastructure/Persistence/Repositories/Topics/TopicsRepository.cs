@@ -7,11 +7,10 @@ namespace Infrastructure.Persistence.Repositories;
 
 public sealed class TopicsRepository(IDbConnectionFactory dbf)
 {
-  public async Task<IReadOnlyList<TopicPostView>> GetPosts(
+  public async Task<IReadOnlyList<TopicPostMetaView>> GetPosts(
     TopicPostsCursor? cursor,
     string slug,
     string lang,
-    string variant,
     Guid? userId,
     int limit,
     CancellationToken ct)
@@ -20,10 +19,7 @@ public sealed class TopicsRepository(IDbConnectionFactory dbf)
                          select
                            p.id,
                            p.kind,
-                           coalesce(requested_variant.variant_code, original_variant.variant_code) as variant_code,
-                           coalesce(requested_variant.title, original_variant.title, p.title) as title,
-                           coalesce(requested_variant.body, original_variant.body, p.body) as body,
-                           coalesce(requested_variant.body_html, original_variant.body_html, p.body_html) as body_html,
+                           coalesce(p.title, '') as title,
                            p.position,
                            p.like_count,
                            p.dislike_count,
@@ -37,12 +33,6 @@ public sealed class TopicsRepository(IDbConnectionFactory dbf)
                          from topics t
                          join posts p on p.topic_id = t.id
                          join raw_documents rd on rd.id = p.raw_document_id
-                         left join post_content_variants requested_variant
-                           on requested_variant.post_id = p.id
-                          and requested_variant.variant_code = @variant
-                         left join post_content_variants original_variant
-                           on original_variant.post_id = p.id
-                          and original_variant.variant_code = 'original'
                          left join saved_posts sp
                            on sp.post_id = p.id
                            and sp.user_id = @userId
@@ -88,12 +78,11 @@ public sealed class TopicsRepository(IDbConnectionFactory dbf)
       cursorId = cursor?.Id,
       slug,
       lang,
-      variant,
       userId,
       limit,
     };
 
-    return (await db.QueryAsync<TopicPostView>(
+    return (await db.QueryAsync<TopicPostMetaView>(
       new CommandDefinition(query, parameters, cancellationToken: ct))).ToList();
   }
 

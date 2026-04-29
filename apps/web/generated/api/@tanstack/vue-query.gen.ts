@@ -22,6 +22,7 @@ import {
   type Options,
   postsCommentsCreate,
   postsCommentsList,
+  postsGetContent,
   postsReactionsToggle,
   resolveMdn,
   sessionMeGet,
@@ -67,6 +68,9 @@ import type {
   PostsCommentsListData,
   PostsCommentsListError,
   PostsCommentsListResponse,
+  PostsGetContentData,
+  PostsGetContentError,
+  PostsGetContentResponse,
   PostsReactionsToggleData,
   PostsReactionsToggleError,
   PostsReactionsToggleResponse,
@@ -382,6 +386,31 @@ export const postsReactionsToggleMutation = (
   return mutationOptions
 }
 
+export const postsGetContentQueryKey = (options: Options<PostsGetContentData>) =>
+  createQueryKey('postsGetContent', options)
+
+/**
+ * Returns content for a post variant
+ */
+export const postsGetContentOptions = (options: Options<PostsGetContentData>) =>
+  queryOptions<
+    PostsGetContentResponse,
+    PostsGetContentError,
+    PostsGetContentResponse,
+    ReturnType<typeof postsGetContentQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await postsGetContent({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      })
+      return data
+    },
+    queryKey: postsGetContentQueryKey(options),
+  })
+
 export const meSavedPostsListQueryKey = (options?: Options<MeSavedPostsListData>) =>
   createQueryKey('meSavedPostsList', options)
 
@@ -652,7 +681,7 @@ export const commentsRepliesListQueryKey = (options: Options<CommentsRepliesList
   createQueryKey('commentsRepliesList', options)
 
 /**
- * Returns replies for a root comment
+ * Returns replies for a comment
  */
 export const commentsRepliesListOptions = (options: Options<CommentsRepliesListData>) =>
   queryOptions<
@@ -673,8 +702,53 @@ export const commentsRepliesListOptions = (options: Options<CommentsRepliesListD
     queryKey: commentsRepliesListQueryKey(options),
   })
 
+export const commentsRepliesListInfiniteQueryKey = (
+  options: Options<CommentsRepliesListData>
+): QueryKey<Options<CommentsRepliesListData>> =>
+  createQueryKey('commentsRepliesList', options, true)
+
 /**
- * Adds a reply to a root comment
+ * Returns replies for a comment
+ */
+export const commentsRepliesListInfiniteOptions = (options: Options<CommentsRepliesListData>) =>
+  infiniteQueryOptions<
+    CommentsRepliesListResponse,
+    CommentsRepliesListError,
+    InfiniteData<CommentsRepliesListResponse>,
+    QueryKey<Options<CommentsRepliesListData>>,
+    | string
+    | Pick<QueryKey<Options<CommentsRepliesListData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<CommentsRepliesListData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  cursor: pageParam,
+                },
+              }
+        const params = createInfiniteParams(queryKey, page)
+        const { data } = await commentsRepliesList({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        })
+        return data
+      },
+      queryKey: commentsRepliesListInfiniteQueryKey(options),
+    }
+  )
+
+/**
+ * Adds a reply to a comment
  */
 export const commentsRepliesCreateMutation = (
   options?: Partial<Options<CommentsRepliesCreateData>>
@@ -753,6 +827,50 @@ export const postsCommentsListOptions = (options: Options<PostsCommentsListData>
     },
     queryKey: postsCommentsListQueryKey(options),
   })
+
+export const postsCommentsListInfiniteQueryKey = (
+  options: Options<PostsCommentsListData>
+): QueryKey<Options<PostsCommentsListData>> => createQueryKey('postsCommentsList', options, true)
+
+/**
+ * Returns root comments for a post
+ */
+export const postsCommentsListInfiniteOptions = (options: Options<PostsCommentsListData>) =>
+  infiniteQueryOptions<
+    PostsCommentsListResponse,
+    PostsCommentsListError,
+    InfiniteData<PostsCommentsListResponse>,
+    QueryKey<Options<PostsCommentsListData>>,
+    | string
+    | Pick<QueryKey<Options<PostsCommentsListData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<PostsCommentsListData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  cursor: pageParam,
+                },
+              }
+        const params = createInfiniteParams(queryKey, page)
+        const { data } = await postsCommentsList({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        })
+        return data
+      },
+      queryKey: postsCommentsListInfiniteQueryKey(options),
+    }
+  )
 
 /**
  * Adds a comment to a post

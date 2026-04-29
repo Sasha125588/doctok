@@ -153,6 +153,34 @@ public sealed class PostsRepository(IDbConnectionFactory dbf)
             new CommandDefinition(sql, new { rawDocumentId, lang }, cancellationToken: ct))).ToList();
     }
 
+    public async Task<PostContentView?> GetContent(
+        long postId,
+        string variantCode,
+        CancellationToken ct)
+    {
+        const string sql = """
+                           select
+                             p.id as post_id,
+                             coalesce(requested_variant.variant_code, original_variant.variant_code, 'original') as variant_code,
+                             coalesce(requested_variant.title, original_variant.title, p.title, '') as title,
+                             coalesce(requested_variant.body, original_variant.body, p.body) as body,
+                             coalesce(requested_variant.body_html, original_variant.body_html, p.body_html) as body_html
+                           from public.posts p
+                           left join public.post_content_variants requested_variant
+                             on requested_variant.post_id = p.id
+                            and requested_variant.variant_code = @variantCode
+                           left join public.post_content_variants original_variant
+                             on original_variant.post_id = p.id
+                            and original_variant.variant_code = 'original'
+                           where p.id = @postId
+                             and p.is_active = true
+                           """;
+
+        using var db = dbf.Create();
+        return await db.QuerySingleOrDefaultAsync<PostContentView>(
+            new CommandDefinition(sql, new { postId, variantCode }, cancellationToken: ct));
+    }
+
     public async Task UpsertContentVariant(
         long postId,
         string variantCode,
