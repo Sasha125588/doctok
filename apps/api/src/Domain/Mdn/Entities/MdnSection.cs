@@ -2,6 +2,6 @@
 
 public sealed record MdnSection(
   string? Id,
-  string? SectionTitle,
+  string? Title,
   bool IsH3,
   string Content);

@@ -14,7 +14,7 @@ export function useComments(postId: Ref<number>, topicSlug: Ref<string>) {
 
   const listOptions = computed(() => ({
     ...postsCommentsListOptions({
-      path: { postId: postId.value ?? 0 },
+      path: { postId: postId.value },
     }),
   }))
 
@@ -60,7 +60,7 @@ export function useComments(postId: Ref<number>, topicSlug: Ref<string>) {
   }
 
   return {
-    comments: computed(() => query.data.value ?? []),
+    comments: computed(() => query.data.value?.items ?? []),
     isLoading: query.isLoading,
     isSending: createMutation.isPending,
     send,

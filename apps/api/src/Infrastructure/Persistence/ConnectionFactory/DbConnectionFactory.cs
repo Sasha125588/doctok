@@ -1,9 +1,9 @@
-using System.Data;
+using System.Data.Common;
 using Npgsql;
 
 namespace Infrastructure.Persistence.ConnectionFactory;
 
 public sealed class DbConnectionFactory(NpgsqlDataSource dataSource): IDbConnectionFactory
 {
-    public IDbConnection Create() => dataSource.CreateConnection();
+    public DbConnection Create() => dataSource.CreateConnection();
 }

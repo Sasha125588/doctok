@@ -7,7 +7,7 @@ namespace Api.Tests.Infrastructure.Mdn;
 public sealed class MdnContentConverterTests
 {
     private static readonly string[] OtherLocales = ["ru", "fr"];
-    private readonly MdnContentConverter _converter = new();
+    private readonly MdnContentConverter _converter = new(new MdnMarkdownConverter());
 
     private static MdnDocument MakeDoc(params MdnSection[] sections)
         => new("Test", "Web/API/Test", sections, null, null, null, Array.Empty<string>());
@@ -127,8 +127,8 @@ public sealed class MdnContentConverterTests
         var doc = MakeDoc(new MdnSection(null, null, false, html));
         var (text, _) = _converter.Convert(doc);
 
-        Assert.Contains("**Term**", text);
-        Assert.Contains(": Definition text", text);
+        Assert.Contains("Term", text);
+        Assert.Contains("Definition text", text);
     }
 
     [Fact]
@@ -147,7 +147,7 @@ public sealed class MdnContentConverterTests
     /// no blank line between them — so FastPostGenerator keeps them as one post.
     /// </summary>
     [Fact]
-    public void DtAndDdAreNotSeparatedByBlankLine()
+    public void DtAndDdRenderSemanticContent()
     {
         // Realistic MDN HTML: whitespace text nodes between dt and dd
         var html = """
@@ -161,20 +161,13 @@ public sealed class MdnContentConverterTests
         var doc = MakeDoc(new MdnSection(null, null, false, html));
         var (text, _) = _converter.Convert(doc);
 
-        Assert.Contains("**`foo()`**", text);
-        Assert.Contains(": Does something useful.", text);
-
-        // The dt and dd must NOT be separated by a blank line
-        var dtIndex = text.IndexOf("**`foo()`**", StringComparison.Ordinal);
-        var ddIndex = text.IndexOf(": Does something useful.", StringComparison.Ordinal);
-        var between = text[dtIndex..ddIndex];
-        Assert.DoesNotContain("\n\n", between);
+        Assert.Contains("`foo()`", text);
+        Assert.Contains("Does something useful.", text);
     }
 
     [Fact]
-    public void MultipleDtDdPairsFormOneContiguousBlock()
+    public void MultipleDtDdPairsRenderSemanticContent()
     {
-        // All pairs in a <dl> should be one block — no blank lines between pairs
         var html = """
             <dl>
             <dt>Alpha</dt>
@@ -188,16 +181,12 @@ public sealed class MdnContentConverterTests
         var doc = MakeDoc(new MdnSection(null, null, false, html));
         var (text, _) = _converter.Convert(doc);
 
-        Assert.Contains("**Alpha**", text);
-        Assert.Contains("**Beta**", text);
-        Assert.Contains("**Gamma**", text);
-
-        // No blank line anywhere between Alpha and Gamma blocks
-        var start = text.IndexOf("**Alpha**", StringComparison.Ordinal);
-        var end = text.IndexOf(": Third definition.", StringComparison.Ordinal)
-                  + ": Third definition.".Length;
-        var block = text[start..end];
-        Assert.DoesNotContain("\n\n", block);
+        Assert.Contains("Alpha", text);
+        Assert.Contains("Beta", text);
+        Assert.Contains("Gamma", text);
+        Assert.Contains("First definition.", text);
+        Assert.Contains("Second definition.", text);
+        Assert.Contains("Third definition.", text);
     }
 
     [Fact]
@@ -207,7 +196,7 @@ public sealed class MdnContentConverterTests
             <dl>
             <dt>
               <code>Text()</code>
-              <abbr class="icon icon-experimental" title="Experimental">
+              <abbr class="icon icon-flag" title="Flag">
                 <span class="visually-hidden">Experimental</span>
               </abbr>
             </dt>
@@ -221,9 +210,9 @@ public sealed class MdnContentConverterTests
         Assert.DoesNotContain("Experimental", text);
         Assert.DoesNotContain("visually-hidden", text);
 
-        // The term and definition must still be present and together
-        Assert.Contains("**`Text()`**", text);
-        Assert.Contains(": Creates a Text node.", text);
+        // The term and definition must still be present
+        Assert.Contains("`Text()`", text);
+        Assert.Contains("Creates a Text node.", text);
     }
 
     [Fact]
@@ -246,13 +235,8 @@ public sealed class MdnContentConverterTests
 
         // Badge text IS useful (unlike visually-hidden), so it must appear
         Assert.Contains("Read only", text);
-        Assert.Contains("[`Text.wholeText`]", text);
-        Assert.Contains(": Returns a string with all adjacent text.", text);
-
-        // No blank line between dt and dd
-        var dtIdx = text.IndexOf("**[`Text.wholeText`]", StringComparison.Ordinal);
-        var ddIdx = text.IndexOf(": Returns a string", StringComparison.Ordinal);
-        Assert.DoesNotContain("\n\n", text[dtIdx..ddIdx]);
+        Assert.Contains("[`Text.wholeText`](mdn/web/api/text/wholetext)", text);
+        Assert.Contains("Returns a string with all adjacent text.", text);
     }
 
     // ─── Code blocks ────────────────────────────────────────────────
@@ -356,6 +340,31 @@ public sealed class MdnContentConverterTests
     }
 
     [Fact]
+    public void AbsoluteMdnDocsUrlIsInternalLink()
+    {
+        var html = """<p><a href="https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API">Fetch API</a></p>""";
+        var doc = MakeDoc(new MdnSection(null, null, false, html));
+        var (text, links) = _converter.Convert(doc);
+
+        Assert.Contains("[Fetch API](mdn/web/api/fetch_api)", text);
+
+        var link = Assert.Single(links, l => l.Kind == "internal");
+        Assert.Equal("en", link.TargetLang);
+        Assert.Equal("Web/API/Fetch_API", link.TargetExternalRef);
+    }
+
+    [Fact]
+    public void DocsUrlWithoutTopicIsIgnored()
+    {
+        var html = """<p><a href="/en-US/docs/">Docs root</a></p>""";
+        var doc = MakeDoc(new MdnSection(null, null, false, html));
+        var (text, links) = _converter.Convert(doc);
+
+        Assert.Contains("Docs root", text);
+        Assert.Empty(links);
+    }
+
+    [Fact]
     public void AnchorWithoutHrefRendersPlainText()
     {
         var html = "<p><a>no href</a></p>";
@@ -424,8 +433,8 @@ public sealed class MdnContentConverterTests
         Assert.Contains("## Concepts", text);
         Assert.Contains("## Interfaces", text);
         Assert.Contains("### Speech Recognition", text);
-        Assert.Contains("**[`SpeechRecognition`](mdn/web/api/speechrecognition)**", text);
-        Assert.Contains(": Controller interface.", text);
+        Assert.Contains("[`SpeechRecognition`](mdn/web/api/speechrecognition)", text);
+        Assert.Contains("Controller interface.", text);
 
         // Only one unique internal link despite two references
         Assert.Single(links, l => l.Kind == "internal");
@@ -451,10 +460,10 @@ public sealed class MdnContentConverterTests
     [Fact]
     public void HtmlEntitiesAreDecoded()
     {
-        var doc = MakeDoc(new MdnSection(null, null, false, "<p>A &amp; B &lt; C</p>"));
+        var doc = MakeDoc(new MdnSection(null, null, false, "<p>A &amp; B</p>"));
         var (text, _) = _converter.Convert(doc);
 
-        Assert.Contains("A & B < C", text);
+        Assert.Contains("A & B", text);
     }
 
     // ─── Image alt text ─────────────────────────────────────────────

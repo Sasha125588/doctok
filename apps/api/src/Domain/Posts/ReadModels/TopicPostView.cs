@@ -1,10 +1,11 @@
-﻿using Domain.Reactions;
+using Domain.Reactions;
 
 namespace Domain.Posts;
 
 public sealed record TopicPostView(
   long Id,
   string Kind,
+  string VariantCode,
   string Title,
   string Body,
   string BodyHtml,

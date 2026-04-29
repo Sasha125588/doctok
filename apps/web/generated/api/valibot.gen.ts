@@ -2,120 +2,6 @@
 
 import * as v from 'valibot'
 
-export const vComment = v.object({
-  id: v.optional(
-    v.union([
-      v.pipe(
-        v.union([v.number(), v.string(), v.bigint()]),
-        v.transform((x) => BigInt(x)),
-        v.minValue(
-          BigInt('-9223372036854775808'),
-          'Invalid value: Expected int64 to be >= -9223372036854775808'
-        ),
-        v.maxValue(
-          BigInt('9223372036854775807'),
-          'Invalid value: Expected int64 to be <= 9223372036854775807'
-        )
-      ),
-      v.pipe(
-        v.union([v.number(), v.string(), v.bigint()]),
-        v.transform((x) => BigInt(x)),
-        v.minValue(
-          BigInt('-9223372036854775808'),
-          'Invalid value: Expected int64 to be >= -9223372036854775808'
-        ),
-        v.maxValue(
-          BigInt('9223372036854775807'),
-          'Invalid value: Expected int64 to be <= 9223372036854775807'
-        )
-      ),
-    ])
-  ),
-  postId: v.optional(
-    v.union([
-      v.pipe(
-        v.union([v.number(), v.string(), v.bigint()]),
-        v.transform((x) => BigInt(x)),
-        v.minValue(
-          BigInt('-9223372036854775808'),
-          'Invalid value: Expected int64 to be >= -9223372036854775808'
-        ),
-        v.maxValue(
-          BigInt('9223372036854775807'),
-          'Invalid value: Expected int64 to be <= 9223372036854775807'
-        )
-      ),
-      v.pipe(
-        v.union([v.number(), v.string(), v.bigint()]),
-        v.transform((x) => BigInt(x)),
-        v.minValue(
-          BigInt('-9223372036854775808'),
-          'Invalid value: Expected int64 to be >= -9223372036854775808'
-        ),
-        v.maxValue(
-          BigInt('9223372036854775807'),
-          'Invalid value: Expected int64 to be <= 9223372036854775807'
-        )
-      ),
-    ])
-  ),
-  userId: v.optional(v.pipe(v.string(), v.uuid())),
-  parentCommentId: v.nullish(
-    v.union([
-      v.pipe(
-        v.union([v.number(), v.string(), v.bigint()]),
-        v.transform((x) => BigInt(x)),
-        v.minValue(
-          BigInt('-9223372036854775808'),
-          'Invalid value: Expected int64 to be >= -9223372036854775808'
-        ),
-        v.maxValue(
-          BigInt('9223372036854775807'),
-          'Invalid value: Expected int64 to be <= 9223372036854775807'
-        )
-      ),
-      v.pipe(
-        v.union([v.number(), v.string(), v.bigint()]),
-        v.transform((x) => BigInt(x)),
-        v.minValue(
-          BigInt('-9223372036854775808'),
-          'Invalid value: Expected int64 to be >= -9223372036854775808'
-        ),
-        v.maxValue(
-          BigInt('9223372036854775807'),
-          'Invalid value: Expected int64 to be <= 9223372036854775807'
-        )
-      ),
-    ])
-  ),
-  body: v.optional(v.string()),
-  createdAt: v.optional(v.pipe(v.string(), v.isoTimestamp())),
-  updatedAt: v.optional(v.pipe(v.string(), v.isoTimestamp())),
-  deletedAt: v.nullish(v.pipe(v.string(), v.isoTimestamp())),
-  likeCount: v.optional(
-    v.union([
-      v.pipe(
-        v.number(),
-        v.integer(),
-        v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'),
-        v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')
-      ),
-      v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
-    ])
-  ),
-  dislikeCount: v.optional(
-    v.union([
-      v.pipe(
-        v.number(),
-        v.integer(),
-        v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'),
-        v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')
-      ),
-      v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
-    ])
-  ),
-})
-
 export const vCreateCommentRequest = v.object({
   body: v.pipe(v.string(), v.minLength(1), v.maxLength(2000)),
 })
@@ -137,6 +23,39 @@ export const vHttpValidationProblemDetails = v.object({
   detail: v.nullish(v.string()),
   instance: v.nullish(v.string()),
   errors: v.optional(v.record(v.string(), v.array(v.string()))),
+})
+
+export const vPostContentView = v.object({
+  postId: v.union([
+    v.pipe(
+      v.union([v.number(), v.string(), v.bigint()]),
+      v.transform((x) => BigInt(x)),
+      v.minValue(
+        BigInt('-9223372036854775808'),
+        'Invalid value: Expected int64 to be >= -9223372036854775808'
+      ),
+      v.maxValue(
+        BigInt('9223372036854775807'),
+        'Invalid value: Expected int64 to be <= 9223372036854775807'
+      )
+    ),
+    v.pipe(
+      v.union([v.number(), v.string(), v.bigint()]),
+      v.transform((x) => BigInt(x)),
+      v.minValue(
+        BigInt('-9223372036854775808'),
+        'Invalid value: Expected int64 to be >= -9223372036854775808'
+      ),
+      v.maxValue(
+        BigInt('9223372036854775807'),
+        'Invalid value: Expected int64 to be <= 9223372036854775807'
+      )
+    ),
+  ]),
+  variantCode: v.string(),
+  title: v.string(),
+  body: v.string(),
+  bodyHtml: v.string(),
 })
 
 export const vPreloadMdnRequest = v.object({
@@ -185,6 +104,127 @@ export const vProblemDetails = v.object({
 })
 
 export const vReactionValue = v.picklist(['none', 'like', 'dislike'])
+
+export const vCommentView = v.object({
+  id: v.union([
+    v.pipe(
+      v.union([v.number(), v.string(), v.bigint()]),
+      v.transform((x) => BigInt(x)),
+      v.minValue(
+        BigInt('-9223372036854775808'),
+        'Invalid value: Expected int64 to be >= -9223372036854775808'
+      ),
+      v.maxValue(
+        BigInt('9223372036854775807'),
+        'Invalid value: Expected int64 to be <= 9223372036854775807'
+      )
+    ),
+    v.pipe(
+      v.union([v.number(), v.string(), v.bigint()]),
+      v.transform((x) => BigInt(x)),
+      v.minValue(
+        BigInt('-9223372036854775808'),
+        'Invalid value: Expected int64 to be >= -9223372036854775808'
+      ),
+      v.maxValue(
+        BigInt('9223372036854775807'),
+        'Invalid value: Expected int64 to be <= 9223372036854775807'
+      )
+    ),
+  ]),
+  postId: v.union([
+    v.pipe(
+      v.union([v.number(), v.string(), v.bigint()]),
+      v.transform((x) => BigInt(x)),
+      v.minValue(
+        BigInt('-9223372036854775808'),
+        'Invalid value: Expected int64 to be >= -9223372036854775808'
+      ),
+      v.maxValue(
+        BigInt('9223372036854775807'),
+        'Invalid value: Expected int64 to be <= 9223372036854775807'
+      )
+    ),
+    v.pipe(
+      v.union([v.number(), v.string(), v.bigint()]),
+      v.transform((x) => BigInt(x)),
+      v.minValue(
+        BigInt('-9223372036854775808'),
+        'Invalid value: Expected int64 to be >= -9223372036854775808'
+      ),
+      v.maxValue(
+        BigInt('9223372036854775807'),
+        'Invalid value: Expected int64 to be <= 9223372036854775807'
+      )
+    ),
+  ]),
+  userId: v.pipe(v.string(), v.uuid()),
+  parentCommentId: v.nullable(
+    v.union([
+      v.pipe(
+        v.union([v.number(), v.string(), v.bigint()]),
+        v.transform((x) => BigInt(x)),
+        v.minValue(
+          BigInt('-9223372036854775808'),
+          'Invalid value: Expected int64 to be >= -9223372036854775808'
+        ),
+        v.maxValue(
+          BigInt('9223372036854775807'),
+          'Invalid value: Expected int64 to be <= 9223372036854775807'
+        )
+      ),
+      v.pipe(
+        v.union([v.number(), v.string(), v.bigint()]),
+        v.transform((x) => BigInt(x)),
+        v.minValue(
+          BigInt('-9223372036854775808'),
+          'Invalid value: Expected int64 to be >= -9223372036854775808'
+        ),
+        v.maxValue(
+          BigInt('9223372036854775807'),
+          'Invalid value: Expected int64 to be <= 9223372036854775807'
+        )
+      ),
+    ])
+  ),
+  body: v.string(),
+  createdAt: v.pipe(v.string(), v.isoTimestamp()),
+  updatedAt: v.pipe(v.string(), v.isoTimestamp()),
+  deletedAt: v.nullable(v.pipe(v.string(), v.isoTimestamp())),
+  likeCount: v.union([
+    v.pipe(
+      v.number(),
+      v.integer(),
+      v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'),
+      v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')
+    ),
+    v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
+  ]),
+  dislikeCount: v.union([
+    v.pipe(
+      v.number(),
+      v.integer(),
+      v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'),
+      v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')
+    ),
+    v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
+  ]),
+  replyCount: v.union([
+    v.pipe(
+      v.number(),
+      v.integer(),
+      v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'),
+      v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')
+    ),
+    v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
+  ]),
+  myVote: vReactionValue,
+})
+
+export const vCommentsResponse = v.object({
+  items: v.array(vCommentView),
+  nextCursor: v.nullable(v.string()),
+})
 
 export const vReactionView = v.object({
   myVote: vReactionValue,
@@ -380,6 +420,89 @@ export const vTopicLink = v.object({
   title: v.string(),
 })
 
+export const vTopicPostMetaView = v.object({
+  id: v.union([
+    v.pipe(
+      v.union([v.number(), v.string(), v.bigint()]),
+      v.transform((x) => BigInt(x)),
+      v.minValue(
+        BigInt('-9223372036854775808'),
+        'Invalid value: Expected int64 to be >= -9223372036854775808'
+      ),
+      v.maxValue(
+        BigInt('9223372036854775807'),
+        'Invalid value: Expected int64 to be <= 9223372036854775807'
+      )
+    ),
+    v.pipe(
+      v.union([v.number(), v.string(), v.bigint()]),
+      v.transform((x) => BigInt(x)),
+      v.minValue(
+        BigInt('-9223372036854775808'),
+        'Invalid value: Expected int64 to be >= -9223372036854775808'
+      ),
+      v.maxValue(
+        BigInt('9223372036854775807'),
+        'Invalid value: Expected int64 to be <= 9223372036854775807'
+      )
+    ),
+  ]),
+  kind: v.string(),
+  title: v.string(),
+  position: v.union([
+    v.pipe(
+      v.number(),
+      v.integer(),
+      v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'),
+      v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')
+    ),
+    v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
+  ]),
+  likeCount: v.union([
+    v.pipe(
+      v.number(),
+      v.integer(),
+      v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'),
+      v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')
+    ),
+    v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
+  ]),
+  dislikeCount: v.union([
+    v.pipe(
+      v.number(),
+      v.integer(),
+      v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'),
+      v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')
+    ),
+    v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
+  ]),
+  commentCount: v.union([
+    v.pipe(
+      v.number(),
+      v.integer(),
+      v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'),
+      v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')
+    ),
+    v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
+  ]),
+  topicSlug: v.string(),
+  topicTitle: v.string(),
+  myVote: vReactionValue,
+  popularity: v.nullable(
+    v.union([
+      v.number(),
+      v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$/)),
+    ])
+  ),
+  createdAt: v.pipe(v.string(), v.isoTimestamp()),
+  isSaved: v.boolean(),
+})
+
+export const vTopicPostsResponse = v.object({
+  items: v.array(vTopicPostMetaView),
+  nextCursor: v.nullable(v.string()),
+})
+
 export const vTopicPostView = v.object({
   id: v.union([
     v.pipe(
@@ -408,6 +531,7 @@ export const vTopicPostView = v.object({
     ),
   ]),
   kind: v.string(),
+  variantCode: v.string(),
   title: v.string(),
   body: v.string(),
   bodyHtml: v.string(),
@@ -461,11 +585,6 @@ export const vTopicPostView = v.object({
 })
 
 export const vFeedResponse = v.object({
-  items: v.array(vTopicPostView),
-  nextCursor: v.nullable(v.string()),
-})
-
-export const vTopicPostsResponse = v.object({
   items: v.array(vTopicPostView),
   nextCursor: v.nullable(v.string()),
 })
@@ -550,6 +669,30 @@ export const vPostsReactionsTogglePath = v.object({
  */
 export const vPostsReactionsToggleResponse = vReactionView
 
+export const vPostsGetContentPath = v.object({
+  postId: v.pipe(
+    v.union([v.number(), v.string(), v.bigint()]),
+    v.transform((x) => BigInt(x)),
+    v.minValue(
+      BigInt('-9223372036854775808'),
+      'Invalid value: Expected int64 to be >= -9223372036854775808'
+    ),
+    v.maxValue(
+      BigInt('9223372036854775807'),
+      'Invalid value: Expected int64 to be <= 9223372036854775807'
+    )
+  ),
+})
+
+export const vPostsGetContentQuery = v.object({
+  variant: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(64)), 'original'),
+})
+
+/**
+ * OK
+ */
+export const vPostsGetContentResponse = vPostContentView
+
 export const vMeSavedPostsListQuery = v.object({
   cursor: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(512))),
   limit: v.optional(
@@ -602,6 +745,7 @@ export const vFeedListQuery = v.object({
     ]),
     20
   ),
+  variant: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(64))),
   lang: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(10)), 'en'),
 })
 
@@ -643,6 +787,7 @@ export const vCommentsRepliesListPath = v.object({
 })
 
 export const vCommentsRepliesListQuery = v.object({
+  cursor: v.optional(v.string()),
   limit: v.optional(
     v.union([
       v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(50)),
@@ -655,7 +800,7 @@ export const vCommentsRepliesListQuery = v.object({
 /**
  * OK
  */
-export const vCommentsRepliesListResponse = v.array(vComment)
+export const vCommentsRepliesListResponse = vCommentsResponse
 
 export const vCommentsRepliesCreateBody = vCreateCommentRequest
 
@@ -677,7 +822,7 @@ export const vCommentsRepliesCreatePath = v.object({
 /**
  * Created
  */
-export const vCommentsRepliesCreateResponse = vComment
+export const vCommentsRepliesCreateResponse = vCommentView
 
 export const vCommentsReactionsToggleBody = vToggleCommentReactionRequest
 
@@ -717,6 +862,7 @@ export const vPostsCommentsListPath = v.object({
 })
 
 export const vPostsCommentsListQuery = v.object({
+  cursor: v.optional(v.string()),
   limit: v.optional(
     v.union([
       v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(50)),
@@ -729,7 +875,7 @@ export const vPostsCommentsListQuery = v.object({
 /**
  * OK
  */
-export const vPostsCommentsListResponse = v.array(vComment)
+export const vPostsCommentsListResponse = vCommentsResponse
 
 export const vPostsCommentsCreateBody = vCreateCommentRequest
 
@@ -751,7 +897,7 @@ export const vPostsCommentsCreatePath = v.object({
 /**
  * Created
  */
-export const vPostsCommentsCreateResponse = vComment
+export const vPostsCommentsCreateResponse = vCommentView
 
 export const vCommentsDeletePath = v.object({
   commentId: v.pipe(

@@ -1,5 +1,8 @@
+using System.Security.Claims;
+using Api.Auth;
 using Api.Extensions;
 using Domain.Comments;
+using Domain.Shared;
 using Infrastructure.Persistence.Repositories;
 
 namespace Api.Endpoints.Comments.Replies.List;
@@ -11,17 +14,25 @@ public sealed class Endpoint : IEndpoint
     app.MapGet("/comments/{commentId:long}/replies", async (
         long commentId,
         [AsParameters] CommentsRepliesListQueryParams query,
+        ClaimsPrincipal user,
         CommentsRepository commentsRepo,
         CancellationToken ct) =>
       {
+        var userId = CurrentUser.GetUserIdOrNull(user);
         var take = Math.Clamp(query.Limit ?? 20, 1, 50);
-        var items = await commentsRepo.ListReplies(commentId, take, ct);
-        return Results.Ok(items);
+        var cursor = CursorCodec.Decode<CommentsCursor>(query.Cursor);
+        var page = await commentsRepo.ListReplies(commentId, userId, cursor, take + 1, ct);
+        var pageResult = CursorPage.From(page, take, ToCursor);
+
+        return Results.Ok(new CommentsResponse(pageResult.Items, pageResult.NextCursor));
       })
       .WithTags("Comments")
-      .WithSummary("Returns replies for a root comment")
+      .WithSummary("Returns replies for a comment")
       .WithName("CommentsRepliesList")
-      .Produces<IReadOnlyList<Comment>>(StatusCodes.Status200OK)
+      .Produces<CommentsResponse>(StatusCodes.Status200OK)
       .ProducesValidationProblem(StatusCodes.Status400BadRequest);
   }
+
+  private static CommentsCursor ToCursor(CommentView item)
+    => new(item.Id, item.CreatedAt);
 }

@@ -1,10 +1,14 @@
-import { resolveMdnOptions, topicsGetPostsOptions } from '#api/@tanstack/vue-query.gen'
+import {
+  postsGetContentOptions,
+  resolveMdnOptions,
+  topicsGetPostsOptions,
+} from '#api/@tanstack/vue-query.gen'
 import { type Options } from '#api/sdk.gen'
-import { useQuery } from '@tanstack/vue-query'
+import { useQueries, useQuery } from '@tanstack/vue-query'
 
 import { isApiError } from '~/lib/api/errors/errors'
 
-import type { TopicsGetPostsData } from '#api/types.gen'
+import type { PostContentView, TopicPostView, TopicsGetPostsData } from '#api/types.gen'
 
 export type TopicStatus = 'ready' | 'failed'
 
@@ -22,12 +26,60 @@ export function useTopicPosts(options: Ref<Options<TopicsGetPostsData>>) {
     () => Boolean(options.value.query.slug?.trim()) && Boolean(options.value.query.lang?.trim())
   )
 
+  const { variant } = usePostContentVariant()
+
   const query = useQuery(() => ({
     ...topicsGetPostsOptions(options.value),
     enabled: canFetch.value,
   }))
 
-  const posts = computed(() => query.data.value?.items ?? [])
+  const contentQueries = useQueries({
+    queries: computed(
+      () =>
+        query.data.value?.items.map((post) => ({
+          ...postsGetContentOptions({
+            path: { postId: Number(post.id) },
+            query: { variant: variant.value },
+          }),
+          enabled: canFetch.value && query.isSuccess.value,
+        })) ?? []
+    ),
+  })
+
+  const contentByPostId = computed(() => {
+    const result = new Map<string, PostContentView>()
+
+    for (const contentQuery of contentQueries.value) {
+      const content = contentQuery.data
+      if (content) result.set(String(content.postId), content)
+    }
+
+    return result
+  })
+
+  const posts = computed<TopicPostView[]>(() => {
+    const metas = query.data.value?.items ?? []
+
+    return metas.flatMap((post) => {
+      const content = contentByPostId.value.get(String(post.id))
+      if (!content) return []
+
+      return [
+        {
+          ...post,
+          variantCode: content.variantCode,
+          title: content.title,
+          body: content.body,
+          bodyHtml: content.bodyHtml,
+        },
+      ]
+    })
+  })
+
+  const isContentLoading = computed(() => contentQueries.value.some((item) => item.isLoading))
+  const isContentFetching = computed(() => contentQueries.value.some((item) => item.isFetching))
+  const isLoading = computed(() => query.isLoading.value || isContentLoading.value)
+  const isFetching = computed(() => query.isFetching.value || isContentFetching.value)
 
   const topicStreamUrl = computed(() => {
     const params = new URLSearchParams({
@@ -84,8 +136,10 @@ export function useTopicPosts(options: Ref<Options<TopicsGetPostsData>>) {
 
   return {
     state: {
-      posts,
       ...query,
+      posts,
+      isLoading,
+      isFetching,
     },
   }
 }

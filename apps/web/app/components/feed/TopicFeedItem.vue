@@ -12,9 +12,11 @@ const props = defineProps<{
 
 const { lang } = useLang()
 
-const { state } = useTopicPosts({
+const queryOptions = computed(() => ({
   query: { slug: props.topic.slug, lang: lang.value },
-})
+}))
+
+const { state } = useTopicPosts(queryOptions)
 
 const swiperKey = computed(() => `${props.topic.slug}:${lang.value}`)
 const showSwiper = computed(() => state.posts.value.length > 0)

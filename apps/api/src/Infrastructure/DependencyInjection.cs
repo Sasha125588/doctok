@@ -116,6 +116,7 @@ public static class InfrastructureServiceRegistration
 
     // Source handlers (keyed by source code for JobProcessor lookup)
     services.AddSingleton<MdnSitemapIndex>();
+    services.AddSingleton<MdnMarkdownConverter>();
     services.AddSingleton<MdnContentConverter>();
     services.AddSingleton<MdnIngestionService>();
     services.AddKeyedSingleton<ISourceJobHandler, MdnSourceJobHandler>(SourceCodes.Mdn);

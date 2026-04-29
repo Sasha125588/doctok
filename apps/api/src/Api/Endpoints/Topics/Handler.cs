@@ -26,17 +26,12 @@ public sealed class Handler(TopicsRepository topicRepo) : IHandler
                 description: $"Topic '{slug}' was not found.");
         }
 
-        var hasNextPage = page.Count > take;
-        var items = hasNextPage ? page.Take(take).ToList() : page;
+        var pageResult = CursorPage.From(page, take, ToCursor);
 
-        var nextCursor = hasNextPage
-          ? CursorCodec.Encode(ToCursor(items[^1]))
-          : null;
-
-        return new TopicPostsResponse(items, nextCursor);
+        return new TopicPostsResponse(pageResult.Items, pageResult.NextCursor);
     }
 
-    private static TopicPostsCursor ToCursor(TopicPostView item)
+    private static TopicPostsCursor ToCursor(TopicPostMetaView item)
       => new(GetKindRank(item.Kind), item.Position, item.Id);
 
     private static int GetKindRank(string kind)

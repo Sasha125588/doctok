@@ -33,6 +33,7 @@ public sealed class TopicFeedRepository(IDbConnectionFactory dbf)
                          join posts p
                            on p.topic_id = t.id
                           and p.lang = @lang
+                          and p.is_active = true
                          join raw_documents rd
                            on rd.id = p.raw_document_id
                          group by t.id, t.slug, t.title

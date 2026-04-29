@@ -8,7 +8,9 @@
     <PackageReference Include="Dapper" />
     <PackageReference Include="Google.GenAI" />
     <PackageReference Include="HtmlAgilityPack" />
+    <PackageReference Include="HtmlSanitizer" />
     <PackageReference Include="Markdig" />
+    <PackageReference Include="ReverseMarkdown" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" />
@@ -16,9 +18,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="PostGeneration\Llm\Prompts\generate_posts.md" />
-    <EmbeddedResource Include="PostGeneration\Title\Prompts\title_example.md" />
-    <EmbeddedResource Include="PostGeneration\Title\Prompts\title_summary.md" />
+    <EmbeddedResource Include="PostGeneration\Llm\Prompts\rewrite_base.md" />
+    <EmbeddedResource Include="PostGeneration\Llm\Prompts\style_ai_simple.md" />
+    <EmbeddedResource Include="PostGeneration\Llm\Prompts\style_ai_senior.md" />
   </ItemGroup>
   
 </Project>

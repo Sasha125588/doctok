@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Domain.Jobs;
 using Domain.Mdn;
 using Domain.Shared;
@@ -10,12 +11,12 @@ namespace Infrastructure.Sources.Mdn;
 public sealed class MdnIngestionService(
     MdnApiClient apiClient,
     MdnContentConverter converter,
-    SourcesRepository sources,
-    RawDocumentsRepository rawDocs,
-    RawLinksRepository rawLinks,
-    TopicsRepository topics,
-    TopicDocumentsRepository topicDocs,
-    JobsRepository jobs,
+    SourcesRepository sourcesRepo,
+    RawDocumentsRepository rawDocsRepo,
+    RawLinksRepository rawLinksRepo,
+    TopicsRepository topicsRepo,
+    TopicDocumentsRepository topicDocsRepo,
+    JobsRepository jobsRepo,
     ILogger<MdnIngestionService> logger
 )
 {
@@ -29,17 +30,19 @@ public sealed class MdnIngestionService(
 
         MdnDocument doc = await apiClient.FetchAsync(lang, externalRef, ct);
         var (text, links) = converter.Convert(doc);
+        var sectionsJson = JsonSerializer.Serialize(doc.Sections);
 
         var canonicalExternalRef = ExternalRefHelpers.Normalize(doc.Slug);
 
-        var sourceId = await sources.GetSourceIdByCode(SourceCodes.Mdn, ct);
+        var sourceId = await sourcesRepo.GetSourceIdByCode(SourceCodes.Mdn, ct);
 
-        var rawId = await rawDocs.UpsertRawDocument(
+        var rawId = await rawDocsRepo.UpsertRawDocument(
             sourceId: sourceId,
             lang: lang,
             externalRef: canonicalExternalRef,
             title: doc.Title,
             content: text,
+            sectionsJson: sectionsJson,
             pageType: doc.PageType,
             popularity: doc.Popularity ?? 0,
             sourceModifiedAt: doc.SourceModifiedAt,
@@ -49,8 +52,8 @@ public sealed class MdnIngestionService(
         var topicSlug = SourceCodes.Mdn + "/" + canonicalExternalRef;
         var topicTitle = doc.Title;
 
-        var topicId = await topics.EnsureTopic(topicSlug, topicTitle, ct);
-        await topicDocs.Link(topicId, rawId, ct);
+        var topicId = await topicsRepo.EnsureTopic(topicSlug, topicTitle, ct);
+        await topicDocsRepo.Link(topicId, rawId, ct);
 
         var internalLinks = links
             .Where(x => x is { Kind: "internal", TargetLang: not null, TargetExternalRef: not null })
@@ -62,7 +65,7 @@ public sealed class MdnIngestionService(
 
         if (internalLinks.Count > 0)
         {
-            await rawLinks.InsertInternalLinks(
+            await rawLinksRepo.InsertInternalLinks(
                 rawDocumentId: rawId,
                 targetSourceId: sourceId,
                 links: internalLinks,
@@ -76,11 +79,11 @@ public sealed class MdnIngestionService(
 
         if (externalLinks.Count > 0)
         {
-            await rawLinks.InsertExternalLinks(rawId, externalLinks, ct);
+            await rawLinksRepo.InsertExternalLinks(rawId, externalLinks, ct);
         }
 
         var jobKey = $"{JobTypes.GenerateFast}:{SourceCodes.Mdn}:{lang}:{canonicalExternalRef}";
-        await jobs.Enqueue(
+        await jobsRepo.Enqueue(
             jobType: JobTypes.GenerateFast,
             jobKey: jobKey,
             payload: new { provider = SourceCodes.Mdn, lang, externalRef = canonicalExternalRef },

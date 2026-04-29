@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { motion } from 'motion-v'
 
+import VariantSelector from '~/components/desktop/VariantSelector.vue'
 import { type FeedMode, type ReadMode, useFeedView } from '~/composables/useFeedView'
 
 const route = useRoute()
@@ -52,6 +53,8 @@ const isFeed = computed(() => route.name === 'feed')
           <span class="label">{{ rm }}</span>
         </button>
       </div>
+
+      <VariantSelector />
     </template>
   </header>
 </template>

@@ -1,3 +1,4 @@
+using Domain.Mdn;
 using Domain.Posts;
 using Infrastructure.PostGeneration.Fast;
 using Xunit;
@@ -8,49 +9,40 @@ public sealed class FastPostGeneratorTests
 {
     private readonly FastPostGenerator _gen = new();
 
-    // ─── See-also / compat section skip ──────────────────────────────────────
+    // ─── Skip rules ──────────────────────────────────────────────────────────
 
     [Theory]
-    [InlineData("## See also")]
-    [InlineData("## See Also")]
-    [InlineData("## Browser compatibility")]
-    [InlineData("## Specifications")]
-    [InlineData("## Смотрите также")]
-    [InlineData("## Смотри(те) также")]
-    [InlineData("## Смотри также")]
-    [InlineData("## см. также")]
-    [InlineData("## Совместимость с браузерами")]
+    [InlineData("See also")]
+    [InlineData("See Also")]
+    [InlineData("Browser compatibility")]
+    [InlineData("Specifications")]
+    [InlineData("Смотрите также")]
+    [InlineData("Совместимость с браузерами")]
     public void SeeAlsoAndCompatSectionsAreSkipped(string heading)
     {
-        var md = $"""
-            ## Intro
+        var sections = new MdnSection[]
+        {
+            new("intro", "Intro", false, "A useful paragraph about the topic."),
+            new("compat", heading, false, "Some content here."),
+        };
 
-            A useful paragraph about the topic.
+        var posts = _gen.Generate(sections);
 
-            {heading}
-
-            - [Some link](mdn/something).
-            """;
-
-        var posts = _gen.Generate(md);
-
-        Assert.DoesNotContain(posts, p => p.Body.Contains("Some link"));
+        Assert.DoesNotContain(posts, p => p.SourceSectionKey == "compat");
     }
 
     // ─── Summary extraction ──────────────────────────────────────────────────
 
     [Fact]
-    public void FirstParagraphBecomesASummaryPost()
+    public void FirstSectionBecomesASummaryPost()
     {
-        var md = """
-            The Fetch API provides an interface for fetching resources across the network.
+        var sections = new MdnSection[]
+        {
+            new(null, null, false, "The Fetch API provides an interface for fetching resources across the network."),
+            new("concepts", "Concepts", false, "Some concepts here about how it works."),
+        };
 
-            ## Concepts
-
-            Some concepts here about how it works.
-            """;
-
-        var posts = _gen.Generate(md);
+        var posts = _gen.Generate(sections);
 
         var summary = Assert.Single(posts, p => p.Kind == PostKind.Summary);
         Assert.Contains("Fetch API", summary.Body);
@@ -61,14 +53,13 @@ public sealed class FastPostGeneratorTests
     [Fact]
     public void H2SectionBecomesConceptPost()
     {
-        var md = """
-            ## Constructor
+        var sections = new MdnSection[]
+        {
+            new(null, null, false, "Lead paragraph."),
+            new("constructor", "Constructor", false, "**Text()** : Returns a Text node."),
+        };
 
-            **[`Text()`](mdn/web/api/text/text)**
-            : Returns a Text node with the given content.
-            """;
-
-        var posts = _gen.Generate(md);
+        var posts = _gen.Generate(sections);
 
         var concept = Assert.Single(posts, p => p.Kind == PostKind.Concept);
         Assert.Contains("Text()", concept.Body);
@@ -76,68 +67,100 @@ public sealed class FastPostGeneratorTests
     }
 
     [Fact]
-    public void H3SubsectionsStayWithParentH2()
+    public void H3SectionsAttachToPreviousH2()
     {
-        var md = """
-            ## Properties
+        var sections = new MdnSection[]
+        {
+            new("intro", "Introduction", false, "Intro body"),
+            new("details", "Details", true, "Nested body"),
+        };
 
-            **[`Text.wholeText`](mdn/web/api/text/wholetext) Read only**
-            : Returns a string with all adjacent text.
+        var posts = _gen.Generate(sections);
 
-            ### Deprecated properties
+        var post = Assert.Single(posts);
+        Assert.Equal("intro", post.SourceSectionKey);
+        Assert.Contains("Intro body", post.Body);
+        Assert.Contains("### Details", post.Body);
+        Assert.Contains("Nested body", post.Body);
+    }
 
-            **[`Text.splitText`](mdn/web/api/text/splittext)**
-            : Splits the node at the given offset.
-            """;
+    [Fact]
+    public void MultipleH3SubsectionsAttachToParentH2()
+    {
+        var sections = new MdnSection[]
+        {
+            new("properties", "Properties", false, "Top-level properties text."),
+            new("deprecated", "Deprecated properties", true, "splitText is deprecated."),
+        };
 
-        var posts = _gen.Generate(md);
+        var posts = _gen.Generate(sections);
 
-        // Both H2 content and H3 subsection in ONE post
         var concept = Assert.Single(posts, p => p.Kind == PostKind.Concept);
-        Assert.Contains("wholeText", concept.Body);
-        Assert.Contains("splitText", concept.Body);
+        Assert.Contains("Top-level properties text.", concept.Body);
+        Assert.Contains("splitText is deprecated.", concept.Body);
     }
 
     // ─── Example section ─────────────────────────────────────────────────────
 
     [Fact]
-    public void CodeBlockInExampleSectionBecomesExample()
+    public void SectionTitledExampleClassifiesAsExample()
     {
-        var md = """
-            ## Example
+        var sections = new MdnSection[]
+        {
+            new(null, null, false, "Lead."),
+            new("examples", "Examples", false, "Fetch a resource: code here."),
+        };
 
-            Fetch a resource:
-
-            ```js
-            const response = await fetch('/api/data');
-            const json = await response.json();
-            ```
-            """;
-
-        var posts = _gen.Generate(md);
+        var posts = _gen.Generate(sections);
 
         var example = Assert.Single(posts, p => p.Kind == PostKind.Example);
-        Assert.Contains("fetch", example.Body);
+        Assert.Contains("Fetch a resource", example.Body);
     }
 
-    // ─── Empty / whitespace sections ─────────────────────────────────────────
+    // ─── Empty sections ──────────────────────────────────────────────────────
 
     [Fact]
     public void EmptySectionsAreSkipped()
     {
-        var md = """
-            ## Concepts and usage
+        var sections = new MdnSection[]
+        {
+            new("concepts", "Concepts and usage", false, ""),
+            new("description", "Description", false, "Something useful here."),
+        };
 
-
-
-            ## Description
-
-            Something useful here.
-            """;
-
-        var posts = _gen.Generate(md);
+        var posts = _gen.Generate(sections);
 
         Assert.Single(posts);
         Assert.Contains("Something useful", posts[0].Body);
+    }
+
+    // ─── Source section keys ─────────────────────────────────────────────────
+
+    [Fact]
+    public void SectionWithoutIdGetsDeterministicFallbackKey()
+    {
+        var sections = new MdnSection[]
+        {
+            new(null, null, false, "Intro."),
+            new(null, "Description", false, "Body."),
+        };
+
+        var posts = _gen.Generate(sections);
+
+        Assert.Equal("section-0", posts[0].SourceSectionKey);
+        Assert.Equal("section-1", posts[1].SourceSectionKey);
+    }
+
+    [Fact]
+    public void SectionIdIsLowercasedForKey()
+    {
+        var sections = new MdnSection[]
+        {
+            new("Intro", null, false, "Hello."),
+        };
+
+        var posts = _gen.Generate(sections);
+
+        Assert.Equal("intro", Assert.Single(posts).SourceSectionKey);
     }
 }

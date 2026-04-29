@@ -7,7 +7,7 @@ namespace Infrastructure.Persistence.Repositories;
 
 public sealed class TopicsRepository(IDbConnectionFactory dbf)
 {
-  public async Task<IReadOnlyList<TopicPostView>> GetPosts(
+  public async Task<IReadOnlyList<TopicPostMetaView>> GetPosts(
     TopicPostsCursor? cursor,
     string slug,
     string lang,
@@ -19,9 +19,7 @@ public sealed class TopicsRepository(IDbConnectionFactory dbf)
                          select
                            p.id,
                            p.kind,
-                           p.title,
-                           p.body,
-                           p.body_html,
+                           coalesce(p.title, '') as title,
                            p.position,
                            p.like_count,
                            p.dislike_count,
@@ -43,8 +41,9 @@ public sealed class TopicsRepository(IDbConnectionFactory dbf)
                             and v.user_id = @userId
                          where t.slug = @slug
                            and p.lang = @lang
+                           and p.is_active = true
                            and (
-                           @cursorId is null 
+                           @cursorId is null
                              or (
                                case p.kind
                                  when 'summary' then 0
@@ -83,7 +82,7 @@ public sealed class TopicsRepository(IDbConnectionFactory dbf)
       limit,
     };
 
-    return (await db.QueryAsync<TopicPostView>(
+    return (await db.QueryAsync<TopicPostMetaView>(
       new CommandDefinition(query, parameters, cancellationToken: ct))).ToList();
   }
 
@@ -96,6 +95,7 @@ public sealed class TopicsRepository(IDbConnectionFactory dbf)
                           join topics t on t.id = p.topic_id
                           where t.slug = @slug
                           and p.lang = @lang
+                          and p.is_active = true
                          )
                          """;
 

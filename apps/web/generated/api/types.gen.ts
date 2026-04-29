@@ -4,17 +4,24 @@ export type ClientOptions = {
   baseUrl: 'http://localhost:5005/' | (string & {})
 }
 
-export type Comment = {
-  id?: number | string
-  postId?: number | string
-  userId?: string
-  parentCommentId?: null | number | string
-  body?: string
-  createdAt?: string
-  updatedAt?: string
-  deletedAt?: null | string
-  likeCount?: number | string
-  dislikeCount?: number | string
+export type CommentsResponse = {
+  items: Array<CommentView>
+  nextCursor: null | string
+}
+
+export type CommentView = {
+  id: number | string
+  postId: number | string
+  userId: string
+  parentCommentId: null | number | string
+  body: string
+  createdAt: string
+  updatedAt: string
+  deletedAt: null | string
+  likeCount: number | string
+  dislikeCount: number | string
+  replyCount: number | string
+  myVote: ReactionValue
 }
 
 export type CreateCommentRequest = {
@@ -35,6 +42,14 @@ export type HttpValidationProblemDetails = {
   errors?: {
     [key: string]: Array<string>
   }
+}
+
+export type PostContentView = {
+  postId: number | string
+  variantCode: string
+  title: string
+  body: string
+  bodyHtml: string
 }
 
 export type PreloadMdnRequest = {
@@ -121,14 +136,31 @@ export type TopicLink = {
   title: string
 }
 
+export type TopicPostMetaView = {
+  id: number | string
+  kind: string
+  title: string
+  position: number | string
+  likeCount: number | string
+  dislikeCount: number | string
+  commentCount: number | string
+  topicSlug: string
+  topicTitle: string
+  myVote: ReactionValue
+  popularity: null | number | string
+  createdAt: string
+  isSaved: boolean
+}
+
 export type TopicPostsResponse = {
-  items: Array<TopicPostView>
+  items: Array<TopicPostMetaView>
   nextCursor: null | string
 }
 
 export type TopicPostView = {
   id: number | string
   kind: string
+  variantCode: string
   title: string
   body: string
   bodyHtml: string
@@ -362,6 +394,39 @@ export type PostsReactionsToggleResponses = {
 export type PostsReactionsToggleResponse =
   PostsReactionsToggleResponses[keyof PostsReactionsToggleResponses]
 
+export type PostsGetContentData = {
+  body?: never
+  path: {
+    postId: number
+  }
+  query?: {
+    variant?: string
+  }
+  url: '/api/posts/{postId}/content'
+}
+
+export type PostsGetContentErrors = {
+  /**
+   * Bad Request
+   */
+  400: HttpValidationProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+}
+
+export type PostsGetContentError = PostsGetContentErrors[keyof PostsGetContentErrors]
+
+export type PostsGetContentResponses = {
+  /**
+   * OK
+   */
+  200: PostContentView
+}
+
+export type PostsGetContentResponse = PostsGetContentResponses[keyof PostsGetContentResponses]
+
 export type MeSavedPostsListData = {
   body?: never
   path?: never
@@ -470,6 +535,7 @@ export type FeedListData = {
   query: {
     cursor?: string
     limit?: number | string
+    variant?: string
     lang: string
   }
   url: '/api/feed'
@@ -528,6 +594,7 @@ export type CommentsRepliesListData = {
     commentId: number
   }
   query?: {
+    cursor?: string
     limit?: number | string
   }
   url: '/api/comments/{commentId}/replies'
@@ -546,7 +613,7 @@ export type CommentsRepliesListResponses = {
   /**
    * OK
    */
-  200: Array<Comment>
+  200: CommentsResponse
 }
 
 export type CommentsRepliesListResponse =
@@ -587,7 +654,7 @@ export type CommentsRepliesCreateResponses = {
   /**
    * Created
    */
-  201: Comment
+  201: CommentView
 }
 
 export type CommentsRepliesCreateResponse =
@@ -640,6 +707,7 @@ export type PostsCommentsListData = {
     postId: number
   }
   query?: {
+    cursor?: string
     limit?: number | string
   }
   url: '/api/posts/{postId}/comments'
@@ -658,7 +726,7 @@ export type PostsCommentsListResponses = {
   /**
    * OK
    */
-  200: Array<Comment>
+  200: CommentsResponse
 }
 
 export type PostsCommentsListResponse = PostsCommentsListResponses[keyof PostsCommentsListResponses]
@@ -697,7 +765,7 @@ export type PostsCommentsCreateResponses = {
   /**
    * Created
    */
-  201: Comment
+  201: CommentView
 }
 
 export type PostsCommentsCreateResponse =

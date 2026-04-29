@@ -26,7 +26,7 @@ public sealed class Endpoint : IEndpoint
       .WithTags("Comments")
       .WithSummary("Adds a comment to a post")
       .WithName("PostsCommentsCreate")
-      .Produces<Comment>(StatusCodes.Status201Created)
+      .Produces<CommentView>(StatusCodes.Status201Created)
       .ProducesProblem(StatusCodes.Status400BadRequest)
       .ProducesProblem(StatusCodes.Status401Unauthorized)
       .ProducesProblem(StatusCodes.Status403Forbidden)

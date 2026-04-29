@@ -12,7 +12,7 @@ public sealed class Handler(CommentReactionsRepository commentReactionsRepo) : I
     var reactionResult = await commentReactionsRepo.Toggle(
       command.CommentId,
       command.UserId,
-      command.Value.ToString().ToLowerInvariant(),
+      command.Value,
       ct);
 
     if(reactionResult is null)
