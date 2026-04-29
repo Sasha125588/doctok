@@ -1,3 +1,5 @@
+using Domain.Reactions;
+
 namespace Domain.Comments;
 
 public sealed record CommentView(
@@ -6,10 +8,11 @@ public sealed record CommentView(
   Guid UserId,
   long? ParentCommentId,
   string Body,
-  DateTimeOffset CreatedAt,
-  DateTimeOffset UpdatedAt,
-  DateTimeOffset? DeletedAt,
+  DateTime CreatedAt,
+  DateTime UpdatedAt,
+  DateTime? DeletedAt,
   int LikeCount,
   int DislikeCount,
-  int ReplyCount
+  int ReplyCount,
+  ReactionValue MyVote
 );

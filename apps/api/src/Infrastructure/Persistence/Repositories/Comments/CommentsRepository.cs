@@ -32,7 +32,8 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
                              select id, post_id, user_id, parent_comment_id, body,
                                     created_at, updated_at, deleted_at,
                                     like_count, dislike_count,
-                                    0 as reply_count
+                                    0 as reply_count,
+                                    'none'::public.t_reaction_value as my_vote
                              from inserted
                              """;
 
@@ -102,7 +103,8 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
                              returning id, post_id, user_id, parent_comment_id, body,
                                        created_at, updated_at, deleted_at,
                                        like_count, dislike_count,
-                                       0 as reply_count
+                                       0 as reply_count,
+                                       'none'::public.t_reaction_value as my_vote
                              """;
 
     var row = await conn.QuerySingleAsync<CommentView>(
@@ -118,6 +120,7 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
 
   public async Task<IReadOnlyList<CommentView>> ListRoots(
     long postId,
+    Guid? userId,
     CommentsCursor? cursor,
     int limit,
     CancellationToken ct)
@@ -139,8 +142,12 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
                            from comments r
                            where r.parent_comment_id = c.id
                              and r.deleted_at is null
-                         ) as reply_count
+                         ) as reply_count,
+                         v.value as my_vote
                        from comments c
+                       left join comment_reactions v
+                         on v.comment_id = c.id
+                        and v.user_id = @userId
                        where c.post_id = @postId
                          and c.parent_comment_id is null
                          and (
@@ -159,6 +166,7 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
         new
         {
           postId,
+          userId,
           cursorId = cursor?.Id,
           cursorCreatedAt = cursor?.CreatedAt,
           limit,
@@ -170,6 +178,7 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
 
   public async Task<IReadOnlyList<CommentView>> ListReplies(
     long commentId,
+    Guid? userId,
     CommentsCursor? cursor,
     int limit,
     CancellationToken ct)
@@ -191,8 +200,12 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
                            from comments r
                            where r.parent_comment_id = c.id
                              and r.deleted_at is null
-                         ) as reply_count
+                         ) as reply_count,
+                         v.value as my_vote
                        from comments c
+                       left join comment_reactions v
+                         on v.comment_id = c.id
+                        and v.user_id = @userId
                        where c.parent_comment_id = @commentId
                          and (
                            @cursorId is null
@@ -202,13 +215,14 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
                        limit @limit
                        """;
 
-    using var db = dbf.Create();
+    await using var db = dbf.Create();
     var rows = await db.QueryAsync<CommentView>(
       new CommandDefinition(
         sql,
         new
         {
           commentId,
+          userId,
           cursorId = cursor?.Id,
           cursorCreatedAt = cursor?.CreatedAt,
           limit,
