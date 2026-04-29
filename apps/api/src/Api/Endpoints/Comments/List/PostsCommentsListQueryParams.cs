@@ -6,6 +6,9 @@ namespace Api.Endpoints.Comments.List;
 
 public sealed class PostsCommentsListQueryParams
 {
+  [FromQuery(Name = "cursor")]
+  public string? Cursor { get; init; }
+
   [FromQuery(Name = "limit")]
   [Range(1, 50)]
   [DefaultValue(20)]

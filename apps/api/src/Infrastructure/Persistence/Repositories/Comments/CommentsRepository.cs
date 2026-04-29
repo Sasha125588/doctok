@@ -1,12 +1,13 @@
 using Dapper;
 using Domain.Comments;
+using Domain.Shared;
 using Infrastructure.Persistence.ConnectionFactory;
 
 namespace Infrastructure.Persistence.Repositories;
 
 public sealed class CommentsRepository(IDbConnectionFactory dbf)
 {
-  public async Task<Comment> CreateRoot(long postId, Guid userId, string body, CancellationToken ct)
+  public async Task<CommentView> CreateRoot(long postId, Guid userId, string body, CancellationToken ct)
   {
     await using var conn = dbf.Create();
     await conn.OpenAsync(ct);
@@ -24,13 +25,18 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
                                insert into comments(post_id, user_id, parent_comment_id, body)
                                select post.id, @userId, null, @body
                                from post
-                               returning id, post_id, user_id, parent_comment_id, body, created_at, deleted_at
+                               returning id, post_id, user_id, parent_comment_id, body,
+                                         created_at, updated_at, deleted_at,
+                                         like_count, dislike_count
                              )
-                             select id, post_id, user_id, parent_comment_id, body, created_at, deleted_at
+                             select id, post_id, user_id, parent_comment_id, body,
+                                    created_at, updated_at, deleted_at,
+                                    like_count, dislike_count,
+                                    0 as reply_count
                              from inserted
                              """;
 
-    var row = await conn.QuerySingleOrDefaultAsync<Comment>(
+    var row = await conn.QuerySingleOrDefaultAsync<CommentView>(
       new CommandDefinition(
         insertSql,
         new { postId, userId, body },
@@ -47,21 +53,21 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
     return row;
   }
 
-  public async Task<Comment> Reply(long parentCommentId, Guid userId, string body, CancellationToken ct)
+  public async Task<CommentView> Reply(long parentCommentId, Guid userId, string body, CancellationToken ct)
   {
     await using var conn = dbf.Create();
     await conn.OpenAsync(ct);
     await using var tx = await conn.BeginTransactionAsync(ct);
 
     const string getParentSql = """
-                                select id, post_id, parent_comment_id
+                                select id, post_id
                                 from comments
                                 where id = @parentCommentId
                                    and deleted_at is null
                                 for update
                                 """;
 
-    var parent = await conn.QuerySingleOrDefaultAsync<(long id, long post_id, long? parent_comment_id)>(
+    var parent = await conn.QuerySingleOrDefaultAsync<(long id, long post_id)>(
       new CommandDefinition(getParentSql, new { parentCommentId }, transaction: tx, cancellationToken: ct));
 
     if (parent == default)
@@ -93,10 +99,13 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
     const string insertSql = """
                              insert into comments(post_id, user_id, parent_comment_id, body)
                              values(@postId, @userId, @parentCommentId, @body)
-                             returning id, post_id, user_id, parent_comment_id, body, created_at, deleted_at
+                             returning id, post_id, user_id, parent_comment_id, body,
+                                       created_at, updated_at, deleted_at,
+                                       like_count, dislike_count,
+                                       0 as reply_count
                              """;
 
-    var row = await conn.QuerySingleAsync<Comment>(
+    var row = await conn.QuerySingleAsync<CommentView>(
       new CommandDefinition(
         insertSql,
         new { postId, userId, parentCommentId, body },
@@ -107,43 +116,103 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
     return row;
   }
 
-  public async Task<IReadOnlyList<Comment>> ListRoots(long postId, int limit, CancellationToken ct)
+  public async Task<IReadOnlyList<CommentView>> ListRoots(
+    long postId,
+    CommentsCursor? cursor,
+    int limit,
+    CancellationToken ct)
   {
     const string sql = """
-                       select id, post_id, user_id, parent_comment_id, body, like_count, dislike_count, created_at, deleted_at
-                       from comments
-                       where post_id = @postId
-                            and parent_comment_id is null
-                       order by created_at desc
+                       select
+                         c.id,
+                         c.post_id,
+                         c.user_id,
+                         c.parent_comment_id,
+                         c.body,
+                         c.created_at,
+                         c.updated_at,
+                         c.deleted_at,
+                         c.like_count,
+                         c.dislike_count,
+                         (
+                           select count(*)::int
+                           from comments r
+                           where r.parent_comment_id = c.id
+                             and r.deleted_at is null
+                         ) as reply_count
+                       from comments c
+                       where c.post_id = @postId
+                         and c.parent_comment_id is null
+                         and (
+                           @cursorId is null
+                             or (c.created_at, c.id) < (@cursorCreatedAt, @cursorId)
+                         )
+                       order by c.created_at desc, c.id desc
                        limit @limit
                        """;
 
     using var db = dbf.Create();
 
-    var rows = await db.QueryAsync<Comment>(
+    var rows = await db.QueryAsync<CommentView>(
       new CommandDefinition(
         sql,
-        new { postId, limit },
+        new
+        {
+          postId,
+          cursorId = cursor?.Id,
+          cursorCreatedAt = cursor?.CreatedAt,
+          limit,
+        },
         cancellationToken: ct));
 
     return rows.ToList();
   }
 
-  public async Task<IReadOnlyList<Comment>> ListReplies(long commentId, int limit, CancellationToken ct)
+  public async Task<IReadOnlyList<CommentView>> ListReplies(
+    long commentId,
+    CommentsCursor? cursor,
+    int limit,
+    CancellationToken ct)
   {
     const string sql = """
-                       select id, post_id, user_id, parent_comment_id, body, like_count, dislike_count, created_at, deleted_at
-                       from comments
-                       where parent_comment_id = @commentId
-                       order by created_at asc
+                       select
+                         c.id,
+                         c.post_id,
+                         c.user_id,
+                         c.parent_comment_id,
+                         c.body,
+                         c.created_at,
+                         c.updated_at,
+                         c.deleted_at,
+                         c.like_count,
+                         c.dislike_count,
+                         (
+                           select count(*)::int
+                           from comments r
+                           where r.parent_comment_id = c.id
+                             and r.deleted_at is null
+                         ) as reply_count
+                       from comments c
+                       where c.parent_comment_id = @commentId
+                         and (
+                           @cursorId is null
+                             or (c.created_at, c.id) > (@cursorCreatedAt, @cursorId)
+                         )
+                       order by c.created_at asc, c.id asc
                        limit @limit
                        """;
 
     using var db = dbf.Create();
-    var rows = await db.QueryAsync<Comment>(
+    var rows = await db.QueryAsync<CommentView>(
       new CommandDefinition(
         sql,
-        new { commentId, limit },
+        new
+        {
+          commentId,
+          cursorId = cursor?.Id,
+          cursorCreatedAt = cursor?.CreatedAt,
+          limit,
+        },
         cancellationToken: ct));
 
     return rows.ToList();

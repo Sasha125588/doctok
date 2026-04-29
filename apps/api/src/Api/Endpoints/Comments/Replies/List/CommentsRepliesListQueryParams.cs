@@ -6,6 +6,9 @@ namespace Api.Endpoints.Comments.Replies.List;
 
 public sealed class CommentsRepliesListQueryParams
 {
+  [FromQuery(Name = "cursor")]
+  public string? Cursor { get; init; }
+
   [FromQuery(Name = "limit")]
   [Range(1, 50)]
   [DefaultValue(20)]

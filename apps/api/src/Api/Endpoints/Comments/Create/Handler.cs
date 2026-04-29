@@ -7,7 +7,7 @@ namespace Api.Endpoints.Comments.Create;
 
 public sealed class Handler(CommentsRepository commentsRepo) : IHandler
 {
-  public async Task<ErrorOr<Comment>> Handle(Command command, CancellationToken ct)
+  public async Task<ErrorOr<CommentView>> Handle(Command command, CancellationToken ct)
   {
     try
     {

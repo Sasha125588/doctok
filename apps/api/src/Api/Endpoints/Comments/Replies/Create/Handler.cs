@@ -7,7 +7,7 @@ namespace Api.Endpoints.Comments.Replies.Create;
 
 public sealed class Handler(CommentsRepository commentsRepo) : IHandler
 {
-  public async Task<ErrorOr<Comment>> Handle(Command command, CancellationToken ct)
+  public async Task<ErrorOr<CommentView>> Handle(Command command, CancellationToken ct)
   {
     try
     {
@@ -19,12 +19,6 @@ public sealed class Handler(CommentsRepository commentsRepo) : IHandler
       return Error.NotFound(
         code: "Comments.ParentNotFound",
         description: $"Parent comment '{command.ParentCommentId}' was not found.");
-    }
-    catch (ArgumentException)
-    {
-      return Error.Validation(
-        code: "Comments.ReplyDepthUnsupported",
-        description: "Replies to replies are not supported.");
     }
   }
 }
