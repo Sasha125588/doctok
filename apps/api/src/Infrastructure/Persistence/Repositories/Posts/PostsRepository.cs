@@ -1,4 +1,3 @@
-using System.Data.Common;
 using Dapper;
 using Domain.Posts;
 using Infrastructure.Persistence.ConnectionFactory;
@@ -17,7 +16,7 @@ public sealed class PostsRepository(IDbConnectionFactory dbf)
         if (posts.Count == 0)
             return;
 
-        await using var conn = (DbConnection)dbf.Create();
+        await using var conn = dbf.Create();
         await conn.OpenAsync(ct);
         await using var tx = await conn.BeginTransactionAsync(ct);
 

@@ -1,4 +1,3 @@
-using System.Data.Common;
 using Dapper;
 using Domain.Comments;
 using Infrastructure.Persistence.ConnectionFactory;
@@ -9,7 +8,7 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
 {
   public async Task<Comment> CreateRoot(long postId, Guid userId, string body, CancellationToken ct)
   {
-    await using var conn = (DbConnection)dbf.Create();
+    await using var conn = dbf.Create();
     await conn.OpenAsync(ct);
     await using var tx = await conn.BeginTransactionAsync(ct);
 
@@ -50,7 +49,7 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
 
   public async Task<Comment> Reply(long parentCommentId, Guid userId, string body, CancellationToken ct)
   {
-    await using var conn = (DbConnection)dbf.Create();
+    await using var conn = dbf.Create();
     await conn.OpenAsync(ct);
     await using var tx = await conn.BeginTransactionAsync(ct);
 
@@ -152,7 +151,7 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
 
   public async Task<bool> Delete(long commentId, Guid userId, CancellationToken ct)
   {
-    await using var conn = (DbConnection)dbf.Create();
+    await using var conn = dbf.Create();
     await conn.OpenAsync(ct);
     await using var tx = await conn.BeginTransactionAsync(ct);
 

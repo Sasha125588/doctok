@@ -1,8 +1,8 @@
-using System.Data;
+using System.Data.Common;
 
 namespace Infrastructure.Persistence.ConnectionFactory;
 
 public interface IDbConnectionFactory
 {
-    IDbConnection Create();
+    DbConnection Create();
 }

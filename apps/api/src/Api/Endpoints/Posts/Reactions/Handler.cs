@@ -12,7 +12,7 @@ public sealed class Handler(PostReactionsRepository postReactionsRepo) : IHandle
     var reactionResult = await postReactionsRepo.Toggle(
       command.PostId,
       command.UserId,
-      command.Value.ToString().ToLowerInvariant(),
+      command.Value,
       ct);
 
     if (reactionResult is null)
