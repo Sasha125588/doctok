@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import LangSwitcher from '~/components/lang/LangSwitcher.vue'
-import PostCarousel from '~/components/topic/PostCarousel.vue'
 import { useLang } from '~/composables/useLang'
 import { useTopicPosts } from '~/composables/useTopicPosts'
 
@@ -18,8 +17,6 @@ const queryOptions = computed(() => ({
 
 const { state } = useTopicPosts(queryOptions)
 const topicTitle = computed(() => state.posts.value[0]?.topicTitle ?? slug.value)
-
-const swiperKey = computed(() => `${slug.value}:${lang.value}`)
 </script>
 
 <template>
@@ -37,25 +34,6 @@ const swiperKey = computed(() => `${slug.value}:${lang.value}`)
         {{ topicTitle }}
       </div>
       <LangSwitcher />
-    </div>
-
-    <PostCarousel
-      v-if="state.posts.value.length"
-      :key="swiperKey"
-      :posts="state.posts.value"
-      :initial-index="0"
-    />
-    <div
-      v-else-if="state.isLoading"
-      class="flex h-full items-center justify-center"
-    >
-      <div class="font-mono text-sm text-[var(--text-secondary)]">loading...</div>
-    </div>
-    <div
-      v-else
-      class="flex h-full items-center justify-center"
-    >
-      <div class="font-mono text-sm text-[var(--text-secondary)]">topic not found</div>
     </div>
   </div>
 </template>
