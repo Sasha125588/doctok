@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
+import { useInfiniteQuery, useMutation } from '@tanstack/vue-query'
 import {
   meSavedPostsCreateMutation,
   meSavedPostsDeleteMutation,
@@ -40,7 +40,6 @@ const savedPostsPageSize = 10
 
 export const useServerSavedPosts = ({ enabled }: UseServerSavedPostsOptions) => {
   const { lang } = useLang()
-  const queryClient = useQueryClient()
 
   const getTopicSlug = (meta: Record<string, unknown> | undefined) =>
     typeof meta?.topicSlug === 'string' ? meta.topicSlug : undefined
@@ -61,7 +60,7 @@ export const useServerSavedPosts = ({ enabled }: UseServerSavedPostsOptions) => 
     SavedPostMutationContext
   >({
     ...meSavedPostsCreateMutation(),
-    onMutate: async (variables) => {
+    onMutate: async (variables, context) => {
       const postId = +variables.body.postId
       const topicSlug = getTopicSlug(variables.meta)
 
@@ -69,19 +68,19 @@ export const useServerSavedPosts = ({ enabled }: UseServerSavedPostsOptions) => 
 
       const target = { postId, topicSlug, lang: lang.value }
 
-      await cancelTopicPostCacheQuery(queryClient, target)
+      await cancelTopicPostCacheQuery(context.client, target)
 
       return {
-        patch: setPostSavedInTopicCache(queryClient, target, true),
+        patch: setPostSavedInTopicCache(context.client, target, true),
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
+    onSuccess: (_data, _variables, _onMutateResult, context) => {
+      context.client.invalidateQueries({
         queryKey: meSavedPostsListInfiniteQueryKey({ query: { limit: savedPostsPageSize } }),
       })
     },
-    onError(_err, _variables, onMutateResult) {
-      rollbackPostSavedInTopicCache(queryClient, onMutateResult?.patch ?? null)
+    onError(_err, _variables, onMutateResult, context) {
+      rollbackPostSavedInTopicCache(context.client, onMutateResult?.patch ?? null)
     },
   })
 
@@ -92,7 +91,7 @@ export const useServerSavedPosts = ({ enabled }: UseServerSavedPostsOptions) => 
     SavedPostMutationContext
   >({
     ...meSavedPostsDeleteMutation(),
-    onMutate: async (variables) => {
+    onMutate: async (variables, context) => {
       const postId = +variables.path.postId
       const topicSlug = getTopicSlug(variables.meta)
 
@@ -100,19 +99,19 @@ export const useServerSavedPosts = ({ enabled }: UseServerSavedPostsOptions) => 
 
       const target = { postId, topicSlug, lang: lang.value }
 
-      await cancelTopicPostCacheQuery(queryClient, target)
+      await cancelTopicPostCacheQuery(context.client, target)
 
       return {
-        patch: setPostSavedInTopicCache(queryClient, target, false),
+        patch: setPostSavedInTopicCache(context.client, target, false),
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
+    onSuccess: (_data, _variables, _onMutateResult, context) => {
+      context.client.invalidateQueries({
         queryKey: meSavedPostsListInfiniteQueryKey({ query: { limit: savedPostsPageSize } }),
       })
     },
-    onError(_err, _variables, onMutateResult) {
-      rollbackPostSavedInTopicCache(queryClient, onMutateResult?.patch ?? null)
+    onError(_err, _variables, onMutateResult, context) {
+      rollbackPostSavedInTopicCache(context.client, onMutateResult?.patch ?? null)
     },
   })
 

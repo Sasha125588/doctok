@@ -1,5 +1,5 @@
 import { postsReactionsToggleMutation, topicsGetPostsQueryKey } from '#api/@tanstack/vue-query.gen'
-import { useMutation, useQueryClient } from '@tanstack/vue-query'
+import { useMutation } from '@tanstack/vue-query'
 
 import type { ReactionValue, TopicsGetPostsResponse } from '#api/types.gen'
 
@@ -21,22 +21,20 @@ export const useVote = (options: UseVoteOptions) => {
       query: { slug: options.topicSlug, lang: lang.value },
     })
 
-  const queryClient = useQueryClient()
-
   const voteMutation = useMutation({
     ...postsReactionsToggleMutation(),
 
-    onMutate: async (variables) => {
+    onMutate: async (variables, context) => {
       const queryKey = getQueryKey()
 
       const postId = variables.path.postId
       const nextVote = variables.body.value
 
-      await queryClient.cancelQueries({ queryKey })
+      await context.client.cancelQueries({ queryKey })
 
-      const previousData = queryClient.getQueryData<TopicsGetPostsResponse>(queryKey)
+      const previousData = context.client.getQueryData<TopicsGetPostsResponse>(queryKey)
 
-      queryClient.setQueryData<TopicsGetPostsResponse>(queryKey, (oldData) => {
+      context.client.setQueryData<TopicsGetPostsResponse>(queryKey, (oldData) => {
         if (!oldData) return oldData
 
         return {
@@ -85,12 +83,12 @@ export const useVote = (options: UseVoteOptions) => {
       return { previousData, queryKey }
     },
 
-    onSuccess(data, variables) {
+    onSuccess(data, variables, _onMutateResult, context) {
       const queryKey = getQueryKey()
 
       const postId = variables.path.postId
 
-      queryClient.setQueryData<TopicsGetPostsResponse>(queryKey, (oldData) => {
+      context.client.setQueryData<TopicsGetPostsResponse>(queryKey, (oldData) => {
         if (!oldData) return oldData
 
         return {
@@ -108,10 +106,10 @@ export const useVote = (options: UseVoteOptions) => {
         }
       })
     },
-    onError(_err, _variables, onMutateResult) {
+    onError(_err, _variables, onMutateResult, context) {
       if (!onMutateResult?.previousData || !onMutateResult.queryKey) return
 
-      queryClient.setQueryData(onMutateResult.queryKey, onMutateResult.previousData)
+      context.client.setQueryData(onMutateResult.queryKey, onMutateResult.previousData)
     },
   })
 

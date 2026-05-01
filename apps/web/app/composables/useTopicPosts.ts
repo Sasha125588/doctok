@@ -29,8 +29,8 @@ export function useTopicPosts(options: Ref<Options<TopicsGetPostsData>>) {
   const { variant } = usePostContentVariant()
 
   const query = useQuery(() => ({
-    ...topicsGetPostsOptions(options.value),
     enabled: canFetch.value,
+    ...topicsGetPostsOptions(options.value),
   }))
 
   const contentQueries = useQueries({
@@ -104,16 +104,16 @@ export function useTopicPosts(options: Ref<Options<TopicsGetPostsData>>) {
   const shouldResolve = computed(() => isTopicNotFound.value && canFetch.value)
 
   const resolveQuery = useQuery(() => ({
+    enabled: shouldResolve.value,
+    retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: Infinity,
     ...resolveMdnOptions({
       query: {
         externalRef: options.value.query.slug.replace(/^mdn\//, ''),
         lang: options.value.query.lang,
       },
     }),
-    enabled: shouldResolve.value,
-    retry: false,
-    refetchOnWindowFocus: false,
-    staleTime: Infinity,
   }))
 
   const shouldOpenSse = computed(

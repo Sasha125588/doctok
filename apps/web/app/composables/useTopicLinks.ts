@@ -6,8 +6,8 @@ import type { TopicLink, TopicsGetLinksData } from '#api/types.gen'
 
 export function useTopicLinks(options: Ref<Options<TopicsGetLinksData>>, enabled: Ref<boolean>) {
   const query = useQuery(() => ({
-    ...topicsGetLinksOptions(options.value),
     enabled: enabled.value,
+    ...topicsGetLinksOptions(options.value),
   }))
 
   const links = computed<TopicLink[]>(() => query.data.value ?? [])
