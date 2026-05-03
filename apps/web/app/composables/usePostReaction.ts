@@ -1,32 +1,24 @@
 import { postsReactionsToggleMutation, topicsGetPostsQueryKey } from '#api/@tanstack/vue-query.gen'
-import { useMutation } from '@tanstack/vue-query'
+import { type QueryKey, useMutation } from '@tanstack/vue-query'
 
 import type { ReactionValue, TopicsGetPostsResponse } from '#api/types.gen'
 
-export interface UseVoteOptions {
-  postId: number
-  topicSlug: string
-}
-
-export interface UseVoteContext {
-  queryKey: ReturnType<typeof topicsGetPostsQueryKey>
+export interface PostReactionMutationContext {
+  queryKey: QueryKey
   previousData?: TopicsGetPostsResponse
 }
 
-export const useVote = (options: UseVoteOptions) => {
+export const usePostReaction = (topicSlug: string) => {
   const { lang } = useLang()
 
-  const getQueryKey = () =>
-    topicsGetPostsQueryKey({
-      query: { slug: options.topicSlug, lang: lang.value },
-    })
+  const queryKey = topicsGetPostsQueryKey({
+    query: { slug: topicSlug, lang: lang.value },
+  })
 
-  const voteMutation = useMutation({
+  const postReactionMutation = useMutation({
     ...postsReactionsToggleMutation(),
 
     onMutate: async (variables, context) => {
-      const queryKey = getQueryKey()
-
       const postId = variables.path.postId
       const nextVote = variables.body.value
 
@@ -82,46 +74,41 @@ export const useVote = (options: UseVoteOptions) => {
 
       return { previousData, queryKey }
     },
-
-    onSuccess(data, variables, _onMutateResult, context) {
-      const queryKey = getQueryKey()
-
+    onSuccess(data, variables, onMutateResult, context) {
       const postId = variables.path.postId
 
-      context.client.setQueryData<TopicsGetPostsResponse>(queryKey, (oldData) => {
+      context.client.setQueryData<TopicsGetPostsResponse>(onMutateResult.queryKey, (oldData) => {
         if (!oldData) return oldData
 
         return {
           ...oldData,
-          items: oldData.items.map((post) =>
-            +post.id === postId
-              ? {
-                  ...post,
-                  likeCount: data.likeCount,
-                  dislikeCount: data.dislikeCount,
-                  myVote: data.myVote,
-                }
-              : post
-          ),
+          items: oldData.items.map((post) => {
+            if (+post.id !== postId) return post
+
+            return {
+              ...post,
+              likeCount: data.likeCount,
+              dislikeCount: data.dislikeCount,
+              myVote: data.myVote,
+            }
+          }),
         }
       })
     },
     onError(_err, _variables, onMutateResult, context) {
-      if (!onMutateResult?.previousData || !onMutateResult.queryKey) return
+      if (!onMutateResult?.previousData) return
 
       context.client.setQueryData(onMutateResult.queryKey, onMutateResult.previousData)
     },
   })
 
-  const onVote = (value: ReactionValue) =>
-    voteMutation.mutate({
-      path: { postId: options.postId },
+  const mutatePostReaction = (postId: number, value: ReactionValue) =>
+    postReactionMutation.mutate({
+      path: { postId },
       body: { value },
     })
 
   return {
-    functions: {
-      onVote,
-    },
+    mutatePostReaction,
   }
 }

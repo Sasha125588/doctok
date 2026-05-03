@@ -12,7 +12,7 @@ export default defineNuxtConfig({
 
   vite: {
     optimizeDeps: {
-      include: ['swiper/modules', 'swiper/vue', '@tanstack/vue-query', 'valibot'],
+      include: ['@tanstack/vue-query', 'valibot', 'lucide-vue-next', 'clsx', 'tailwind-merge'],
     },
   },
 

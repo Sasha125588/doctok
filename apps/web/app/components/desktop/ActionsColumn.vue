@@ -12,7 +12,7 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-  onVote: [value: ReactionValue]
+  onPostReaction: [value: ReactionValue]
   onToggleSave: []
   onOpenNote: []
   onOpenComments: []
@@ -31,7 +31,7 @@ const emit = defineEmits<{
       :while-tap="{ scale: 0.9 }"
       :while-hover="{ scale: 1.08 }"
       :transition="{ type: 'spring', stiffness: 400, damping: 22 }"
-      @click="emit('onVote', 'like')"
+      @click="emit('onPostReaction', 'like')"
     >
       <Icon
         name="lucide:heart"

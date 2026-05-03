@@ -89,6 +89,7 @@ import type {
   TopicsStreamData,
   TopicsStreamError,
 } from '../types.gen'
+import type { PostReactionMutationContext } from '~/composables/usePostReaction'
 
 /**
  * Enqueues batch MDN fetch_raw jobs (dev/admin)
@@ -366,13 +367,13 @@ export const postsReactionsToggleMutation = (
   PostsReactionsToggleResponse,
   PostsReactionsToggleError,
   Options<PostsReactionsToggleData>,
-  UseVoteContext
+  PostReactionMutationContext
 > => {
   const mutationOptions: UseMutationOptions<
     PostsReactionsToggleResponse,
     PostsReactionsToggleError,
     Options<PostsReactionsToggleData>,
-    UseVoteContext
+    PostReactionMutationContext
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await postsReactionsToggle({

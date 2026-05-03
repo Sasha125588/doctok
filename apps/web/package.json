@@ -31,7 +31,6 @@
     "nuxt-svgo": "4.2.6",
     "reka-ui": "^2.9.6",
     "shadcn-nuxt": "^2.6.2",
-    "swiper": "^12.1.4",
     "tailwind-merge": "^3.5.0",
     "valibot": "^1.2.0",
     "vue": "^3.5.33",

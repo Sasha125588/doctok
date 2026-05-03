@@ -7,7 +7,7 @@ import CardMeta from './CardMeta.vue'
 import RelatedTags from './RelatedTags.vue'
 import PostCardBody from '~/components/post/PostCardBody.vue'
 import { useNotes } from '~/composables/useNotes'
-import { useVote } from '~/composables/useVote'
+import { usePostReaction } from '~/composables/usePostReaction'
 
 import type { ReactionValue, TopicPostView } from '#api/types.gen'
 
@@ -23,22 +23,21 @@ const emit = defineEmits<{
 }>()
 
 const { copy } = useClipboard()
-const { share, isSupported: isShareSupported } = useShare()
+const { share, isSupported } = useShare()
 
 const { isSaved, toggle } = useSavedPosts()
 const { has: hasNote } = useNotes()
 
-const { functions } = useVote({
-  postId: +props.post.id,
-  topicSlug: props.post.topicSlug,
-})
+const { mutatePostReaction } = usePostReaction(props.post.topicSlug)
+
+const onPostReaction = (value: ReactionValue) => mutatePostReaction(+props.post.id, value)
 
 const onToggleSave = () => toggle(props.post)
 
-async function onShare() {
+const onShare = async () => {
   const url = `${window.location.origin}/topic/${props.post.topicSlug}`
 
-  if (isShareSupported.value) {
+  if (isSupported.value) {
     try {
       await share({
         title: props.post.title,
@@ -89,7 +88,7 @@ async function onShare() {
         :comment-count="+post.commentCount"
         :is-saved="isSaved(post)"
         :has-note="hasNote(+post.id)"
-        @on-vote="functions.onVote"
+        @on-post-reaction="onPostReaction"
         @on-toggle-save="onToggleSave"
         @on-open-note="emit('openNotes')"
         @on-open-comments="emit('openComments')"
