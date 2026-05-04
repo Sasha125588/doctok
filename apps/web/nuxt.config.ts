@@ -1,8 +1,6 @@
 import path from 'node:path'
 
-function resolve(filePath: string) {
-  return path.resolve(__dirname, filePath)
-}
+const resolve = (filePath: string) => path.resolve(__dirname, filePath)
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -12,7 +10,14 @@ export default defineNuxtConfig({
 
   vite: {
     optimizeDeps: {
-      include: ['@tanstack/vue-query', 'valibot', 'lucide-vue-next', 'clsx', 'tailwind-merge'],
+      include: [
+        '@tanstack/vue-query',
+        'valibot',
+        'lucide-vue-next',
+        'clsx',
+        'tailwind-merge',
+        'date-fns',
+      ],
     },
   },
 
