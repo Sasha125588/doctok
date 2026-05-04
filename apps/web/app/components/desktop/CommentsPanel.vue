@@ -5,13 +5,15 @@ import DesktopSidePanel from './DesktopSidePanel.vue'
 import { useComments } from '~/composables/useComments'
 import { useFeedView } from '~/composables/useFeedView'
 
+import type { ReactionValue } from '#api/types.gen'
+
 const props = defineProps<{ activePostId: number; topicSlug: string }>()
 
 const { activePanel } = useFeedView()
 
 const activePostId = computed(() => props.activePostId)
 const topicSlug = computed(() => props.topicSlug)
-const { comments, isLoading, isSending, send } = useComments(activePostId, topicSlug)
+const { comments, isLoading, isSending, send, vote } = useComments(activePostId, topicSlug)
 
 const draft = ref('')
 const isOpen = computed(() => activePanel.value === 'comments')
@@ -27,7 +29,11 @@ function initial(str: string | undefined) {
   return (str?.[0] ?? '?').toUpperCase()
 }
 
-const formatTime = (iso: string | undefined) => (iso ? format(new Date(iso), 'HH:mm') : '')
+function toggleReaction(commentId: number, value: ReactionValue) {
+  vote(commentId, value)
+}
+
+const formatTime = (iso: string) => format(new Date(iso), 'HH:mm')
 </script>
 
 <template>
@@ -59,6 +65,36 @@ const formatTime = (iso: string | undefined) => (iso ? format(new Date(iso), 'HH
           <span class="time">{{ formatTime(c.createdAt) }}</span>
         </div>
         <div class="text">{{ c.body }}</div>
+        <div class="reactions">
+          <button
+            type="button"
+            class="reaction"
+            :class="{ 'reaction--liked': c.myVote === 'like' }"
+            :aria-pressed="c.myVote === 'like'"
+            aria-label="Like comment"
+            @click="toggleReaction(+c.id, 'like')"
+          >
+            <Icon
+              name="lucide:heart"
+              class="reaction-icon"
+            />
+            <span>{{ c.likeCount }}</span>
+          </button>
+          <button
+            type="button"
+            class="reaction"
+            :class="{ 'reaction--disliked': c.myVote === 'dislike' }"
+            :aria-pressed="c.myVote === 'dislike'"
+            aria-label="Dislike comment"
+            @click="toggleReaction(+c.id, 'dislike')"
+          >
+            <Icon
+              name="lucide:thumbs-down"
+              class="reaction-icon"
+            />
+            <span>{{ c.dislikeCount }}</span>
+          </button>
+        </div>
       </div>
     </div>
     <div class="input-wrap">
@@ -134,6 +170,52 @@ const formatTime = (iso: string | undefined) => (iso ? format(new Date(iso), 'HH
   color: #3a3a3a;
   line-height: 1.6;
   padding-left: 24px;
+}
+.reactions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding-left: 24px;
+}
+.reaction {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 32px;
+  height: 18px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--dt-text-quaternary);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    background 0.15s,
+    border-color 0.15s;
+}
+.reaction:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--dt-rail-active-bg) 65%, transparent);
+  color: var(--dt-text-tertiary);
+}
+.reaction:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+.reaction-icon {
+  width: 10px;
+  height: 10px;
+}
+.reaction--liked {
+  color: #d14d4d;
+  background: rgba(209, 77, 77, 0.1);
+  border-color: rgba(209, 77, 77, 0.18);
+}
+.reaction--disliked {
+  color: #3d72c6;
+  background: rgba(61, 114, 198, 0.1);
+  border-color: rgba(61, 114, 198, 0.18);
 }
 .input-wrap {
   padding: 10px 12px;

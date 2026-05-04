@@ -20,7 +20,7 @@ export const usePostReaction = (topicSlug: string) => {
 
     onMutate: async (variables, context) => {
       const postId = variables.path.postId
-      const nextVote = variables.body.value
+      const nextReaction = variables.body.value
 
       await context.client.cancelQueries({ queryKey })
 
@@ -40,7 +40,7 @@ export const usePostReaction = (topicSlug: string) => {
             let dislikeCount = +post.dislikeCount
             let myVote = prev
 
-            if (nextVote === 'like') {
+            if (nextReaction === 'like') {
               if (prev === 'like') {
                 likeCount--
                 myVote = 'none'
@@ -51,7 +51,7 @@ export const usePostReaction = (topicSlug: string) => {
               }
             }
 
-            if (nextVote === 'dislike') {
+            if (nextReaction === 'dislike') {
               if (prev === 'dislike') {
                 dislikeCount--
                 myVote = 'none'

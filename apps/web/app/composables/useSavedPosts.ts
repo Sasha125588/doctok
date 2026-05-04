@@ -5,57 +5,39 @@ import type { SavedPostView, TopicPostView } from '~~/generated/api/types.gen'
 
 export const useSavedPosts = () => {
   const session = useSession()
+
   const guest = useGuestSavedPosts()
+  const server = useServerSavedPosts()
 
   const isAuthenticated = computed(
     () => session.isSuccess.value && Boolean(session.data.value?.userId)
   )
-  const server = useServerSavedPosts({
-    enabled: isAuthenticated,
-  })
 
   const savedPosts = computed(() =>
     isAuthenticated.value ? server.savedPosts.value : guest.savedPosts.value
   )
 
-  const isSaved = (post: TopicPostView) => {
-    if (isAuthenticated.value) {
-      return post.isSaved
-    }
+  const isSaved = (post: TopicPostView) =>
+    isAuthenticated.value ? post.isSaved : guest.isSaved(+post.id)
 
-    return guest.isSaved(+post.id)
-  }
+  const save = async (post: TopicPostView) =>
+    isAuthenticated.value
+      ? await server.save({ postId: post.id, topicSlug: post.topicSlug })
+      : guest.save(post)
 
-  const save = async (post: TopicPostView) => {
-    if (isAuthenticated.value) {
-      await server.save({ postId: post.id, topicSlug: post.topicSlug })
-      return
-    }
+  const remove = async (post: SavedPostView) =>
+    isAuthenticated.value
+      ? await server.remove({ postId: post.postId, topicSlug: post.topicSlug })
+      : guest.remove(+post.postId)
 
-    guest.save(post)
-  }
-
-  const remove = async (post: SavedPostView) => {
-    if (isAuthenticated.value) {
-      await server.remove({ postId: post.postId, topicSlug: post.topicSlug })
-      return
-    }
-
-    guest.remove(+post.postId)
-  }
-
-  const toggle = async (post: TopicPostView) => {
-    if (isAuthenticated.value) {
-      await server.toggle({ postId: post.id, topicSlug: post.topicSlug }, post.isSaved)
-      return
-    }
-
-    guest.toggle(post)
-  }
+  const toggle = async (post: TopicPostView) =>
+    isAuthenticated.value
+      ? await server.toggle({ postId: post.id, topicSlug: post.topicSlug }, post.isSaved)
+      : guest.toggle(post)
 
   const clear = async () => {
     // if (isAuthenticated.value) {
-    //   await server.remove(postId)
+    //   await server.сlear()
     //   return
     // }
 

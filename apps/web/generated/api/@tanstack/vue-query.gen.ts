@@ -90,6 +90,7 @@ import type {
   TopicsStreamError,
 } from '../types.gen'
 import type { PostReactionMutationContext } from '~/composables/usePostReaction'
+import type { SavedPostMutationContext } from '~/composables/useServerSavedPosts'
 
 /**
  * Enqueues batch MDN fetch_raw jobs (dev/admin)
@@ -494,12 +495,14 @@ export const meSavedPostsCreateMutation = (
 ): UseMutationOptions<
   MeSavedPostsCreateResponse,
   MeSavedPostsCreateError,
-  Options<MeSavedPostsCreateData>
+  Options<MeSavedPostsCreateData>,
+  SavedPostMutationContext
 > => {
   const mutationOptions: UseMutationOptions<
     MeSavedPostsCreateResponse,
     MeSavedPostsCreateError,
-    Options<MeSavedPostsCreateData>
+    Options<MeSavedPostsCreateData>,
+    SavedPostMutationContext
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await meSavedPostsCreate({
@@ -785,12 +788,14 @@ export const commentsReactionsToggleMutation = (
 ): UseMutationOptions<
   CommentsReactionsToggleResponse,
   CommentsReactionsToggleError,
-  Options<CommentsReactionsToggleData>
+  Options<CommentsReactionsToggleData>,
+  UseCommentReactionContext
 > => {
   const mutationOptions: UseMutationOptions<
     CommentsReactionsToggleResponse,
     CommentsReactionsToggleError,
-    Options<CommentsReactionsToggleData>
+    Options<CommentsReactionsToggleData>,
+    UseCommentReactionContext
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await commentsReactionsToggle({
@@ -881,12 +886,14 @@ export const postsCommentsCreateMutation = (
 ): UseMutationOptions<
   PostsCommentsCreateResponse,
   PostsCommentsCreateError,
-  Options<PostsCommentsCreateData>
+  Options<PostsCommentsCreateData>,
+  UseCommentCreateContext
 > => {
   const mutationOptions: UseMutationOptions<
     PostsCommentsCreateResponse,
     PostsCommentsCreateError,
-    Options<PostsCommentsCreateData>
+    Options<PostsCommentsCreateData>,
+    UseCommentCreateContext
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await postsCommentsCreate({

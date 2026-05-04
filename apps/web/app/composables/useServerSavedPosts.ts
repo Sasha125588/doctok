@@ -1,51 +1,54 @@
-import { useInfiniteQuery, useMutation } from '@tanstack/vue-query'
+import { type QueryKey, useInfiniteQuery, useMutation } from '@tanstack/vue-query'
+import { createSharedComposable } from '@vueuse/core'
 import {
   meSavedPostsCreateMutation,
   meSavedPostsDeleteMutation,
   meSavedPostsListInfiniteOptions,
   meSavedPostsListInfiniteQueryKey,
+  topicsGetPostsQueryKey,
 } from '~~/generated/api/@tanstack/vue-query.gen'
-
-import {
-  type SavedPostTopicCachePatch,
-  cancelTopicPostCacheQuery,
-  rollbackPostSavedInTopicCache,
-  setPostSavedInTopicCache,
-} from './savedPostsCache'
 
 import type { Options } from '~~/generated/api/sdk.gen'
 import type {
-  MeSavedPostsCreateData,
-  MeSavedPostsCreateError,
-  MeSavedPostsCreateResponse,
   MeSavedPostsDeleteData,
   MeSavedPostsDeleteError,
   MeSavedPostsDeleteResponse,
   SavePostRequest,
+  TopicsGetPostsResponse,
 } from '~~/generated/api/types.gen'
 
-export interface UseServerSavedPostsOptions {
-  enabled: Ref<boolean>
+export interface SavedPostMutationContext {
+  queryKey?: QueryKey
+  previousData?: TopicsGetPostsResponse
 }
 
 export interface ServerSavedPostRequest extends SavePostRequest {
   topicSlug: string
 }
 
-interface SavedPostMutationContext {
-  patch: SavedPostTopicCachePatch | null
-}
-
 const savedPostsPageSize = 10
 
-export const useServerSavedPosts = ({ enabled }: UseServerSavedPostsOptions) => {
+function getTopicSlugFromMeta(meta: Record<string, unknown> | undefined) {
+  const raw = meta?.topicSlug
+  return typeof raw === 'string' ? raw.trim() : ''
+}
+
+function topicsListQueryKey() {
+  return meSavedPostsListInfiniteQueryKey({
+    query: { limit: savedPostsPageSize },
+  })
+}
+
+function useServerSavedPostsImpl() {
+  const session = useSession()
   const { lang } = useLang()
 
-  const getTopicSlug = (meta: Record<string, unknown> | undefined) =>
-    typeof meta?.topicSlug === 'string' ? meta.topicSlug : undefined
+  const enabled = computed(() => session.isSuccess.value && Boolean(session.data.value?.userId))
 
   const query = useInfiniteQuery({
-    ...meSavedPostsListInfiniteOptions({ query: { limit: savedPostsPageSize } }),
+    ...meSavedPostsListInfiniteOptions({
+      query: { limit: savedPostsPageSize },
+    }),
     enabled,
     initialPageParam: '',
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
@@ -53,34 +56,49 @@ export const useServerSavedPosts = ({ enabled }: UseServerSavedPostsOptions) => 
 
   const savedPosts = computed(() => query.data.value?.pages.flatMap((page) => page.items) ?? [])
 
-  const saveMutation = useMutation<
-    MeSavedPostsCreateResponse,
-    MeSavedPostsCreateError,
-    Options<MeSavedPostsCreateData>,
-    SavedPostMutationContext
-  >({
+  const saveMutation = useMutation({
     ...meSavedPostsCreateMutation(),
     onMutate: async (variables, context) => {
       const postId = +variables.body.postId
-      const topicSlug = getTopicSlug(variables.meta)
+      const topicSlug = getTopicSlugFromMeta(variables.meta)
+      if (!topicSlug) return {}
 
-      if (!topicSlug) return { patch: null }
+      const queryKey = topicsGetPostsQueryKey({
+        query: { slug: topicSlug, lang: lang.value },
+      })
 
-      const target = { postId, topicSlug, lang: lang.value }
+      await context.client.cancelQueries({ queryKey })
 
-      await cancelTopicPostCacheQuery(context.client, target)
+      const previousData = context.client.getQueryData<TopicsGetPostsResponse>(queryKey)
+
+      context.client.setQueryData<TopicsGetPostsResponse>(queryKey, (oldData) => {
+        if (!oldData) return oldData
+
+        return {
+          ...oldData,
+          items: oldData.items.map((post) => {
+            if (+post.id !== postId) return post
+
+            return {
+              ...post,
+              isSaved: true,
+            }
+          }),
+        }
+      })
 
       return {
-        patch: setPostSavedInTopicCache(context.client, target, true),
+        previousData,
+        queryKey,
       }
     },
     onSuccess: (_data, _variables, _onMutateResult, context) => {
-      context.client.invalidateQueries({
-        queryKey: meSavedPostsListInfiniteQueryKey({ query: { limit: savedPostsPageSize } }),
-      })
+      context.client.invalidateQueries({ queryKey: topicsListQueryKey() })
     },
-    onError(_err, _variables, onMutateResult, context) {
-      rollbackPostSavedInTopicCache(context.client, onMutateResult?.patch ?? null)
+    onError: (_err, _variables, onMutateResult, context) => {
+      if (!onMutateResult?.queryKey) return
+
+      context.client.setQueryData(onMutateResult.queryKey, onMutateResult.previousData)
     },
   })
 
@@ -93,25 +111,46 @@ export const useServerSavedPosts = ({ enabled }: UseServerSavedPostsOptions) => 
     ...meSavedPostsDeleteMutation(),
     onMutate: async (variables, context) => {
       const postId = +variables.path.postId
-      const topicSlug = getTopicSlug(variables.meta)
+      const topicSlug = getTopicSlugFromMeta(variables.meta)
+      if (!topicSlug) return {}
 
-      if (!topicSlug) return { patch: null }
+      const queryKey = topicsGetPostsQueryKey({
+        query: { slug: topicSlug, lang: lang.value },
+      })
 
-      const target = { postId, topicSlug, lang: lang.value }
+      await context.client.cancelQueries({ queryKey })
 
-      await cancelTopicPostCacheQuery(context.client, target)
+      const previousData = context.client.getQueryData<TopicsGetPostsResponse>(queryKey)
+
+      context.client.setQueryData<TopicsGetPostsResponse>(queryKey, (oldData) => {
+        if (!oldData) return oldData
+
+        return {
+          ...oldData,
+          items: oldData.items.map((post) => {
+            if (+post.id !== postId) return post
+
+            return {
+              ...post,
+              isSaved: false,
+            }
+          }),
+        }
+      })
 
       return {
-        patch: setPostSavedInTopicCache(context.client, target, false),
+        previousData,
+        queryKey,
       }
     },
     onSuccess: (_data, _variables, _onMutateResult, context) => {
-      context.client.invalidateQueries({
-        queryKey: meSavedPostsListInfiniteQueryKey({ query: { limit: savedPostsPageSize } }),
-      })
+      context.client.invalidateQueries({ queryKey: topicsListQueryKey() })
     },
-    onError(_err, _variables, onMutateResult, context) {
-      rollbackPostSavedInTopicCache(context.client, onMutateResult?.patch ?? null)
+
+    onError: (_err, _variables, onMutateResult, context) => {
+      if (!onMutateResult?.queryKey) return
+
+      context.client.setQueryData(onMutateResult.queryKey, onMutateResult.previousData)
     },
   })
 
@@ -132,3 +171,5 @@ export const useServerSavedPosts = ({ enabled }: UseServerSavedPostsOptions) => 
 
   return { savedPosts, save, remove, toggle, ...query }
 }
+
+export const useServerSavedPosts = createSharedComposable(useServerSavedPostsImpl)

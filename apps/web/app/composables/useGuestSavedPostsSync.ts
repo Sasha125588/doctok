@@ -3,15 +3,13 @@ import { useServerSavedPosts } from './useServerSavedPosts'
 
 export const useGuestSavedPostsSync = () => {
   const session = useSession()
+
   const guest = useGuestSavedPosts()
+  const server = useServerSavedPosts()
 
   const isAuthenticated = computed(
     () => session.isSuccess.value && Boolean(session.data.value?.userId)
   )
-
-  const server = useServerSavedPosts({
-    enabled: isAuthenticated,
-  })
 
   const isSyncing = useState('saved-posts:syncing-guest', () => false)
 
