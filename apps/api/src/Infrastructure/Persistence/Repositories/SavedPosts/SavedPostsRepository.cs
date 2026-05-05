@@ -35,7 +35,7 @@ public sealed class SavedPostsRepository(IDbConnectionFactory dbf)
                          limit @limit
                          """;
 
-    using var db = dbf.Create();
+    await using var db = dbf.Create();
 
     var parameters = new
     {
@@ -61,7 +61,7 @@ public sealed class SavedPostsRepository(IDbConnectionFactory dbf)
                          on conflict (user_id, post_id) do nothing
                          """;
 
-    using var db = dbf.Create();
+    await using var db = dbf.Create();
 
     var parameters = new
     {
@@ -83,7 +83,7 @@ public sealed class SavedPostsRepository(IDbConnectionFactory dbf)
                          returning post_id
                          """;
 
-    using var db = dbf.Create();
+    await using var db = dbf.Create();
 
     var parameters = new
     {
@@ -94,5 +94,19 @@ public sealed class SavedPostsRepository(IDbConnectionFactory dbf)
     var savedPostId = await db.ExecuteScalarAsync<long?>(new CommandDefinition(query, parameters, cancellationToken: ct));
 
     return savedPostId;
+  }
+
+  public async Task<int> Clear(Guid userId, CancellationToken ct)
+  {
+    const string query = """
+                         delete from public.saved_posts
+                         where user_id = @userId
+                         """;
+
+    await using var db = dbf.Create();
+
+    var affected = await db.ExecuteAsync(new CommandDefinition(query, new { userId }, cancellationToken: ct));
+
+    return affected;
   }
 }

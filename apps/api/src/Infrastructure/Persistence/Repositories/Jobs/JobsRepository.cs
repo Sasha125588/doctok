@@ -25,7 +25,7 @@ public sealed class JobsRepository(IDbConnectionFactory dbf)
 
         var payloadJson = JsonSerializer.Serialize(payload);
 
-        using var db = dbf.Create();
+        await using var db = dbf.Create();
         return await db.ExecuteScalarAsync<long>(
             new CommandDefinition(sql, new { jobType, jobKey, payload = payloadJson }, cancellationToken: ct));
     }
@@ -55,7 +55,7 @@ public sealed class JobsRepository(IDbConnectionFactory dbf)
                                      jb.attempts as Attempts
                            """;
 
-        using var db = dbf.Create();
+        await using var db = dbf.Create();
 
         var row = await db.QuerySingleOrDefaultAsync<DequeueRow>(new CommandDefinition(sql, cancellationToken: ct));
 
@@ -75,7 +75,7 @@ public sealed class JobsRepository(IDbConnectionFactory dbf)
                            where id = @jobId
                            """;
 
-        using var db = dbf.Create();
+        await using var db = dbf.Create();
         await db.ExecuteAsync(new CommandDefinition(sql, new { jobId }, cancellationToken: ct));
     }
 
@@ -89,7 +89,7 @@ public sealed class JobsRepository(IDbConnectionFactory dbf)
                            where id = @jobId
                            """;
 
-        using var db = dbf.Create();
+        await using var db = dbf.Create();
         await db.ExecuteAsync(new CommandDefinition(sql, new { jobId, error }, cancellationToken: ct));
     }
 
@@ -104,7 +104,7 @@ public sealed class JobsRepository(IDbConnectionFactory dbf)
                            where id = @jobId
                            """;
 
-        using var db = dbf.Create();
+        await using var db = dbf.Create();
         await db.ExecuteAsync(new CommandDefinition(sql, new { jobId, error, delay }, cancellationToken: ct));
     }
 
@@ -119,7 +119,7 @@ public sealed class JobsRepository(IDbConnectionFactory dbf)
                              and updated_at < now() - @staleAfter
                            """;
 
-        using var db = dbf.Create();
+        await using var db = dbf.Create();
         return await db.ExecuteAsync(new CommandDefinition(sql, new { staleAfter }, cancellationToken: ct));
     }
 

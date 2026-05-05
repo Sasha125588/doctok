@@ -29,7 +29,7 @@ public sealed class TopicLinksRepository(IDbConnectionFactory dbf)
                            )
                            """;
 
-        using var db = dbf.Create();
+        await using var db = dbf.Create();
 
         return (await db.QueryAsync<TopicLink>(
             new CommandDefinition(sql, new { slug, lang }, cancellationToken: ct))).ToList();

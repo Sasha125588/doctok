@@ -158,7 +158,7 @@ public sealed class CommentsRepository(IDbConnectionFactory dbf)
                        limit @limit
                        """;
 
-    using var db = dbf.Create();
+    await using var db = dbf.Create();
 
     var rows = await db.QueryAsync<CommentView>(
       new CommandDefinition(

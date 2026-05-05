@@ -69,7 +69,7 @@ public sealed class TopicsRepository(IDbConnectionFactory dbf)
                          limit @limit
                          """;
 
-    using var db = dbf.Create();
+    await using var db = dbf.Create();
 
     var parameters = new
     {
@@ -99,7 +99,7 @@ public sealed class TopicsRepository(IDbConnectionFactory dbf)
                          )
                          """;
 
-    using var db = dbf.Create();
+    await using var db = dbf.Create();
 
     return await db.ExecuteScalarAsync<bool>(new CommandDefinition(query, new { slug, lang }, cancellationToken: ct));
   }
@@ -114,7 +114,7 @@ public sealed class TopicsRepository(IDbConnectionFactory dbf)
                          returning id
                          """;
 
-      using var db = dbf.Create();
+      await using var db = dbf.Create();
       return await db.ExecuteScalarAsync<long>(
           new CommandDefinition(sql, new { slug, title }, cancellationToken: ct));
   }

@@ -50,7 +50,7 @@ public sealed class TopicFeedRepository(IDbConnectionFactory dbf)
                        limit @limit;
                        """;
 
-    using var db = dbf.Create();
+    await using var db = dbf.Create();
 
     var parameters = new
     {

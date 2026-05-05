@@ -13,7 +13,7 @@ public sealed class SourcesRepository(IDbConnectionFactory dbf)
                              where code = @code
                              """;
 
-        using var db = dbf.Create();
+        await using var db = dbf.Create();
         var id = await db.ExecuteScalarAsync<long?>(
             new CommandDefinition(query, new { code }, cancellationToken: ct));
 

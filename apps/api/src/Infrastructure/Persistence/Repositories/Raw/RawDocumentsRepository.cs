@@ -39,7 +39,7 @@ public sealed class RawDocumentsRepository(IDbConnectionFactory dbf)
                              returning id
                              """;
 
-        using var db = dbf.Create();
+        await using var db = dbf.Create();
         return await db.ExecuteScalarAsync<long>(
             new CommandDefinition(
                 query,
@@ -62,7 +62,7 @@ public sealed class RawDocumentsRepository(IDbConnectionFactory dbf)
                                and rd.external_ref = @externalRef
                              """;
 
-        using var db = dbf.Create();
+        await using var db = dbf.Create();
         return await db.QuerySingleOrDefaultAsync<RawDocumentForPosts>(
             new CommandDefinition(query, new { sourceId, lang, externalRef }, cancellationToken: ct));
     }

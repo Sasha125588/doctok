@@ -22,7 +22,7 @@ public sealed class ResolveRepository(IDbConnectionFactory dbf)
                           limit 1
                           """;
 
-      using var db = dbf.Create();
+      await using var db = dbf.Create();
       return await db.ExecuteScalarAsync<string>(
           new CommandDefinition(query, new { sourceId, lang, externalRef }, cancellationToken: ct));
     }

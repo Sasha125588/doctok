@@ -41,7 +41,7 @@ public sealed class RawLinksRepository(IDbConnectionFactory dbf)
 
         sb.Append(" on conflict (raw_document_id, kind, target_source_id, target_lang, target_external_ref) do nothing");
 
-        using var db = dbf.Create();
+        await using var db = dbf.Create();
         await db.ExecuteAsync(new CommandDefinition(sb.ToString(), parameters, cancellationToken: ct));
     }
 
@@ -76,7 +76,7 @@ public sealed class RawLinksRepository(IDbConnectionFactory dbf)
 
         sb.Append(" on conflict (raw_document_id, kind, url) do nothing");
 
-        using var db = dbf.Create();
+        await using var db = dbf.Create();
         await db.ExecuteAsync(new CommandDefinition(sb.ToString(), parameters, cancellationToken: ct));
     }
 }

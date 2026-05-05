@@ -122,7 +122,7 @@ public sealed class PostsRepository(IDbConnectionFactory dbf)
                            )
                            """;
 
-        using var db = dbf.Create();
+        await using var db = dbf.Create();
         return await db.ExecuteScalarAsync<bool>(
             new CommandDefinition(sql, new { rawDocumentId, lang }, cancellationToken: ct));
     }
@@ -148,7 +148,7 @@ public sealed class PostsRepository(IDbConnectionFactory dbf)
                            order by p.position, p.id
                            """;
 
-        using var db = dbf.Create();
+        await using var db = dbf.Create();
         return (await db.QueryAsync<PostOriginalForVariant>(
             new CommandDefinition(sql, new { rawDocumentId, lang }, cancellationToken: ct))).ToList();
     }
@@ -176,7 +176,7 @@ public sealed class PostsRepository(IDbConnectionFactory dbf)
                              and p.is_active = true
                            """;
 
-        using var db = dbf.Create();
+        await using var db = dbf.Create();
         return await db.QuerySingleOrDefaultAsync<PostContentView>(
             new CommandDefinition(sql, new { postId, variantCode }, cancellationToken: ct));
     }
@@ -209,7 +209,7 @@ public sealed class PostsRepository(IDbConnectionFactory dbf)
                              updated_at = now()
                            """;
 
-        using var db = dbf.Create();
+        await using var db = dbf.Create();
         await db.ExecuteAsync(new CommandDefinition(
             sql,
             new { postId, variantCode, title, body, bodyHtml, provider, model, promptVersion },

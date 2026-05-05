@@ -13,7 +13,7 @@ public sealed class TopicDocumentsRepository(IDbConnectionFactory dbf)
                            on conflict do nothing
                            """;
 
-        using var db = dbf.Create();
+        await using var db = dbf.Create();
         await db.ExecuteAsync(new CommandDefinition(sql, new { topicId, rawDocumentId }, cancellationToken: ct));
     }
 }
