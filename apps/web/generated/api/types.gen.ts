@@ -4,6 +4,10 @@ export type ClientOptions = {
   baseUrl: 'http://localhost:5005/' | (string & {})
 }
 
+export type ClearSavedPostsResponse = {
+  deletedCount: number | string
+}
+
 export type CommentsResponse = {
   items: Array<CommentView>
   nextCursor: null | string
@@ -426,6 +430,35 @@ export type PostsGetContentResponses = {
 }
 
 export type PostsGetContentResponse = PostsGetContentResponses[keyof PostsGetContentResponses]
+
+export type MeSavedPostsClearData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/api/me/saved-posts'
+}
+
+export type MeSavedPostsClearErrors = {
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+}
+
+export type MeSavedPostsClearError = MeSavedPostsClearErrors[keyof MeSavedPostsClearErrors]
+
+export type MeSavedPostsClearResponses = {
+  /**
+   * OK
+   */
+  200: ClearSavedPostsResponse
+}
+
+export type MeSavedPostsClearResponse = MeSavedPostsClearResponses[keyof MeSavedPostsClearResponses]
 
 export type MeSavedPostsListData = {
   body?: never

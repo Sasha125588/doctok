@@ -7,7 +7,7 @@ export default defineConfig({
     fileName: {
       suffix: '.gen',
     },
-    postProcess: ['oxfmt', 'oxlint'],
+    postProcess: ['oxfmt'],
   },
   plugins: [
     {

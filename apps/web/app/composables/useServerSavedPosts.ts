@@ -1,6 +1,7 @@
-import { type QueryKey, useInfiniteQuery, useMutation } from '@tanstack/vue-query'
+import { type Query, type QueryKey, useInfiniteQuery, useMutation } from '@tanstack/vue-query'
 import { createSharedComposable } from '@vueuse/core'
 import {
+  meSavedPostsClearMutation,
   meSavedPostsCreateMutation,
   meSavedPostsDeleteMutation,
   meSavedPostsListInfiniteOptions,
@@ -10,6 +11,12 @@ import {
 
 import type { Options } from '~~/generated/api/sdk.gen'
 import type {
+  MeSavedPostsClearData,
+  MeSavedPostsClearError,
+  MeSavedPostsClearResponse,
+  MeSavedPostsCreateData,
+  MeSavedPostsCreateError,
+  MeSavedPostsCreateResponse,
   MeSavedPostsDeleteData,
   MeSavedPostsDeleteError,
   MeSavedPostsDeleteResponse,
@@ -28,18 +35,17 @@ export interface ServerSavedPostRequest extends SavePostRequest {
 
 const savedPostsPageSize = 10
 
-function getTopicSlugFromMeta(meta: Record<string, unknown> | undefined) {
+const getTopicSlugFromMeta = (meta: Record<string, unknown> | undefined) => {
   const raw = meta?.topicSlug
   return typeof raw === 'string' ? raw.trim() : ''
 }
 
-function topicsListQueryKey() {
-  return meSavedPostsListInfiniteQueryKey({
+const savedPostsListQueryKey = () =>
+  meSavedPostsListInfiniteQueryKey({
     query: { limit: savedPostsPageSize },
   })
-}
 
-function useServerSavedPostsImpl() {
+const useServerSavedPostsImpl = () => {
   const session = useSession()
   const { lang } = useLang()
 
@@ -56,7 +62,12 @@ function useServerSavedPostsImpl() {
 
   const savedPosts = computed(() => query.data.value?.pages.flatMap((page) => page.items) ?? [])
 
-  const saveMutation = useMutation({
+  const saveMutation = useMutation<
+    MeSavedPostsCreateResponse,
+    MeSavedPostsCreateError,
+    Options<MeSavedPostsCreateData>,
+    SavedPostMutationContext
+  >({
     ...meSavedPostsCreateMutation(),
     onMutate: async (variables, context) => {
       const postId = +variables.body.postId
@@ -93,7 +104,7 @@ function useServerSavedPostsImpl() {
       }
     },
     onSuccess: (_data, _variables, _onMutateResult, context) => {
-      context.client.invalidateQueries({ queryKey: topicsListQueryKey() })
+      context.client.invalidateQueries({ queryKey: savedPostsListQueryKey() })
     },
     onError: (_err, _variables, onMutateResult, context) => {
       if (!onMutateResult?.queryKey) return
@@ -144,13 +155,46 @@ function useServerSavedPostsImpl() {
       }
     },
     onSuccess: (_data, _variables, _onMutateResult, context) => {
-      context.client.invalidateQueries({ queryKey: topicsListQueryKey() })
+      context.client.invalidateQueries({ queryKey: savedPostsListQueryKey() })
     },
 
     onError: (_err, _variables, onMutateResult, context) => {
       if (!onMutateResult?.queryKey) return
 
       context.client.setQueryData(onMutateResult.queryKey, onMutateResult.previousData)
+    },
+  })
+
+  const isTopicsGetPostsQuery = (query: Query) =>
+    (query.queryKey[0] as { _id: string })._id === 'topicsGetPosts'
+
+  const clearMutation = useMutation<
+    MeSavedPostsClearResponse,
+    MeSavedPostsClearError,
+    Options<MeSavedPostsClearData>
+  >({
+    ...meSavedPostsClearMutation(),
+    onSuccess: (_data, _variables, _onMutateResult, context) => {
+      context.client.invalidateQueries({ queryKey: savedPostsListQueryKey() })
+
+      context.client.setQueriesData<TopicsGetPostsResponse>(
+        { predicate: isTopicsGetPostsQuery },
+        (oldData) => {
+          if (!oldData) return oldData
+
+          return {
+            ...oldData,
+            items: oldData.items.map((post) => ({
+              ...post,
+              isSaved: false,
+            })),
+          }
+        }
+      )
+
+      context.client.invalidateQueries({
+        predicate: isTopicsGetPostsQuery,
+      })
     },
   })
 
@@ -169,7 +213,11 @@ function useServerSavedPostsImpl() {
   const toggle = (request: ServerSavedPostRequest, isSaved: boolean) =>
     isSaved ? remove(request) : save(request)
 
-  return { savedPosts, save, remove, toggle, ...query }
+  const clear = () => clearMutation.mutateAsync({})
+
+  const isClearing = computed(() => clearMutation.isPending.value)
+
+  return { savedPosts, save, remove, toggle, clear, isClearing, ...query }
 }
 
 export const useServerSavedPosts = createSharedComposable(useServerSavedPostsImpl)

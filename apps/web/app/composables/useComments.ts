@@ -9,11 +9,18 @@ import { type QueryKey, useMutation, useQuery } from '@tanstack/vue-query'
 
 import type {
   CommentView,
+  CommentsReactionsToggleData,
+  CommentsReactionsToggleError,
+  CommentsReactionsToggleResponse,
   CommentsResponse,
+  PostsCommentsCreateData,
+  PostsCommentsCreateError,
+  PostsCommentsCreateResponse,
   PostsCommentsListResponse,
   ReactionValue,
   TopicsGetPostsResponse,
 } from '#api/types.gen'
+import type { Options } from '~~/generated/api/sdk.gen'
 
 export interface UseCommentReactionContext {
   commentsQueryKey: QueryKey
@@ -44,7 +51,12 @@ export function useComments(postId: Ref<number>, topicSlug: Ref<string>) {
     })
   )
 
-  const createMutation = useMutation({
+  const createMutation = useMutation<
+    PostsCommentsCreateResponse,
+    PostsCommentsCreateError,
+    Options<PostsCommentsCreateData>,
+    UseCommentCreateContext
+  >({
     ...postsCommentsCreateMutation(),
     onMutate: async (variables, context) => {
       const postId = variables.path.postId
@@ -131,7 +143,12 @@ export function useComments(postId: Ref<number>, topicSlug: Ref<string>) {
     },
   })
 
-  const reactionMutation = useMutation({
+  const reactionMutation = useMutation<
+    CommentsReactionsToggleResponse,
+    CommentsReactionsToggleError,
+    Options<CommentsReactionsToggleData>,
+    UseCommentReactionContext
+  >({
     ...commentsReactionsToggleMutation(),
     onMutate: async (variables, context) => {
       const commentId = variables.path.commentId

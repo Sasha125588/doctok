@@ -35,14 +35,9 @@ export const useSavedPosts = () => {
       ? await server.toggle({ postId: post.id, topicSlug: post.topicSlug }, post.isSaved)
       : guest.toggle(post)
 
-  const clear = async () => {
-    // if (isAuthenticated.value) {
-    //   await server.сlear()
-    //   return
-    // }
+  const clear = async () => (isAuthenticated.value ? await server.clear() : guest.clear())
 
-    guest.clear()
-  }
+  const isClearing = computed(() => (isAuthenticated.value ? server.isClearing.value : false))
 
-  return { savedPosts, isSaved, save, remove, toggle, clear }
+  return { savedPosts, isSaved, save, remove, toggle, clear, isClearing }
 }

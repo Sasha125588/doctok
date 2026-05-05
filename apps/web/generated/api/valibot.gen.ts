@@ -2,6 +2,18 @@
 
 import * as v from 'valibot'
 
+export const vClearSavedPostsResponse = v.object({
+  deletedCount: v.union([
+    v.pipe(
+      v.number(),
+      v.integer(),
+      v.minValue(-2147483648, 'Invalid value: Expected int32 to be >= -2147483648'),
+      v.maxValue(2147483647, 'Invalid value: Expected int32 to be <= 2147483647')
+    ),
+    v.pipe(v.string(), v.regex(/^-?(?:0|[1-9]\d*)$/)),
+  ]),
+})
+
 export const vCreateCommentRequest = v.object({
   body: v.pipe(v.string(), v.minLength(1), v.maxLength(2000)),
 })
@@ -692,6 +704,11 @@ export const vPostsGetContentQuery = v.object({
  * OK
  */
 export const vPostsGetContentResponse = vPostContentView
+
+/**
+ * OK
+ */
+export const vMeSavedPostsClearResponse = vClearSavedPostsResponse
 
 export const vMeSavedPostsListQuery = v.object({
   cursor: v.optional(v.pipe(v.string(), v.minLength(0), v.maxLength(512))),

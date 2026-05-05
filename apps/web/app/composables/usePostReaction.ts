@@ -1,7 +1,14 @@
 import { postsReactionsToggleMutation, topicsGetPostsQueryKey } from '#api/@tanstack/vue-query.gen'
 import { type QueryKey, useMutation } from '@tanstack/vue-query'
 
-import type { ReactionValue, TopicsGetPostsResponse } from '#api/types.gen'
+import type {
+  PostsReactionsToggleData,
+  PostsReactionsToggleError,
+  PostsReactionsToggleResponse,
+  ReactionValue,
+  TopicsGetPostsResponse,
+} from '#api/types.gen'
+import type { Options } from '~~/generated/api/sdk.gen'
 
 export interface PostReactionMutationContext {
   queryKey: QueryKey
@@ -15,7 +22,12 @@ export const usePostReaction = (topicSlug: string) => {
     query: { slug: topicSlug, lang: lang.value },
   })
 
-  const postReactionMutation = useMutation({
+  const postReactionMutation = useMutation<
+    PostsReactionsToggleResponse,
+    PostsReactionsToggleError,
+    Options<PostsReactionsToggleData>,
+    PostReactionMutationContext
+  >({
     ...postsReactionsToggleMutation(),
 
     onMutate: async (variables, context) => {

@@ -21,6 +21,7 @@ import {
   vFeedListResponse,
   vFeedTopicsListQuery,
   vFeedTopicsListResponse,
+  vMeSavedPostsClearResponse,
   vMeSavedPostsCreateBody,
   vMeSavedPostsCreateResponse,
   vMeSavedPostsDeletePath,
@@ -72,6 +73,9 @@ import type {
   FeedTopicsListData,
   FeedTopicsListErrors,
   FeedTopicsListResponses,
+  MeSavedPostsClearData,
+  MeSavedPostsClearErrors,
+  MeSavedPostsClearResponses,
   MeSavedPostsCreateData,
   MeSavedPostsCreateErrors,
   MeSavedPostsCreateResponses,
@@ -311,6 +315,34 @@ export const postsGetContent = <ThrowOnError extends boolean = false>(
       ),
     responseValidator: async (data) => await v.parseAsync(vPostsGetContentResponse, data),
     url: '/api/posts/{postId}/content',
+    ...options,
+  })
+
+/**
+ * Clears saved posts for the current user
+ *
+ * Deletes all saved-post entries for the current user and returns the number of deleted posts.
+ */
+export const meSavedPostsClear = <ThrowOnError extends boolean = false>(
+  options?: Options<MeSavedPostsClearData, ThrowOnError>
+) =>
+  (options?.client ?? client).delete<
+    MeSavedPostsClearResponses,
+    MeSavedPostsClearErrors,
+    ThrowOnError
+  >({
+    requestValidator: async (data) =>
+      await v.parseAsync(
+        v.object({
+          body: v.optional(v.never()),
+          path: v.optional(v.never()),
+          query: v.optional(v.never()),
+        }),
+        data
+      ),
+    responseValidator: async (data) => await v.parseAsync(vMeSavedPostsClearResponse, data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/me/saved-posts',
     ...options,
   })
 

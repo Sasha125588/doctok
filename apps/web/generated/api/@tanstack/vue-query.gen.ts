@@ -16,6 +16,7 @@ import {
   commentsRepliesList,
   feedList,
   feedTopicsList,
+  meSavedPostsClear,
   meSavedPostsCreate,
   meSavedPostsDelete,
   meSavedPostsList,
@@ -53,6 +54,9 @@ import type {
   FeedTopicsListData,
   FeedTopicsListError,
   FeedTopicsListResponse,
+  MeSavedPostsClearData,
+  MeSavedPostsClearError,
+  MeSavedPostsClearResponse,
   MeSavedPostsCreateData,
   MeSavedPostsCreateError,
   MeSavedPostsCreateResponse,
@@ -89,8 +93,6 @@ import type {
   TopicsStreamData,
   TopicsStreamError,
 } from '../types.gen'
-import type { PostReactionMutationContext } from '~/composables/usePostReaction'
-import type { SavedPostMutationContext } from '~/composables/useServerSavedPosts'
 
 /**
  * Enqueues batch MDN fetch_raw jobs (dev/admin)
@@ -367,14 +369,12 @@ export const postsReactionsToggleMutation = (
 ): UseMutationOptions<
   PostsReactionsToggleResponse,
   PostsReactionsToggleError,
-  Options<PostsReactionsToggleData>,
-  PostReactionMutationContext
+  Options<PostsReactionsToggleData>
 > => {
   const mutationOptions: UseMutationOptions<
     PostsReactionsToggleResponse,
     PostsReactionsToggleError,
-    Options<PostsReactionsToggleData>,
-    PostReactionMutationContext
+    Options<PostsReactionsToggleData>
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await postsReactionsToggle({
@@ -412,6 +412,35 @@ export const postsGetContentOptions = (options: Options<PostsGetContentData>) =>
     },
     queryKey: postsGetContentQueryKey(options),
   })
+
+/**
+ * Clears saved posts for the current user
+ *
+ * Deletes all saved-post entries for the current user and returns the number of deleted posts.
+ */
+export const meSavedPostsClearMutation = (
+  options?: Partial<Options<MeSavedPostsClearData>>
+): UseMutationOptions<
+  MeSavedPostsClearResponse,
+  MeSavedPostsClearError,
+  Options<MeSavedPostsClearData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    MeSavedPostsClearResponse,
+    MeSavedPostsClearError,
+    Options<MeSavedPostsClearData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await meSavedPostsClear({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      })
+      return data
+    },
+  }
+  return mutationOptions
+}
 
 export const meSavedPostsListQueryKey = (options?: Options<MeSavedPostsListData>) =>
   createQueryKey('meSavedPostsList', options)
@@ -495,14 +524,12 @@ export const meSavedPostsCreateMutation = (
 ): UseMutationOptions<
   MeSavedPostsCreateResponse,
   MeSavedPostsCreateError,
-  Options<MeSavedPostsCreateData>,
-  SavedPostMutationContext
+  Options<MeSavedPostsCreateData>
 > => {
   const mutationOptions: UseMutationOptions<
     MeSavedPostsCreateResponse,
     MeSavedPostsCreateError,
-    Options<MeSavedPostsCreateData>,
-    SavedPostMutationContext
+    Options<MeSavedPostsCreateData>
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await meSavedPostsCreate({
@@ -788,14 +815,12 @@ export const commentsReactionsToggleMutation = (
 ): UseMutationOptions<
   CommentsReactionsToggleResponse,
   CommentsReactionsToggleError,
-  Options<CommentsReactionsToggleData>,
-  UseCommentReactionContext
+  Options<CommentsReactionsToggleData>
 > => {
   const mutationOptions: UseMutationOptions<
     CommentsReactionsToggleResponse,
     CommentsReactionsToggleError,
-    Options<CommentsReactionsToggleData>,
-    UseCommentReactionContext
+    Options<CommentsReactionsToggleData>
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await commentsReactionsToggle({
@@ -886,14 +911,12 @@ export const postsCommentsCreateMutation = (
 ): UseMutationOptions<
   PostsCommentsCreateResponse,
   PostsCommentsCreateError,
-  Options<PostsCommentsCreateData>,
-  UseCommentCreateContext
+  Options<PostsCommentsCreateData>
 > => {
   const mutationOptions: UseMutationOptions<
     PostsCommentsCreateResponse,
     PostsCommentsCreateError,
-    Options<PostsCommentsCreateData>,
-    UseCommentCreateContext
+    Options<PostsCommentsCreateData>
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await postsCommentsCreate({
