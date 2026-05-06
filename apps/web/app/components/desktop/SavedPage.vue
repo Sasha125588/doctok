@@ -32,8 +32,8 @@ const kindFilters: Array<{ value: SavedKindFilter; label: string }> = [
 ]
 
 const sortOptions: Array<{ value: SavedSortMode; label: string }> = [
-  { value: 'newest', label: '↑ новіші спочатку' },
-  { value: 'oldest', label: '↓ старіші спочатку' },
+  { value: 'newest', label: '↓ новіші спочатку' },
+  { value: 'oldest', label: '↑ старіші спочатку' },
   { value: 'topic', label: 'A-Z за темою' },
 ]
 
@@ -80,7 +80,7 @@ const sortedSavedPosts = computed(() => {
 })
 
 const selectedSortLabel = computed(
-  () => sortOptions.find((option) => option.value === selectedSort.value)?.label ?? 'сортування'
+  () => sortOptions.find((option) => option.value === selectedSort.value)?.label
 )
 
 const hasActiveFilters = computed(
@@ -148,7 +148,7 @@ const closeClearDialog = () => {
                 Видалити всі {{ savedPosts.length }} збережених постів?
               </AlertDialogTitle>
               <AlertDialogDescription class="clear-dialog-description">
-                Це не можна скасувати.
+                Це не можна відмінити.
               </AlertDialogDescription>
             </div>
 
@@ -166,7 +166,7 @@ const closeClearDialog = () => {
               >
                 <Icon
                   v-if="isClearing"
-                  name="lucide:loader-2"
+                  name="lucide:loader"
                   class="clear-spinner"
                 />
                 {{ isClearing ? 'видалення...' : '✕ видалити' }}
@@ -194,6 +194,12 @@ const closeClearDialog = () => {
             type="search"
             placeholder="Пошук у збережених..."
             spellcheck="false"
+          />
+          <Icon
+            v-if="normalizedSearchQuery"
+            name="lucide:x"
+            class="empty-link"
+            @click="resetSearchQuery"
           />
         </label>
 
@@ -300,7 +306,10 @@ const closeClearDialog = () => {
               layout: { duration: 0.22 },
             }"
           >
-            <SavedCard :post="post" />
+            <SavedCard
+              :post="post"
+              :search-query="normalizedSearchQuery"
+            />
           </motion.div>
         </AnimatePresence>
       </LayoutGroup>
@@ -352,6 +361,7 @@ const closeClearDialog = () => {
   border: 1px solid transparent;
   border-radius: 5px;
   background: transparent;
+  cursor: pointer;
 }
 .clear-trigger:hover,
 .clear-trigger[data-state='open'] {

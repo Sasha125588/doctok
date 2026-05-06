@@ -4,7 +4,29 @@ import { useFeedView } from '~/composables/useFeedView'
 
 import type { SavedPostView } from '~~/generated/api/types.gen'
 
-const props = defineProps<{ post: SavedPostView }>()
+const props = defineProps<{ post: SavedPostView; searchQuery: string }>()
+
+const highlightedTitle = computed(() => {
+  if (!props.searchQuery) return props.post.title
+
+  const regex = new RegExp(`(${props.searchQuery.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi')
+
+  return props.post.title.replace(
+    regex,
+    '<span style="color: #00e87a; background: #001f0d;">$1</span>'
+  )
+})
+
+const highlightedTopicSlug = computed(() => {
+  if (!props.searchQuery) return props.post.topicSlug
+
+  const regex = new RegExp(`(${props.searchQuery.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi')
+
+  return props.post.topicSlug.replace(
+    regex,
+    '<span style="color: #00e87a; background: #001f0d;">$1</span>'
+  )
+})
 
 const { activeTopicSlug, pendingPostId, mode } = useFeedView()
 const { remove } = useSavedPosts()
@@ -30,8 +52,11 @@ const onRemove = () => remove(props.post)
     @keydown.space.prevent="open"
   >
     <PostKindBadge :kind="post.kind" />
-    <div class="title">{{ post.title }}</div>
-    <div class="topic">// topic: {{ post.topicSlug }}</div>
+    <div
+      class="title"
+      v-html="highlightedTitle"
+    ></div>
+    <div class="topic">// topic: <span v-html="highlightedTopicSlug" /></div>
     <button
       class="remove"
       type="button"
@@ -87,6 +112,10 @@ const onRemove = () => remove(props.post)
   font-size: 9px;
   color: var(--dt-text-tertiary);
   margin-top: auto;
+}
+.highlight {
+  color: #00e87a;
+  background: #001f0d;
 }
 .remove {
   position: absolute;
