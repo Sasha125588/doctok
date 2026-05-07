@@ -1,3 +1,4 @@
+import tailwindcss from '@tailwindcss/vite'
 import path from 'node:path'
 
 const resolve = (filePath: string) => path.resolve(__dirname, filePath)
@@ -17,8 +18,11 @@ export default defineNuxtConfig({
         'clsx',
         'tailwind-merge',
         'date-fns',
+        '@vue/devtools-core',
+        '@vue/devtools-kit',
       ],
     },
+    plugins: [tailwindcss()],
   },
 
   compatibilityDate: '2025-07-15',
@@ -32,7 +36,6 @@ export default defineNuxtConfig({
   modules: [
     '@pinia/nuxt',
     '@vueuse/nuxt',
-    '@nuxtjs/tailwindcss',
     'shadcn-nuxt',
     '@nuxt/icon',
     'nuxt-svgo',
@@ -80,6 +83,8 @@ export default defineNuxtConfig({
     // @link https://nuxt.com/docs/api/nuxt-config#alias
     componentDir: '@/components/ui',
   },
+
+  css: ['./app/assets/css/tailwind.css'],
 
   vueSonner: {
     css: true, // true by default to include css file
