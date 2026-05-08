@@ -3,14 +3,18 @@ import { useInfiniteQuery } from '@tanstack/vue-query'
 
 const feedPageSize = 3
 
-export function useFeed(lang: Ref<string>) {
+export const useFeed = () => {
+  const { lang } = useLang()
+
+  const queryOptions = computed(() => ({
+    query: {
+      lang: lang.value,
+      limit: feedPageSize,
+    },
+  }))
+
   const query = useInfiniteQuery(() => ({
-    ...feedTopicsListInfiniteOptions({
-      query: {
-        lang: lang.value,
-        limit: feedPageSize,
-      },
-    }),
+    ...feedTopicsListInfiniteOptions(queryOptions.value),
     initialPageParam: '',
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   }))
@@ -18,14 +22,10 @@ export function useFeed(lang: Ref<string>) {
   const topics = computed(() => query.data.value?.pages.flatMap((page) => page.items) ?? [])
 
   return {
-    state: {
-      topics: topics,
-      hasNextPage: query.hasNextPage,
-      isLoading: query.isLoading,
-      isFetchingNextPage: query.isFetchingNextPage,
-    },
-    functions: {
-      fetchNextPage: query.fetchNextPage,
-    },
+    topics: topics,
+    hasNextPage: query.hasNextPage,
+    isLoading: query.isLoading,
+    isFetchingNextPage: query.isFetchingNextPage,
+    fetchNextPage: query.fetchNextPage,
   }
 }

@@ -1,11 +1,14 @@
 <script setup lang="ts">
+import { storeToRefs } from 'pinia'
+
 import DesktopSidePanel from './DesktopSidePanel.vue'
-import { useFeedView } from '~/composables/useFeedView'
 import { useNotes } from '~/composables/useNotes'
+import { useFeedViewStore } from '~/stores/feedView'
 
 const props = defineProps<{ activePostId: number }>()
 
-const { activePanel } = useFeedView()
+const feedView = useFeedViewStore()
+const { activePanel } = storeToRefs(feedView)
 const { get, set } = useNotes()
 
 const text = ref('')

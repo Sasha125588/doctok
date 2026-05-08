@@ -1,44 +1,55 @@
 <script setup lang="ts">
 import PostKindBadge from '~/components/post/PostKindBadge.vue'
-import { useFeedView } from '~/composables/useFeedView'
+import { useFeedRouteState } from '~/composables/useFeedRouteState'
 
 import type { SavedPostView } from '~~/generated/api/types.gen'
 
 const props = defineProps<{ post: SavedPostView; searchQuery: string }>()
 
+const escapeHtml = (value: string) =>
+  value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
+
+const buildHighlightedHtml = (value: string) => {
+  if (!props.searchQuery) return escapeHtml(value)
+
+  const escapedQuery = props.searchQuery.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
+  const splitRegex = new RegExp(`(${escapedQuery})`, 'gi')
+  const exactRegex = new RegExp(`^${escapedQuery}$`, 'i')
+
+  return value
+    .split(splitRegex)
+    .map((part) =>
+      exactRegex.test(part)
+        ? `<span style="color: #00e87a; background: #001f0d;">${escapeHtml(part)}</span>`
+        : escapeHtml(part)
+    )
+    .join('')
+}
+
 const highlightedTitle = computed(() => {
-  if (!props.searchQuery) return props.post.title
-
-  const regex = new RegExp(`(${props.searchQuery.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi')
-
-  return props.post.title.replace(
-    regex,
-    '<span style="color: #00e87a; background: #001f0d;">$1</span>'
-  )
+  return buildHighlightedHtml(props.post.title)
 })
 
 const highlightedTopicSlug = computed(() => {
-  if (!props.searchQuery) return props.post.topicSlug
-
-  const regex = new RegExp(`(${props.searchQuery.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi')
-
-  return props.post.topicSlug.replace(
-    regex,
-    '<span style="color: #00e87a; background: #001f0d;">$1</span>'
-  )
+  return buildHighlightedHtml(props.post.topicSlug)
 })
 
-const { activeTopicSlug, pendingPostId, mode } = useFeedView()
 const { remove } = useSavedPosts()
+const { openPost } = useFeedRouteState()
 
-const open = () => {
-  activeTopicSlug.value = props.post.topicSlug
-  pendingPostId.value = +props.post.postId
-  mode.value = 'focus'
-  navigateTo({ name: 'feed' })
-}
-
-const onRemove = () => remove(props.post)
+const open = () =>
+  openPost(
+    {
+      id: +props.post.postId,
+      topicSlug: props.post.topicSlug,
+    },
+    { replace: false }
+  )
 </script>
 
 <template>
@@ -46,22 +57,22 @@ const onRemove = () => remove(props.post)
     class="card"
     tabindex="0"
     role="button"
-    :aria-label="`Відкрити: ${post.title}`"
+    :aria-label="`Відкрити: ${props.post.title}`"
     @click="open"
     @keydown.enter="open"
     @keydown.space.prevent="open"
   >
-    <PostKindBadge :kind="post.kind" />
+    <PostKindBadge :kind="props.post.kind" />
     <div
       class="title"
       v-html="highlightedTitle"
-    ></div>
+    />
     <div class="topic">// topic: <span v-html="highlightedTopicSlug" /></div>
     <button
       class="remove"
       type="button"
       title="видалити зі збережених"
-      @click.stop="onRemove"
+      @click.stop="remove(props.post)"
     >
       <Icon
         name="lucide:bookmark-minus"

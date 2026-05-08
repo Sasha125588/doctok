@@ -1,45 +1,40 @@
 <script setup lang="ts">
-import { useFeedView } from '~/composables/useFeedView'
+import { useFeedRouteState } from '~/composables/useFeedRouteState'
 import { useLang } from '~/composables/useLang'
 import { useTopicLinks } from '~/composables/useTopicLinks'
 
 const { lang } = useLang()
-const { activeTopicSlug, activePostIndex } = useFeedView()
+const { topicSlug, openTopic } = useFeedRouteState()
 
-const enabled = computed(() => !!activeTopicSlug.value)
 const queryOptions = computed(() => ({
   query: {
-    slug: activeTopicSlug.value ?? '',
+    slug: topicSlug.value ?? '',
     lang: lang.value,
   },
 }))
+const enabled = computed(() => !!topicSlug.value)
 
-const { state } = useTopicLinks(queryOptions, enabled)
-
-const go = (slug: string) => {
-  activeTopicSlug.value = slug
-  activePostIndex.value = 0
-}
+const { links, isLoading } = useTopicLinks(queryOptions, enabled)
 </script>
 
 <template>
   <div class="wrap">
     <div class="label">→ related</div>
     <div
-      v-if="state.links.value.length"
+      v-if="links.length"
       class="tags"
     >
       <button
-        v-for="link in state.links.value"
+        v-for="link in links"
         :key="link.slug"
         class="tag"
-        @click="go(link.slug)"
+        @click="openTopic(link.slug)"
       >
         {{ link.title }}
       </button>
     </div>
     <div
-      v-else-if="state.isLoading.value"
+      v-else-if="isLoading"
       class="loading"
     >
       …

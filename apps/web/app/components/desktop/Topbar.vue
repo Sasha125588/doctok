@@ -2,13 +2,12 @@
 import { motion } from 'motion-v'
 
 import VariantSelector from '~/components/desktop/VariantSelector.vue'
-import { type FeedMode, type ReadMode, useFeedView } from '~/composables/useFeedView'
+import { type FeedMode, useFeedRouteState } from '~/composables/useFeedRouteState'
 
 const route = useRoute()
-const { mode, readMode } = useFeedView()
+const { mode, setMode } = useFeedRouteState()
 
 const modes: FeedMode[] = ['focus', 'browse']
-const readModes: ReadMode[] = ['simplified', 'standard', 'detailed', 'original']
 
 const isFeed = computed(() => route.name === 'feed')
 </script>
@@ -17,14 +16,17 @@ const isFeed = computed(() => route.name === 'feed')
   <header class="topbar">
     <span class="page-title">{{ route.name }}</span>
 
-    <template v-if="isFeed">
+    <div
+      v-if="isFeed"
+      class="flex w-full justify-between"
+    >
       <div class="toggle">
         <button
           v-for="m in modes"
           :key="m"
           class="toggle-btn"
           :class="{ 'is-active': mode === m }"
-          @click="mode = m"
+          @click="setMode(m)"
         >
           <motion.span
             v-if="mode === m"
@@ -36,26 +38,8 @@ const isFeed = computed(() => route.name === 'feed')
         </button>
       </div>
 
-      <div class="read-toggle">
-        <button
-          v-for="rm in readModes"
-          :key="rm"
-          class="read-btn"
-          :class="{ 'is-active': readMode === rm }"
-          @click="readMode = rm"
-        >
-          <motion.span
-            v-if="readMode === rm"
-            layoutId="dt-rm-active"
-            class="active-pill blue"
-            :transition="{ type: 'spring', stiffness: 500, damping: 35 }"
-          />
-          <span class="label">{{ rm }}</span>
-        </button>
-      </div>
-
       <VariantSelector />
-    </template>
+    </div>
   </header>
 </template>
 
@@ -75,18 +59,13 @@ const isFeed = computed(() => route.name === 'feed')
   color: var(--dt-text-tertiary);
   letter-spacing: 0.1em;
 }
-.toggle,
-.read-toggle {
+.toggle {
   display: flex;
   border: 1px solid #161616;
   border-radius: 4px;
   overflow: hidden;
 }
-.read-toggle {
-  margin-left: auto;
-}
-.toggle-btn,
-.read-btn {
+.toggle-btn {
   font-family: var(--font-mono);
   font-size: 8px;
   padding: 4px 11px;
@@ -98,19 +77,11 @@ const isFeed = computed(() => route.name === 'feed')
   position: relative;
   transition: color 0.15s;
 }
-.read-btn {
-  padding: 4px 9px;
-  letter-spacing: 0.06em;
-  color: #222;
-}
 .toggle-btn:hover:not(.is-active) {
   color: #555;
 }
 .toggle-btn.is-active {
   color: var(--kind-example);
-}
-.read-btn.is-active {
-  color: var(--kind-summary);
 }
 .active-pill {
   position: absolute;

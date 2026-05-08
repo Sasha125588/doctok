@@ -10,7 +10,7 @@ const isDesktop = useDesktop()
     position="bottom-right"
     closeButton
   />
-  <DesktopShell v-if="isDesktop">
+  <DesktopLayout v-if="isDesktop">
     <NuxtPage />
-  </DesktopShell>
+  </DesktopLayout>
 </template>

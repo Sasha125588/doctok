@@ -1,19 +1,18 @@
 <script setup lang="ts">
 import PostKindBadge from '~/components/post/PostKindBadge.vue'
-import { useFeedView } from '~/composables/useFeedView'
+import { useFeedRouteState } from '~/composables/useFeedRouteState'
 
 import type { TopicPostView } from '#api/types.gen'
 
 const props = defineProps<{
-  posts?: TopicPostView[]
+  activePostId: null | number
+  posts: TopicPostView[]
 }>()
 
-const { activePostIndex, mode } = useFeedView()
+const { openPost } = useFeedRouteState()
 
-function open(index: number) {
-  activePostIndex.value = index
-  mode.value = 'focus'
-}
+const open = (post: TopicPostView) =>
+  openPost({ id: +post.id, topicSlug: post.topicSlug }, { mode: 'focus', replace: true })
 </script>
 
 <template>
@@ -21,11 +20,11 @@ function open(index: number) {
     <div class="area">
       <div class="grid">
         <button
-          v-for="(post, i) in props.posts"
+          v-for="post in props.posts"
           :key="post.id"
           class="card"
-          :class="{ 'is-current': i === activePostIndex }"
-          @click="open(i)"
+          :class="{ 'is-current': +post.id === props.activePostId }"
+          @click="open(post)"
         >
           <PostKindBadge :kind="post.kind" />
           <div class="title">{{ post.title }}</div>

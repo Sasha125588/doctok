@@ -65,6 +65,7 @@ const emit = defineEmits<{
     <motion.button
       aria-label="Add note"
       type="button"
+      data-panel-toggle
       :aria-pressed="hasNote"
       class="btn"
       :class="{ 'is-noted': hasNote }"
@@ -83,6 +84,7 @@ const emit = defineEmits<{
     <motion.button
       type="button"
       class="btn"
+      data-panel-toggle
       aria-label="Open comments"
       :while-tap="{ scale: 0.9 }"
       :while-hover="{ scale: 1.08 }"

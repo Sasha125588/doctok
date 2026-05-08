@@ -3,12 +3,11 @@ import {
   resolveMdnOptions,
   topicsGetPostsOptions,
 } from '#api/@tanstack/vue-query.gen'
-import { type Options } from '#api/sdk.gen'
 import { useQueries, useQuery } from '@tanstack/vue-query'
 
 import { isApiError } from '~/lib/api/errors/errors'
 
-import type { PostContentView, TopicPostView, TopicsGetPostsData } from '#api/types.gen'
+import type { PostContentView, TopicPostView } from '#api/types.gen'
 
 export type TopicStatus = 'ready' | 'failed'
 
@@ -21,16 +20,23 @@ export interface TopicEvent {
 
 const topicEvents = ['topic-ready', 'topic-failed', 'topic-timeout'] as const
 
-export function useTopicPosts(options: Ref<Options<TopicsGetPostsData>>) {
-  const canFetch = computed(
-    () => Boolean(options.value.query.slug?.trim()) && Boolean(options.value.query.lang?.trim())
-  )
+export function useTopicPosts(topicSlug: Ref<string | null>) {
+  const { lang } = useLang()
 
-  const { variant } = usePostContentVariant()
+  const queryOptions = computed(() => ({
+    query: {
+      slug: topicSlug.value ?? '',
+      lang: lang.value,
+    },
+  }))
+
+  const canFetch = computed(() => Boolean(topicSlug.value?.trim()) && Boolean(lang.value?.trim()))
+
+  const variant = usePostContentVariant()
 
   const query = useQuery(() => ({
     enabled: canFetch.value,
-    ...topicsGetPostsOptions(options.value),
+    ...topicsGetPostsOptions(queryOptions.value),
   }))
 
   const contentQueries = useQueries({
@@ -38,7 +44,7 @@ export function useTopicPosts(options: Ref<Options<TopicsGetPostsData>>) {
       () =>
         query.data.value?.items.map((post) => ({
           ...postsGetContentOptions({
-            path: { postId: Number(post.id) },
+            path: { postId: +post.id },
             query: { variant: variant.value },
           }),
           enabled: canFetch.value && query.isSuccess.value,
@@ -47,11 +53,11 @@ export function useTopicPosts(options: Ref<Options<TopicsGetPostsData>>) {
   })
 
   const contentByPostId = computed(() => {
-    const result = new Map<string, PostContentView>()
+    const result = new Map<number, PostContentView>()
 
     for (const contentQuery of contentQueries.value) {
       const content = contentQuery.data
-      if (content) result.set(String(content.postId), content)
+      if (content) result.set(+content.postId, content)
     }
 
     return result
@@ -61,7 +67,7 @@ export function useTopicPosts(options: Ref<Options<TopicsGetPostsData>>) {
     const metas = query.data.value?.items ?? []
 
     return metas.flatMap((post) => {
-      const content = contentByPostId.value.get(String(post.id))
+      const content = contentByPostId.value.get(+post.id)
       if (!content) return []
 
       return [
@@ -83,8 +89,8 @@ export function useTopicPosts(options: Ref<Options<TopicsGetPostsData>>) {
 
   const topicStreamUrl = computed(() => {
     const params = new URLSearchParams({
-      slug: options.value.query.slug,
-      lang: options.value.query.lang,
+      slug: topicSlug.value ?? '',
+      lang: lang.value,
     })
     return `/api/topics/stream?${params.toString()}`
   })
@@ -110,8 +116,8 @@ export function useTopicPosts(options: Ref<Options<TopicsGetPostsData>>) {
     staleTime: Infinity,
     ...resolveMdnOptions({
       query: {
-        externalRef: options.value.query.slug.replace(/^mdn\//, ''),
-        lang: options.value.query.lang,
+        externalRef: topicSlug.value?.replace(/^mdn\//, '') ?? '',
+        lang: lang.value,
       },
     }),
   }))
@@ -135,11 +141,9 @@ export function useTopicPosts(options: Ref<Options<TopicsGetPostsData>>) {
   })
 
   return {
-    state: {
-      ...query,
-      posts,
-      isLoading,
-      isFetching,
-    },
+    ...query,
+    posts,
+    isLoading,
+    isFetching,
   }
 }

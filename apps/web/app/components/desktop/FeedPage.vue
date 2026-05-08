@@ -1,70 +1,144 @@
 <script setup lang="ts">
+import { storeToRefs } from 'pinia'
+
 import BrowseMode from './BrowseMode.vue'
 import CommentsPanel from './CommentsPanel.vue'
 import FocusMode from './FocusMode.vue'
 import NotesPanel from './NotesPanel.vue'
-import { useFeedView } from '~/composables/useFeedView'
+import Sidebar from './Sidebar.vue'
+import { useFeed } from '~/composables/useFeed'
+import { useFeedRouteState } from '~/composables/useFeedRouteState'
+import { useFeedViewStore } from '~/stores/feedView'
 
-const { mode, activeTopicSlug, activePostIndex, pendingPostId } = useFeedView()
+const feedView = useFeedViewStore()
+const { activePanel } = storeToRefs(feedView)
+const { topicSlug, postId, mode, clearPostId, openTopic, openPost } = useFeedRouteState()
+const { topics, fetchNextPage, hasNextPage, isFetchingNextPage } = useFeed()
 
-const { lang } = useLang()
+const { posts, isLoading } = useTopicPosts(topicSlug)
+const activeTopicIndex = computed(() =>
+  topics.value.findIndex((topic) => topic.slug === topicSlug.value)
+)
+const totalPosts = computed(() => posts.value.length)
 
-const queryOptions = computed(() => ({
-  query: {
-    slug: activeTopicSlug.value ?? '',
-    lang: lang.value,
-  },
-}))
+const activePostIndex = computed(() => {
+  if (!posts.value.length) return 0
 
-const { state } = useTopicPosts(queryOptions)
-
-// Consume a pendingPostId handoff (e.g. from SavedPage). Runs on both fresh
-// state-posts load (slug changed, posts load async) and same-slug re-entry
-// (posts already loaded, runs on next tick after pendingPostId flips null→number).
-// Clearing pendingPostId to null at the end ensures the effect is a one-shot.
-watchEffect(() => {
-  const target = pendingPostId.value
-  if (target == null) return
-  const posts = state.posts.value
-  if (!posts.length) return
-  const idx = posts.findIndex((p) => +p.id === target)
-  activePostIndex.value = idx >= 0 ? idx : 0
-  pendingPostId.value = null
+  const index = posts.value.findIndex((post) => +post.id === postId.value)
+  return index >= 0 ? index : 0
 })
+const activePost = computed(() => posts.value[activePostIndex.value])
 
-const activePost = computed(() => state.posts.value[activePostIndex.value])
-const totalPosts = computed(() => state.posts.value.length)
+watch(
+  [topicSlug, topics],
+  ([currentTopicSlug, currentTopics]) => {
+    if (currentTopicSlug) return
 
-const slugKey = computed(() => `$slug:${activeTopicSlug.value}`)
+    const firstTopic = currentTopics[0]
+    if (!firstTopic) return
+
+    openTopic(firstTopic.slug)
+  },
+  { immediate: true }
+)
+
+watch(
+  [posts, postId, topicSlug, isLoading],
+  ([currentPosts, currentPostId, currentTopicSlug, loading]) => {
+    if (loading || !currentTopicSlug) return
+
+    const firstPost = currentPosts[0]
+    if (!firstPost) {
+      if (currentPostId != null) clearPostId()
+      return
+    }
+
+    const hasPost = currentPostId != null && currentPosts.some((post) => +post.id === currentPostId)
+    if (hasPost) return
+
+    openPost(
+      { id: +firstPost.id, topicSlug: firstPost.topicSlug },
+      { mode: mode.value, replace: true }
+    )
+  },
+  { immediate: true }
+)
+
+const openPostAt = (index: number) => {
+  const safeIndex = Math.min(Math.max(0, index), Math.max(0, totalPosts.value - 1))
+  const post = posts.value[safeIndex]
+  if (!post) return
+
+  openPost({ id: +post.id, topicSlug: post.topicSlug }, { mode: 'focus', replace: true })
+}
+
+const openTopicAt = (index: number) => {
+  const topic = topics.value[index]
+  if (!topic) return false
+
+  openTopic(topic.slug)
+  return true
+}
+
+const openAdjacentTopic = async (direction: 1 | -1) => {
+  const nextIndex = activeTopicIndex.value + direction
+  if (openTopicAt(nextIndex)) return
+  if (direction === -1 || !hasNextPage.value || isFetchingNextPage.value) return
+
+  const loadedCount = topics.value.length
+  await fetchNextPage()
+
+  openTopicAt(loadedCount)
+}
+
+const onKeydown = (e: KeyboardEvent) => {
+  if (mode.value !== 'focus' || activePanel.value !== null) return
+
+  if (e.key === 'ArrowRight') {
+    e.preventDefault()
+    openPostAt(activePostIndex.value + 1)
+  } else if (e.key === 'ArrowLeft') {
+    e.preventDefault()
+    openPostAt(activePostIndex.value - 1)
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    openAdjacentTopic(1)
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    openAdjacentTopic(-1)
+  }
+}
+
+onMounted(() => window.addEventListener('keydown', onKeydown))
+onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
   <div class="feed-page">
+    <Sidebar :topics />
     <div class="stack">
       <FocusMode
         v-if="mode === 'focus'"
-        :key="`focus-${slugKey}`"
         class="pane"
         :active-post="activePost"
-        :is-loading="state.isLoading.value"
+        :current-index="activePostIndex"
+        :is-loading="isLoading"
         :total-posts="totalPosts"
       />
       <BrowseMode
         v-else-if="mode === 'browse'"
-        :key="`browse-${slugKey}`"
         class="pane"
-        :posts="state.posts.value"
+        :active-post-id="postId"
+        :posts
       />
     </div>
     <CommentsPanel
       v-if="activePost"
-      :key="`comments-${slugKey}`"
       :active-post-id="+activePost.id"
       :topic-slug="activePost.topicSlug"
     />
     <NotesPanel
       v-if="activePost"
-      :key="`notes-${slugKey}`"
       :active-post-id="+activePost.id"
     />
   </div>

@@ -15,8 +15,8 @@ const queryOptions = computed(() => ({
   },
 }))
 
-const { state } = useTopicPosts(queryOptions)
-const topicTitle = computed(() => state.posts.value[0]?.topicTitle ?? slug.value)
+const { posts } = useTopicPosts(queryOptions)
+const topicTitle = computed(() => posts.value[0]?.topicTitle ?? slug.value)
 </script>
 
 <template>

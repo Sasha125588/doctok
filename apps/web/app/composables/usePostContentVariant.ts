@@ -1,24 +1,17 @@
 export type PostContentVariant = 'original' | 'ai_simple' | 'ai_senior'
 
-const STORAGE_KEY = 'postContentVariant'
+const STORAGE_KEY = 'dt:post-content-variant'
 
-function isValidVariant(value: unknown): value is PostContentVariant {
-  return value === 'original' || value === 'ai_simple' || value === 'ai_senior'
-}
+const isValidVariant = (value: unknown): value is PostContentVariant =>
+  value === 'original' || value === 'ai_simple' || value === 'ai_senior'
 
-export function usePostContentVariant() {
-  const variant = useState<PostContentVariant>('post-content-variant', () => 'original')
+const variant = useLocalStorage<PostContentVariant>(STORAGE_KEY, 'original', {
+  initOnMounted: true,
+  shallow: true,
+  serializer: {
+    read: (value): PostContentVariant => (isValidVariant(value) ? value : 'original'),
+    write: (value) => value,
+  },
+})
 
-  if (import.meta.client) {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (isValidVariant(saved)) {
-      variant.value = saved
-    }
-
-    watch(variant, (value) => {
-      localStorage.setItem(STORAGE_KEY, value)
-    })
-  }
-
-  return { variant }
-}
+export const usePostContentVariant = () => variant

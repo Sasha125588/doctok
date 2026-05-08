@@ -1,15 +1,22 @@
 <script setup lang="ts">
 import { AnimatePresence, motion } from 'motion-v'
+import { storeToRefs } from 'pinia'
 
-import { useFeedView } from '~/composables/useFeedView'
+import { useFeedRouteState } from '~/composables/useFeedRouteState'
 import { useTopicHistory } from '~/composables/useTopicHistory'
+import { useFeedViewStore } from '~/stores/feedView'
 
 import type { TopicFeedPageView } from '#api/types.gen'
 
 const props = defineProps<{ topics: TopicFeedPageView[] }>()
 
 const { pinned, recent } = useTopicHistory()
-const { activeTopicSlug, sidebarHidden, activePostIndex } = useFeedView()
+
+const feedView = useFeedViewStore()
+const { sidebarHidden } = storeToRefs(feedView)
+const { toggleSidebar } = feedView
+
+const { topicSlug, openTopic } = useFeedRouteState()
 
 const titleOf = (slug: string) => props.topics.find((t) => t.slug === slug)?.title ?? slug
 
@@ -20,63 +27,123 @@ const sections = computed(() => [
     slugs: Array.from(new Set([...recent.value, ...props.topics.map((topic) => topic.slug)])),
   },
 ])
-
-const selectTopic = (slug: string) => {
-  activeTopicSlug.value = slug
-  activePostIndex.value = 0
-}
 </script>
 
 <template>
   <motion.aside
     class="sidebar"
-    :animate="{ width: sidebarHidden ? 0 : 168, opacity: sidebarHidden ? 0 : 1 }"
+    :class="{ 'is-collapsed': sidebarHidden }"
+    :animate="{ width: sidebarHidden ? 8 : 168 }"
     :transition="{ duration: 0.22, ease: 'easeInOut' }"
   >
-    <div class="header">
-      <div class="title">Recent &amp; Pinned</div>
-    </div>
-    <div class="list">
-      <template
-        v-for="section in sections"
-        :key="section.label"
-      >
-        <div class="section">{{ section.label }}</div>
-        <div
-          v-if="!section.slugs.length"
-          class="empty"
+    <div
+      class="content"
+      :inert="sidebarHidden"
+      :aria-hidden="sidebarHidden"
+    >
+      <div class="header">
+        <div class="title">Recent &amp; Pinned</div>
+      </div>
+      <div class="list">
+        <template
+          v-for="section in sections"
+          :key="section.label"
         >
-          // порожньо
-        </div>
-        <div
-          v-for="slug in section.slugs"
-          :key="section.label + ':' + slug"
-          class="item"
-          :class="{ 'is-active': slug === activeTopicSlug }"
-          @click="selectTopic(slug)"
-        >
-          <AnimatePresence>
-            <motion.span
-              v-if="slug === activeTopicSlug"
-              layoutId="dt-active-topic-bar"
-              class="active-bar"
-              :transition="{ type: 'spring', stiffness: 500, damping: 35 }"
-            />
-          </AnimatePresence>
-          <span class="name">{{ titleOf(slug) }}</span>
-        </div>
-      </template>
+          <div class="section">{{ section.label }}</div>
+          <div
+            v-if="!section.slugs.length"
+            class="empty"
+          >
+            // порожньо
+          </div>
+          <div
+            v-for="slug in section.slugs"
+            :key="section.label + ':' + slug"
+            class="item"
+            :class="{ 'is-active': slug === topicSlug }"
+            @click="openTopic(slug)"
+          >
+            <AnimatePresence>
+              <motion.span
+                v-if="slug === topicSlug"
+                layoutId="dt-active-topic-bar"
+                class="active-bar"
+                :transition="{ type: 'spring', stiffness: 500, damping: 35 }"
+              />
+            </AnimatePresence>
+            <span class="name">{{ titleOf(slug) }}</span>
+          </div>
+        </template>
+      </div>
     </div>
+    <button
+      class="handle"
+      type="button"
+      :aria-label="sidebarHidden ? 'Show feed sidebar' : 'Hide feed sidebar'"
+      :aria-expanded="!sidebarHidden"
+      :title="sidebarHidden ? 'Show feed sidebar' : 'Hide feed sidebar'"
+      @click="toggleSidebar"
+    />
   </motion.aside>
 </template>
 
 <style scoped>
 .sidebar {
-  border-right: 1px solid var(--dt-sidebar-border);
-  display: flex;
-  flex-direction: column;
+  position: relative;
   overflow: hidden;
   flex-shrink: 0;
+}
+.content {
+  width: 168px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  opacity: 1;
+  transition:
+    opacity 0.16s,
+    visibility 0.16s;
+}
+.sidebar.is-collapsed .content {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 8px;
+  padding: 0;
+  border: none;
+  border-left: 1px solid var(--dt-sidebar-border);
+  background: #080808;
+  cursor: col-resize;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.handle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 3px;
+  width: 2px;
+  height: 34px;
+  border-radius: 999px;
+  background: #151515;
+  transform: translateY(-50%);
+  transition: background 0.15s;
+}
+.handle:hover,
+.handle:focus-visible {
+  border-color: color-mix(in oklab, var(--kind-example) 35%, transparent);
+  background: #0b0b0b;
+  outline: none;
+}
+.handle:hover::after,
+.handle:focus-visible::after {
+  background: color-mix(in oklab, var(--kind-example) 45%, #151515);
 }
 .header {
   padding: 12px 14px 8px;

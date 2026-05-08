@@ -17,13 +17,11 @@ const props = defineProps<{
   currentIndex: number
 }>()
 
-const emit = defineEmits<{
-  openNotes: []
-  openComments: []
-}>()
-
 const { copy } = useClipboard()
 const { share, isSupported } = useShare()
+
+const feedView = useFeedViewStore()
+const { togglePanel } = feedView
 
 const { isSaved, toggle } = useSavedPosts()
 const { has: hasNote } = useNotes()
@@ -90,8 +88,8 @@ const onShare = async () => {
         :has-note="hasNote(+post.id)"
         @on-post-reaction="onPostReaction"
         @on-toggle-save="onToggleSave"
-        @on-open-note="emit('openNotes')"
-        @on-open-comments="emit('openComments')"
+        @on-open-note="togglePanel('notes')"
+        @on-open-comments="togglePanel('comments')"
         @on-share="onShare"
       />
     </div>

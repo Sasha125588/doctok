@@ -1,24 +1,32 @@
 <script setup lang="ts">
 import { motion } from 'motion-v'
 
+import { useFeedViewStore } from '~/stores/feedView'
+
 const props = defineProps<{
   open: boolean
   title: string
 }>()
 
-const { activePanel } = useFeedView()
+const { closePanel } = useFeedViewStore()
 
 const panel = useTemplateRef<HTMLElement>('panel')
 
 function close() {
   if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
-  activePanel.value = null
+  closePanel()
 }
 
-onClickOutside(panel, () => {
-  if (!props.open) return
-  close()
-})
+onClickOutside(
+  panel,
+  () => {
+    if (!props.open) return
+    close()
+  },
+  {
+    ignore: ['[data-panel-toggle]'],
+  }
+)
 </script>
 
 <template>

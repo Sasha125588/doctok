@@ -1,4 +1,4 @@
-export function useLang() {
+export const useLang = () => {
   const lang = useCookie('doctoc_content_lang', { default: () => 'en' })
 
   const setLang = (value: string) => {

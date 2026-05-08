@@ -2,31 +2,15 @@
 import { AnimatePresence, motion } from 'motion-v'
 
 import FocusCard from './FocusCard.vue'
-import { useFeedView } from '~/composables/useFeedView'
 
 import type { TopicPostView } from '#api/types.gen'
 
 const props = defineProps<{
   activePost?: TopicPostView
+  currentIndex: number
   isLoading: boolean
   totalPosts: number
 }>()
-
-const { activePostIndex, activePanel, activeTopicPostCount } = useFeedView()
-
-watch(
-  () => props.totalPosts,
-  (len) => (activeTopicPostCount.value = len),
-  { immediate: true }
-)
-
-const openNotes = () => {
-  activePanel.value = activePanel.value === 'notes' ? null : 'notes'
-}
-
-const openComments = () => {
-  activePanel.value = activePanel.value === 'comments' ? null : 'comments'
-}
 </script>
 
 <template>
@@ -47,10 +31,8 @@ const openComments = () => {
           <FocusCard
             v-if="activePost"
             :post="activePost"
-            :total-posts="props.totalPosts"
-            :current-index="activePostIndex"
-            @open-notes="openNotes"
-            @open-comments="openComments"
+            :total-posts
+            :current-index
           />
           <div
             v-else-if="props.isLoading"

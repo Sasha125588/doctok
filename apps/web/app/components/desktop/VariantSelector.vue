@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { type PostContentVariant, usePostContentVariant } from '~/composables/usePostContentVariant'
 
-const { variant } = usePostContentVariant()
+const variant = usePostContentVariant()
 
 const options: { code: PostContentVariant; label: string }[] = [
-  { code: 'original', label: 'Original' },
-  { code: 'ai_simple', label: 'Simple' },
-  { code: 'ai_senior', label: 'Senior' },
+  { code: 'original', label: 'original' },
+  { code: 'ai_simple', label: 'simplified' },
+  { code: 'ai_senior', label: 'senior' },
 ]
 </script>
 

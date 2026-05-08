@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import { format } from 'date-fns'
+import { storeToRefs } from 'pinia'
 
 import DesktopSidePanel from './DesktopSidePanel.vue'
 import { useComments } from '~/composables/useComments'
-import { useFeedView } from '~/composables/useFeedView'
+import { useFeedViewStore } from '~/stores/feedView'
 
 import type { ReactionValue } from '#api/types.gen'
 
 const props = defineProps<{ activePostId: number; topicSlug: string }>()
 
-const { activePanel } = useFeedView()
+const feedView = useFeedViewStore()
+const { activePanel } = storeToRefs(feedView)
 
 const activePostId = computed(() => props.activePostId)
 const topicSlug = computed(() => props.topicSlug)
@@ -56,7 +58,7 @@ const formatTime = (iso: string) => format(new Date(iso), 'HH:mm')
       </div>
       <div
         v-for="c in comments"
-        :key="String(c.id)"
+        :key="c.id"
         class="comment"
       >
         <div class="meta">
