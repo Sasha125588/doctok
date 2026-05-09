@@ -1,6 +1,9 @@
 <script setup lang="ts">
+import { toast } from 'vue-sonner'
+
 import PostKindBadge from '~/components/post/PostKindBadge.vue'
 import { useFeedRouteState } from '~/composables/useFeedRouteState'
+import { savedPostRemoveUndoDelayMs } from '~/composables/useSavedPosts'
 
 import type { SavedPostView } from '~~/generated/api/types.gen'
 
@@ -39,7 +42,30 @@ const highlightedTopicSlug = computed(() => {
   return buildHighlightedHtml(props.post.topicSlug)
 })
 
-const { remove } = useSavedPosts()
+const { remove, restore } = useSavedPosts()
+
+const removeSavedPost = async () => {
+  try {
+    await remove(props.post)
+
+    toast.success('видалено зі збережених', {
+      duration: savedPostRemoveUndoDelayMs,
+      action: {
+        label: 'скасувати',
+        onClick: async () => {
+          try {
+            await restore(props.post)
+          } catch {
+            toast.error('не вдалося повернути пост')
+          }
+        },
+      },
+    })
+  } catch {
+    toast.error('не вдалося видалити зі збережених')
+  }
+}
+
 const { openPost } = useFeedRouteState()
 
 const open = () =>
@@ -73,7 +99,9 @@ const open = () =>
       class="remove"
       type="button"
       title="видалити зі збережених"
-      @click.stop="remove(props.post)"
+      @click.stop="removeSavedPost()"
+      @keydown.enter.stop
+      @keydown.space.stop
     >
       <Icon
         name="lucide:bookmark-minus"
@@ -105,7 +133,8 @@ const open = () =>
   border-color: #161616;
   background: #0c0c0c;
 }
-.card:hover .remove {
+.card:hover .remove,
+.remove:focus-visible {
   opacity: 1;
 }
 .title {

@@ -38,7 +38,7 @@ const sortOptions: Array<{ value: SavedSortMode; label: string }> = [
 
 const {
   savedPosts,
-  clearSavedPosts,
+  clear: clearSavedPosts,
   fetchNextPage,
   hasNextPage,
   isClearing,
@@ -51,10 +51,6 @@ const savedRoot = useTemplateRef('savedRoot')
 const { searchQuery, selectedKind, selectedSort, resetFilters } = useSavedRouteState()
 
 const normalizedSearchQuery = computed(() => searchQuery.value.trim().toLowerCase())
-
-const resetSearchQuery = () => {
-  resetFilters()
-}
 
 const filteredSavedPosts = computed(() => {
   const query = normalizedSearchQuery.value
@@ -220,7 +216,7 @@ useInfiniteScroll(
             v-if="normalizedSearchQuery"
             name="lucide:x"
             class="empty-link"
-            @click="resetSearchQuery"
+            @click="resetFilters"
           />
         </label>
 
@@ -303,7 +299,7 @@ useInfiniteScroll(
       <button
         type="button"
         class="empty-link"
-        @click="resetSearchQuery"
+        @click="resetFilters"
       >
         // скинути пошук
       </button>

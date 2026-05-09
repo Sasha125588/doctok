@@ -28,10 +28,14 @@ export interface UseCommentReactionContext {
 }
 
 export interface UseCommentCreateContext {
-  commentsQueryKey: QueryKey
-  topicPostsQueryKey: QueryKey
-  commentsPreviousData?: PostsCommentsListResponse
-  topicPostsPreviousData?: TopicsGetPostsResponse
+  comments: {
+    queryKey: QueryKey
+    previousData?: PostsCommentsListResponse
+  }
+  topicPosts: {
+    queryKey: QueryKey
+    previousData?: TopicsGetPostsResponse
+  }
 }
 
 export const useComments = (postId: Ref<number>, topicSlug: Ref<string>, enabled: Ref<boolean>) => {
@@ -110,34 +114,38 @@ export const useComments = (postId: Ref<number>, topicSlug: Ref<string>, enabled
       })
 
       return {
-        commentsQueryKey,
-        commentsPreviousData,
-        topicPostsQueryKey,
-        topicPostsPreviousData,
+        comments: {
+          queryKey: commentsQueryKey,
+          previousData: commentsPreviousData,
+        },
+        topicPosts: {
+          queryKey: topicPostsQueryKey,
+          previousData: topicPostsPreviousData,
+        },
       }
     },
     onSuccess: (_data, _variables, onMutateResult, context) => {
       context.client.invalidateQueries({
-        queryKey: onMutateResult.commentsQueryKey,
+        queryKey: onMutateResult.comments.queryKey,
       })
       context.client.invalidateQueries({
-        queryKey: onMutateResult.topicPostsQueryKey,
+        queryKey: onMutateResult.topicPosts.queryKey,
       })
     },
     onError: (_data, _variables, onMutateResult, context) => {
       if (!onMutateResult) return
 
-      if (onMutateResult.topicPostsPreviousData) {
+      if (onMutateResult.topicPosts.previousData) {
         context.client.setQueryData(
-          onMutateResult.topicPostsQueryKey,
-          onMutateResult.topicPostsPreviousData
+          onMutateResult.topicPosts.queryKey,
+          onMutateResult.topicPosts.previousData
         )
       }
 
-      if (onMutateResult.commentsPreviousData) {
+      if (onMutateResult.comments.previousData) {
         context.client.setQueryData(
-          onMutateResult.commentsQueryKey,
-          onMutateResult.commentsPreviousData
+          onMutateResult.comments.queryKey,
+          onMutateResult.comments.previousData
         )
       }
     },

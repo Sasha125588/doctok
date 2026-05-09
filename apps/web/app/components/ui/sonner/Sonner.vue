@@ -80,6 +80,42 @@ const props = defineProps<ToasterProps>()
   color: #c8c8c0;
 }
 
+[data-sonner-toast][data-styled='true'] [data-content] {
+  min-width: 0;
+}
+
+[data-sonner-toast][data-styled='true'] [data-button] {
+  height: 26px;
+  margin-inline: 4px;
+  padding: 0 12px;
+  border: 1px solid #1f3224;
+  border-radius: 16px;
+  background: #08140d;
+  color: var(--kind-example);
+  cursor: pointer;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    color 0.15s;
+}
+
+[data-sonner-toast][data-styled='true'] [data-button]:hover {
+  border-color: rgba(0, 232, 122, 0.34);
+  background: #0b1f13;
+  color: #9cffc6;
+}
+
+[data-sonner-toast][data-styled='true'] [data-button]:focus-visible {
+  outline: 1px solid rgba(0, 232, 122, 0.46);
+  outline-offset: 2px;
+}
+
 [data-sonner-toast][data-styled='true'][data-type='success'] {
   border-left-color: var(--kind-example);
 }
@@ -128,11 +164,14 @@ const props = defineProps<ToasterProps>()
   background: transparent;
   box-shadow: none;
   transform: none;
-  opacity: 0;
+  opacity: 0.55;
   color: var(--dt-text-quaternary);
   flex-shrink: 0;
-  pointer-events: none;
-  transition: opacity 120ms ease-out;
+  pointer-events: auto;
+  cursor: pointer;
+  transition:
+    opacity 120ms ease-out,
+    color 120ms ease-out;
 }
 
 [data-sonner-toast][data-styled='true'] [data-close-button] svg {
@@ -140,9 +179,10 @@ const props = defineProps<ToasterProps>()
   width: 12px;
 }
 
-[data-sonner-toast][data-styled='true']:hover [data-close-button] {
+[data-sonner-toast][data-styled='true']:hover [data-close-button],
+[data-sonner-toast][data-styled='true'] [data-close-button]:hover {
   opacity: 1;
-  pointer-events: auto;
+  color: var(--dt-text-tertiary);
 }
 
 [data-sonner-toast][data-styled='true']:hover [data-close-button]:hover {
@@ -152,7 +192,10 @@ const props = defineProps<ToasterProps>()
 
 [data-sonner-toast][data-styled='true'] [data-close-button]:focus-visible {
   opacity: 1;
+  color: var(--dt-text-tertiary);
   background: transparent;
   border-color: transparent;
+  outline: 1px solid rgba(200, 200, 192, 0.28);
+  outline-offset: 3px;
 }
 </style>

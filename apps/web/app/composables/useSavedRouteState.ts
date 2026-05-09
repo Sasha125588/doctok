@@ -7,9 +7,9 @@ export type SavedKindFilter = (typeof savedKindFilterValues)[number]
 export type SavedSortMode = (typeof savedSortModeValues)[number]
 
 export const useSavedRouteState = () => {
-  const searchQuery = useRouteQuery('q', '', { mode: 'replace' })
-  const selectedKind = useRouteQuery<SavedKindFilter>('kind', 'all', { mode: 'replace' })
-  const selectedSort = useRouteQuery<SavedSortMode>('sort', 'newest', { mode: 'replace' })
+  const searchQuery = useRouteQuery<string>('q', '')
+  const selectedKind = useRouteQuery<SavedKindFilter>('kind', 'all')
+  const selectedSort = useRouteQuery<SavedSortMode>('sort', 'newest')
 
   const resetFilters = () => {
     searchQuery.value = ''
