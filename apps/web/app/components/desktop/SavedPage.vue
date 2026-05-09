@@ -37,9 +37,18 @@ const sortOptions: Array<{ value: SavedSortMode; label: string }> = [
   { value: 'topic', label: 'A-Z за темою' },
 ]
 
-const { savedPosts, clear, isClearing } = useSavedPosts()
+const {
+  savedPosts,
+  clearSavedPosts,
+  fetchNextPage,
+  hasNextPage,
+  isClearing,
+  isFetchingNextPage,
+  isLoading,
+} = useSavedPosts()
 
 const isClearDialogOpen = ref(false)
+const savedRoot = useTemplateRef('savedRoot')
 const searchQuery = ref('')
 const selectedKind = ref<SavedKindFilter>('all')
 const selectedSort = ref<SavedSortMode>('newest')
@@ -89,13 +98,13 @@ const hasActiveFilters = computed(
 
 const savedPostsCount = computed(() =>
   hasActiveFilters.value
-    ? `${filteredSavedPosts.value.length} / ${savedPosts.value.length} posts`
-    : `${savedPosts.value.length} posts`
+    ? `${filteredSavedPosts.value.length} / ${savedPosts.value.length}${hasNextPage.value ? '+' : ''} posts`
+    : `${savedPosts.value.length}${hasNextPage.value ? '+' : ''} posts`
 )
 
 const onClearSavedPosts = async () => {
   try {
-    await clear()
+    await clearSavedPosts()
     closeClearDialog()
     toast.success('збережене очищено')
   } catch {
@@ -108,10 +117,26 @@ const closeClearDialog = () => {
 
   isClearDialogOpen.value = false
 }
+
+const canFetchNextPage = computed(() => hasNextPage.value && !isFetchingNextPage.value)
+
+useInfiniteScroll(
+  savedRoot,
+  async () => {
+    await fetchNextPage()
+  },
+  {
+    distance: 220,
+    canLoadMore: () => canFetchNextPage.value,
+  }
+)
 </script>
 
 <template>
-  <section class="saved">
+  <section
+    ref="savedRoot"
+    class="saved"
+  >
     <header class="header">
       <div class="header-copy">
         <div class="title">// saved</div>
@@ -265,8 +290,9 @@ const closeClearDialog = () => {
       v-if="!savedPosts.length"
       class="empty"
     >
-      <div>// тут порожньо</div>
+      <div>{{ isLoading ? '// завантаження...' : '// тут порожньо' }}</div>
       <NuxtLink
+        v-if="!isLoading"
         to="/"
         class="empty-link"
       >
@@ -313,6 +339,18 @@ const closeClearDialog = () => {
           </motion.div>
         </AnimatePresence>
       </LayoutGroup>
+    </div>
+
+    <div
+      v-if="savedPosts.length && hasNextPage"
+      class="load-more"
+    >
+      <Icon
+        v-if="isFetchingNextPage"
+        name="lucide:loader"
+        class="load-more-spinner"
+      />
+      <span>{{ isFetchingNextPage ? 'завантаження...' : 'прокрути нижче' }}</span>
     </div>
   </section>
 </template>
@@ -648,8 +686,25 @@ const closeClearDialog = () => {
 }
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(4, minmax(220px, 1fr));
   gap: 12px;
+}
+.load-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 18px 0 4px;
+  flex-shrink: 0;
+  color: var(--dt-text-quaternary);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+.load-more-spinner {
+  width: 13px;
+  height: 13px;
+  color: var(--kind-example);
+  animation: spin 0.8s linear infinite;
 }
 .empty {
   flex: 1;

@@ -35,9 +35,26 @@ export const useSavedPosts = () => {
       ? await server.toggle({ postId: post.id, topicSlug: post.topicSlug }, post.isSaved)
       : guest.toggle(post)
 
-  const clear = async () => (isAuthenticated.value ? await server.clear() : guest.clear())
+  const clearSavedPosts = async () => (isAuthenticated.value ? await server.clear() : guest.clear())
 
   const isClearing = computed(() => (isAuthenticated.value ? server.isClearing.value : false))
+  const isLoading = computed(() => (isAuthenticated.value ? server.isLoading.value : false))
+  const hasNextPage = computed(() => (isAuthenticated.value ? server.hasNextPage.value : false))
+  const isFetchingNextPage = computed(() =>
+    isAuthenticated.value ? server.isFetchingNextPage.value : false
+  )
 
-  return { savedPosts, isSaved, save, remove, toggle, clear, isClearing }
+  return {
+    savedPosts,
+    isSaved,
+    save,
+    remove,
+    toggle,
+    clearSavedPosts,
+    isClearing,
+    isLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage: server.fetchNextPage,
+  }
 }

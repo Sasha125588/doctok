@@ -33,7 +33,7 @@ export interface ServerSavedPostRequest extends SavePostRequest {
   topicSlug: string
 }
 
-const savedPostsPageSize = 10
+const savedPostsPageSize = 2
 
 const getTopicSlugFromMeta = (meta: Record<string, unknown> | undefined) => {
   const raw = meta?.topicSlug

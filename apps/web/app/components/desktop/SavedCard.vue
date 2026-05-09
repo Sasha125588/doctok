@@ -67,6 +67,7 @@ const open = () =>
       class="title"
       v-html="highlightedTitle"
     />
+    <!-- <span>{{ post.topicTitle }}</span> -->
     <div class="topic">// topic: <span v-html="highlightedTopicSlug" /></div>
     <button
       class="remove"
