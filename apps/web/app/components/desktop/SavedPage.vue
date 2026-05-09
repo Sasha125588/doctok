@@ -20,8 +20,7 @@ import { toast } from 'vue-sonner'
 
 import SavedCard from './SavedCard.vue'
 
-type SavedKindFilter = 'all' | 'summary' | 'example' | 'concept' | 'tip'
-type SavedSortMode = 'newest' | 'oldest' | 'topic'
+import type { SavedKindFilter, SavedSortMode } from '~/composables/useSavedRouteState'
 
 const kindFilters: Array<{ value: SavedKindFilter; label: string }> = [
   { value: 'all', label: 'all' },
@@ -49,15 +48,12 @@ const {
 
 const isClearDialogOpen = ref(false)
 const savedRoot = useTemplateRef('savedRoot')
-const searchQuery = ref('')
-const selectedKind = ref<SavedKindFilter>('all')
-const selectedSort = ref<SavedSortMode>('newest')
+const { searchQuery, selectedKind, selectedSort, resetFilters } = useSavedRouteState()
 
 const normalizedSearchQuery = computed(() => searchQuery.value.trim().toLowerCase())
 
 const resetSearchQuery = () => {
-  searchQuery.value = ''
-  selectedKind.value = 'all'
+  resetFilters()
 }
 
 const filteredSavedPosts = computed(() => {
