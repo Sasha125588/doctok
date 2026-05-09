@@ -20,7 +20,7 @@ export interface TopicEvent {
 
 const topicEvents = ['topic-ready', 'topic-failed', 'topic-timeout'] as const
 
-export function useTopicPosts(topicSlug: Ref<string | null>) {
+export const useTopicPosts = (topicSlug: Ref<string | null>) => {
   const { lang } = useLang()
 
   const queryOptions = computed(() => ({
@@ -35,7 +35,7 @@ export function useTopicPosts(topicSlug: Ref<string | null>) {
   const variant = usePostContentVariant()
 
   const query = useQuery(() => ({
-    enabled: canFetch.value,
+    enabled: canFetch,
     ...topicsGetPostsOptions(queryOptions.value),
   }))
 

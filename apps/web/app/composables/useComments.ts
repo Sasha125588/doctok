@@ -34,7 +34,7 @@ export interface UseCommentCreateContext {
   topicPostsPreviousData?: TopicsGetPostsResponse
 }
 
-export function useComments(postId: Ref<number>, topicSlug: Ref<string>) {
+export const useComments = (postId: Ref<number>, topicSlug: Ref<string>, enabled: Ref<boolean>) => {
   const { lang } = useLang()
   const getCommentsQueryKey = () => postsCommentsListQueryKey({ path: { postId: postId.value } })
   const getTopicPostsQueryKey = () =>
@@ -45,11 +45,11 @@ export function useComments(postId: Ref<number>, topicSlug: Ref<string>) {
       },
     })
 
-  const query = useQuery(() =>
-    postsCommentsListOptions({
-      path: { postId: postId.value },
-    })
-  )
+  const queryOptions = computed(() => ({
+    path: { postId: postId.value },
+  }))
+
+  const query = useQuery(() => ({ enabled, ...postsCommentsListOptions(queryOptions.value) }))
 
   const createMutation = useMutation<
     PostsCommentsCreateResponse,

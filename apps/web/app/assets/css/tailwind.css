@@ -47,6 +47,8 @@
   --radius: 0.625rem;
   --kind-summary: #3b82f6;
   --kind-example: #22c55e;
+  --kind-concept: #a855f7;
+  --kind-tip: #eab308;
   --kind-fact: #f97316;
   --text-secondary: #8899aa;
   --background: #080c10;
@@ -89,6 +91,8 @@
   --dt-border-subtle: #141616;
   --kind-summary-bg: #0d1f35;
   --kind-example-bg: #001f10;
+  --kind-concept-bg: #1a0f35;
+  --kind-tip-bg: #241f05;
   --kind-fact-bg: #1e1400;
 }
 

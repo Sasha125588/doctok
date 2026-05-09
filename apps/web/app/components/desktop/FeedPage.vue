@@ -2,17 +2,20 @@
 import { storeToRefs } from 'pinia'
 
 import BrowseMode from './BrowseMode.vue'
-import CommentsPanel from './CommentsPanel.vue'
 import FocusMode from './FocusMode.vue'
-import NotesPanel from './NotesPanel.vue'
 import Sidebar from './Sidebar.vue'
 import { useFeed } from '~/composables/useFeed'
 import { useFeedRouteState } from '~/composables/useFeedRouteState'
 import { useFeedViewStore } from '~/stores/feedView'
 
+const hasMountedCommentsPanel = ref(false)
+const hasMountedNotesPanel = ref(false)
+
 const feedView = useFeedViewStore()
 const { activePanel } = storeToRefs(feedView)
+
 const { topicSlug, postId, mode, clearPostId, openTopic, openPost } = useFeedRouteState()
+
 const { topics, fetchNextPage, hasNextPage, isFetchingNextPage } = useFeed()
 
 const { posts, isLoading } = useTopicPosts(topicSlug)
@@ -28,6 +31,18 @@ const activePostIndex = computed(() => {
   return index >= 0 ? index : 0
 })
 const activePost = computed(() => posts.value[activePostIndex.value])
+
+const shouldMountCommentsPanel = computed(
+  () => activePanel.value === 'comments' || hasMountedCommentsPanel.value
+)
+const shouldMountNotesPanel = computed(
+  () => activePanel.value === 'notes' || hasMountedNotesPanel.value
+)
+
+watch(activePanel, (panel) => {
+  if (panel === 'comments') hasMountedCommentsPanel.value = true
+  if (panel === 'notes') hasMountedNotesPanel.value = true
+})
 
 watch(
   [topicSlug, topics],
@@ -132,13 +147,13 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         :posts
       />
     </div>
-    <CommentsPanel
-      v-if="activePost"
+    <LazyDesktopCommentsPanel
+      v-if="activePost && shouldMountCommentsPanel"
       :active-post-id="+activePost.id"
       :topic-slug="activePost.topicSlug"
     />
-    <NotesPanel
-      v-if="activePost"
+    <LazyDesktopNotesPanel
+      v-if="activePost && shouldMountNotesPanel"
       :active-post-id="+activePost.id"
     />
   </div>

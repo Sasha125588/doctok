@@ -10,9 +10,9 @@ const props = defineProps<{
 
 const { closePanel } = useFeedViewStore()
 
-const panel = useTemplateRef<HTMLElement>('panel')
+const panel = useTemplateRef('panel')
 
-function close() {
+const close = () => {
   if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
   closePanel()
 }
@@ -32,6 +32,7 @@ onClickOutside(
 <template>
   <motion.aside
     class="panel"
+    :initial="{ width: 0 }"
     :animate="{ width: props.open ? 280 : 0 }"
     :transition="{ duration: 0.22, ease: 'easeInOut' }"
   >

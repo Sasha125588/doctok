@@ -6,8 +6,6 @@ import DesktopSidePanel from './DesktopSidePanel.vue'
 import { useComments } from '~/composables/useComments'
 import { useFeedViewStore } from '~/stores/feedView'
 
-import type { ReactionValue } from '#api/types.gen'
-
 const props = defineProps<{ activePostId: number; topicSlug: string }>()
 
 const feedView = useFeedViewStore()
@@ -15,24 +13,17 @@ const { activePanel } = storeToRefs(feedView)
 
 const activePostId = computed(() => props.activePostId)
 const topicSlug = computed(() => props.topicSlug)
-const { comments, isLoading, isSending, send, vote } = useComments(activePostId, topicSlug)
-
-const draft = ref('')
 const isOpen = computed(() => activePanel.value === 'comments')
 
-function submit() {
+const { comments, isLoading, isSending, send, vote } = useComments(activePostId, topicSlug, isOpen)
+
+const draft = ref('')
+
+const submit = () => {
   if (isSending.value) return
   send(draft.value, () => {
     draft.value = ''
   })
-}
-
-function initial(str: string | undefined) {
-  return (str?.[0] ?? '?').toUpperCase()
-}
-
-function toggleReaction(commentId: number, value: ReactionValue) {
-  vote(commentId, value)
 }
 
 const formatTime = (iso: string) => format(new Date(iso), 'HH:mm')
@@ -62,7 +53,7 @@ const formatTime = (iso: string) => format(new Date(iso), 'HH:mm')
         class="comment"
       >
         <div class="meta">
-          <div class="avatar">{{ initial(c.userId) }}</div>
+          <div class="avatar">{{ (c.userId[0] ?? '?').toUpperCase() }}</div>
           <span class="author">{{ c.userId?.slice(10) ?? 'user' }}</span>
           <span class="time">{{ formatTime(c.createdAt) }}</span>
         </div>
@@ -74,7 +65,7 @@ const formatTime = (iso: string) => format(new Date(iso), 'HH:mm')
             :class="{ 'reaction--liked': c.myVote === 'like' }"
             :aria-pressed="c.myVote === 'like'"
             aria-label="Like comment"
-            @click="toggleReaction(+c.id, 'like')"
+            @click="vote(+c.id, 'like')"
           >
             <Icon
               name="lucide:heart"
@@ -88,7 +79,7 @@ const formatTime = (iso: string) => format(new Date(iso), 'HH:mm')
             :class="{ 'reaction--disliked': c.myVote === 'dislike' }"
             :aria-pressed="c.myVote === 'dislike'"
             aria-label="Dislike comment"
-            @click="toggleReaction(+c.id, 'dislike')"
+            @click="vote(+c.id, 'dislike')"
           >
             <Icon
               name="lucide:thumbs-down"
