@@ -1,0 +1,15 @@
+.DS_Store
+.env
+.env.*
+.idea/
+.vs/
+bin/
+obj/
+**/bin/
+**/obj/
+TestResults/
+logs/
+*.log
+*.user
+*.suo
+*.rsuser
