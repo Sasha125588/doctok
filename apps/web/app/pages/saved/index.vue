@@ -18,23 +18,9 @@ import {
 } from 'reka-ui'
 import { toast } from 'vue-sonner'
 
-import SavedCard from './SavedCard.vue'
-
-import type { SavedKindFilter, SavedSortMode } from '~/composables/useSavedRouteState'
-
-const kindFilters: Array<{ value: SavedKindFilter; label: string }> = [
-  { value: 'all', label: 'all' },
-  { value: 'summary', label: 'summary' },
-  { value: 'example', label: 'example' },
-  { value: 'concept', label: 'concept' },
-  { value: 'tip', label: 'tip' },
-]
-
-const sortOptions: Array<{ value: SavedSortMode; label: string }> = [
-  { value: 'newest', label: '↓ новіші спочатку' },
-  { value: 'oldest', label: '↑ старіші спочатку' },
-  { value: 'topic', label: 'A-Z за темою' },
-]
+import SavedCard from './_components/SavedCard.vue'
+import { useSavedRouteState } from './_composables/useSavedRouteState'
+import { kindFilters, sortOptions } from './_constants'
 
 const {
   savedPosts,
@@ -48,9 +34,8 @@ const {
 
 const isClearDialogOpen = ref(false)
 const savedRoot = useTemplateRef('savedRoot')
-const { searchQuery, selectedKind, selectedSort, resetFilters } = useSavedRouteState()
-
-const normalizedSearchQuery = computed(() => searchQuery.value.trim().toLowerCase())
+const { searchQuery, normalizedSearchQuery, selectedKind, selectedSort, resetFilters } =
+  useSavedRouteState()
 
 const filteredSavedPosts = computed(() => {
   const query = normalizedSearchQuery.value

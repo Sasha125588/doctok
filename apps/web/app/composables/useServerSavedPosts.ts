@@ -57,63 +57,6 @@ const savedPostsListQueryKey = () =>
     query: { limit: savedPostsPageSize },
   })
 
-const markTopicPostSaved = (
-  oldData: TopicsGetPostsResponse | undefined,
-  postId: number,
-  isSaved: boolean
-) => {
-  if (!oldData) return oldData
-
-  return {
-    ...oldData,
-    items: oldData.items.map((post) => {
-      if (+post.id !== postId) return post
-
-      return {
-        ...post,
-        isSaved,
-      }
-    }),
-  }
-}
-
-const removeSavedPostFromList = (oldData: SavedPostsInfiniteData | undefined, postId: number) => {
-  if (!oldData) return oldData
-
-  return {
-    ...oldData,
-    pages: oldData.pages.map((page) => ({
-      ...page,
-      items: page.items.filter((post) => +post.postId !== postId),
-    })),
-  }
-}
-
-const addSavedPostToList = (
-  oldData: SavedPostsInfiniteData | undefined,
-  savedPost: SavedPostView
-) => {
-  if (!oldData) return oldData
-
-  const hasPost = oldData.pages.some((page) =>
-    page.items.some((post) => +post.postId === +savedPost.postId)
-  )
-  const [firstPage, ...restPages] = oldData.pages
-
-  if (hasPost || !firstPage) return oldData
-
-  return {
-    ...oldData,
-    pages: [
-      {
-        ...firstPage,
-        items: [savedPost, ...firstPage.items],
-      },
-      ...restPages,
-    ],
-  }
-}
-
 const useServerSavedPostsImpl = () => {
   const session = useSession()
   const { lang } = useLang()
@@ -313,6 +256,63 @@ const useServerSavedPostsImpl = () => {
   const isClearing = computed(() => clearMutation.isPending.value)
 
   return { savedPosts, save, remove, toggle, clear, isClearing, ...query }
+}
+
+const markTopicPostSaved = (
+  oldData: TopicsGetPostsResponse | undefined,
+  postId: number,
+  isSaved: boolean
+) => {
+  if (!oldData) return oldData
+
+  return {
+    ...oldData,
+    items: oldData.items.map((post) => {
+      if (+post.id !== postId) return post
+
+      return {
+        ...post,
+        isSaved,
+      }
+    }),
+  }
+}
+
+const removeSavedPostFromList = (oldData: SavedPostsInfiniteData | undefined, postId: number) => {
+  if (!oldData) return oldData
+
+  return {
+    ...oldData,
+    pages: oldData.pages.map((page) => ({
+      ...page,
+      items: page.items.filter((post) => +post.postId !== postId),
+    })),
+  }
+}
+
+const addSavedPostToList = (
+  oldData: SavedPostsInfiniteData | undefined,
+  savedPost: SavedPostView
+) => {
+  if (!oldData) return oldData
+
+  const hasPost = oldData.pages.some((page) =>
+    page.items.some((post) => +post.postId === +savedPost.postId)
+  )
+  const [firstPage, ...restPages] = oldData.pages
+
+  if (hasPost || !firstPage) return oldData
+
+  return {
+    ...oldData,
+    pages: [
+      {
+        ...firstPage,
+        items: [savedPost, ...firstPage.items],
+      },
+      ...restPages,
+    ],
+  }
 }
 
 export const useServerSavedPosts = createSharedComposable(useServerSavedPostsImpl)

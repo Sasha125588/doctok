@@ -1,5 +1,41 @@
-import { useGuestSavedPostsSync } from '~/composables/useGuestSavedPostsSync'
-
 export default defineNuxtPlugin(() => {
-  useGuestSavedPostsSync()
+  const session = useSession()
+
+  const guest = useGuestSavedPosts()
+  const server = useServerSavedPosts()
+
+  const isAuthenticated = computed(
+    () => session.isSuccess.value && Boolean(session.data.value?.userId)
+  )
+
+  const isSyncing = useState('saved-posts:syncing-guest', () => false)
+
+  const syncGuestToServer = async () => {
+    if (!isAuthenticated.value) return
+    if (isSyncing.value) return
+
+    const guestPosts = [...guest.savedPosts.value]
+    if (!guestPosts.length) return
+
+    isSyncing.value = true
+
+    try {
+      for (const post of guestPosts) {
+        await server.save({ postId: post.postId, topicSlug: post.topicSlug })
+      }
+
+      guest.clear()
+    } finally {
+      isSyncing.value = false
+    }
+  }
+
+  watch(
+    isAuthenticated,
+    async (authed) => {
+      if (!authed) return
+      await syncGuestToServer()
+    },
+    { immediate: true }
+  )
 })

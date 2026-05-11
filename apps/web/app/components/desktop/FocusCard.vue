@@ -30,8 +30,6 @@ const { mutatePostReaction } = usePostReaction(props.post.topicSlug)
 
 const onPostReaction = (value: ReactionValue) => mutatePostReaction(+props.post.id, value)
 
-const onToggleSave = () => toggle(props.post)
-
 const onShare = async () => {
   const url = `${window.location.origin}/topic/${props.post.topicSlug}`
 
@@ -87,7 +85,7 @@ const onShare = async () => {
         :is-saved="isSaved(post)"
         :has-note="hasNote(+post.id)"
         @on-post-reaction="onPostReaction"
-        @on-toggle-save="onToggleSave"
+        @on-toggle-save="toggle(props.post)"
         @on-open-note="togglePanel('notes')"
         @on-open-comments="togglePanel('comments')"
         @on-share="onShare"

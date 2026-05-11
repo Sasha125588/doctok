@@ -1,10 +1,6 @@
 import { useRouteQuery } from '@vueuse/router'
 
-export const savedKindFilterValues = ['all', 'summary', 'example', 'concept', 'tip'] as const
-export const savedSortModeValues = ['newest', 'oldest', 'topic'] as const
-
-export type SavedKindFilter = (typeof savedKindFilterValues)[number]
-export type SavedSortMode = (typeof savedSortModeValues)[number]
+import type { SavedKindFilter, SavedSortMode } from '../_types'
 
 export const useSavedRouteState = () => {
   const searchQuery = useRouteQuery<string>('q', '')
@@ -14,10 +10,14 @@ export const useSavedRouteState = () => {
   const resetFilters = () => {
     searchQuery.value = ''
     selectedKind.value = 'all'
+    selectedSort.value = 'newest'
   }
+
+  const normalizedSearchQuery = computed(() => searchQuery.value.trim().toLowerCase())
 
   return {
     searchQuery,
+    normalizedSearchQuery,
     selectedKind,
     selectedSort,
     resetFilters,
