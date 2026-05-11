@@ -8,14 +8,7 @@ const slug = computed(() => route.params.slug!.join('/'))
 
 const { lang } = useLang()
 
-const queryOptions = computed(() => ({
-  query: {
-    slug: slug.value ?? '',
-    lang: lang.value,
-  },
-}))
-
-const { posts } = useTopicPosts(queryOptions)
+const { posts } = useTopicPosts(slug)
 const topicTitle = computed(() => posts.value[0]?.topicTitle ?? slug.value)
 </script>
 

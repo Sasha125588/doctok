@@ -33,7 +33,11 @@ app.MapScalarApiReference("/docs", options =>
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
-app.UseHttpsRedirection();
+if (app.Environment.IsDevelopment())
+{
+  app.UseHttpsRedirection();
+}
+
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();

@@ -2,6 +2,8 @@ import tailwindcss from '@tailwindcss/vite'
 import path from 'node:path'
 
 const resolve = (filePath: string) => path.resolve(__dirname, filePath)
+const apiBaseUrl = process.env.NUXT_API_BASE_URL ?? 'http://localhost:5005'
+const publicApiBaseUrl = process.env.NUXT_PUBLIC_API_BASE_URL
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -52,15 +54,10 @@ export default defineNuxtConfig({
     preset: 'bun',
   },
 
-  routeRules: {
-    '/api/**': {
-      proxy: 'http://localhost:5005/api/**',
-    },
-  },
-
   runtimeConfig: {
+    apiBaseUrl,
     public: {
-      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL ?? 'http://localhost:5005',
+      apiBaseUrl: publicApiBaseUrl,
     },
   },
 
