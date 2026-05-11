@@ -3,11 +3,17 @@ import { toast } from 'vue-sonner'
 
 import PostKindBadge from '~/components/post/PostKindBadge.vue'
 import { useFeedRouteState } from '~/composables/useFeedRouteState'
+import { usePostKind } from '~/composables/usePostKind'
 import { savedPostRemoveUndoDelayMs } from '~/composables/useSavedPosts'
 
 import type { SavedPostView } from '~~/generated/api/types.gen'
 
-const props = defineProps<{ post: SavedPostView; searchQuery: string }>()
+type SavedCardView = 'grid' | 'grouped'
+
+const props = withDefaults(
+  defineProps<{ post: SavedPostView; searchQuery: string; view?: SavedCardView }>(),
+  { view: 'grid' }
+)
 
 const escapeHtml = (value: string) =>
   value
@@ -40,6 +46,20 @@ const highlightedTitle = computed(() => {
 
 const highlightedTopicSlug = computed(() => {
   return buildHighlightedHtml(props.post.topicSlug)
+})
+
+const isGrouped = computed(() => props.view === 'grouped')
+const kindConfig = usePostKind(() => props.post.kind)
+
+const savedAtLabel = computed(() => {
+  const date = new Date(props.post.savedAt)
+
+  if (Number.isNaN(date.getTime())) return null
+
+  return new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+  }).format(date)
 })
 
 const { remove, restore } = useSavedPosts()
@@ -81,6 +101,8 @@ const open = () =>
 <template>
   <article
     class="card"
+    :class="{ 'is-grouped': isGrouped }"
+    :style="{ '--saved-kind-color': kindConfig.cssColor }"
     tabindex="0"
     role="button"
     :aria-label="`Відкрити: ${props.post.title}`"
@@ -93,8 +115,20 @@ const open = () =>
       class="title"
       v-html="highlightedTitle"
     />
-    <!-- <span>{{ post.topicTitle }}</span> -->
-    <div class="topic">// topic: <span v-html="highlightedTopicSlug" /></div>
+    <div class="meta">
+      <div
+        v-if="!isGrouped"
+        class="topic"
+      >
+        // topic: <span v-html="highlightedTopicSlug" />
+      </div>
+      <div
+        v-if="savedAtLabel"
+        class="saved-at"
+      >
+        saved {{ savedAtLabel }}
+      </div>
+    </div>
     <button
       class="remove"
       type="button"
@@ -113,11 +147,14 @@ const open = () =>
 
 <style scoped>
 .card {
+  --saved-kind-color: var(--text-secondary);
   position: relative;
+  overflow: hidden;
   padding: 12px;
-  border: 1px solid #0e0e0e;
+  border: 1px solid #181818;
   border-radius: 6px;
-  background: var(--dt-panel-bg);
+  background: #0b0b0b;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.012) inset;
   cursor: pointer;
   transition: all 0.15s;
   display: flex;
@@ -127,11 +164,31 @@ const open = () =>
   min-width: 0;
   text-align: left;
   font-family: inherit;
-  word-break: break-word;
+}
+.card::before {
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: 0;
+  width: 2px;
+  border-radius: 0 999px 999px 0;
+  background: var(--saved-kind-color);
+  content: '';
+  opacity: 0.2;
+  transition:
+    opacity 0.15s,
+    transform 0.15s;
+}
+.card.is-grouped {
+  gap: 8px;
 }
 .card:hover {
-  border-color: #161616;
-  background: #0c0c0c;
+  border-color: #242424;
+  background: #101010;
+}
+.card:hover::before {
+  opacity: 0.72;
+  transform: scaleY(1.06);
 }
 .card:hover .remove,
 .remove:focus-visible {
@@ -148,11 +205,25 @@ const open = () =>
   line-clamp: 3;
   overflow: hidden;
 }
+.meta {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  margin-top: auto;
+}
 .topic {
+  overflow: hidden;
+  min-width: 0;
+  color: var(--dt-text-tertiary);
   font-family: var(--font-mono);
   font-size: 9px;
-  color: var(--dt-text-tertiary);
-  margin-top: auto;
+  line-height: 1.35;
+}
+.saved-at {
+  color: #6f756d;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  line-height: 1.35;
 }
 .highlight {
   color: #00e87a;

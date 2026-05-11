@@ -20,7 +20,9 @@ import { toast } from 'vue-sonner'
 
 import SavedCard from './_components/SavedCard.vue'
 import { useSavedRouteState } from './_composables/useSavedRouteState'
-import { kindFilters, sortOptions } from './_constants'
+import { kindFilters, sortOptions, viewOptions } from './_constants'
+
+import type { SavedTopicGroup } from './_types'
 
 const {
   savedPosts,
@@ -33,9 +35,15 @@ const {
 } = useSavedPosts()
 
 const isClearDialogOpen = ref(false)
-const savedRoot = useTemplateRef('savedRoot')
-const { searchQuery, normalizedSearchQuery, selectedKind, selectedSort, resetFilters } =
-  useSavedRouteState()
+const savedRootRef = useTemplateRef('savedRootRef')
+const {
+  searchQuery,
+  normalizedSearchQuery,
+  selectedKind,
+  selectedSort,
+  selectedView,
+  resetFilters,
+} = useSavedRouteState()
 
 const filteredSavedPosts = computed(() => {
   const query = normalizedSearchQuery.value
@@ -53,7 +61,7 @@ const sortedSavedPosts = computed(() => {
   const posts = [...filteredSavedPosts.value]
 
   if (selectedSort.value === 'oldest') {
-    return posts.sort((a, b) => Date.parse(String(a.savedAt)) - Date.parse(String(b.savedAt)))
+    return posts.sort((a, b) => Date.parse(a.savedAt) - Date.parse(b.savedAt))
   }
 
   if (selectedSort.value === 'topic') {
@@ -62,12 +70,50 @@ const sortedSavedPosts = computed(() => {
     )
   }
 
-  return posts.sort((a, b) => Date.parse(String(b.savedAt)) - Date.parse(String(a.savedAt)))
+  return posts.sort((a, b) => Date.parse(b.savedAt) - Date.parse(a.savedAt))
 })
 
 const selectedSortLabel = computed(
   () => sortOptions.find((option) => option.value === selectedSort.value)?.label
 )
+
+const formatSavedDate = (value: string) => {
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) return null
+
+  return new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+  }).format(date)
+}
+
+const groupedSavedPosts = computed(() => {
+  const groups = new Map<string, SavedTopicGroup>()
+
+  for (const post of sortedSavedPosts.value) {
+    const group = groups.get(post.topicSlug)
+
+    if (group) {
+      group.posts.push(post)
+
+      if (Date.parse(post.savedAt) > Date.parse(group.lastSavedAt)) {
+        group.lastSavedAt = post.savedAt
+      }
+
+      continue
+    }
+
+    groups.set(post.topicSlug, {
+      topicTitle: post.topicTitle,
+      topicSlug: post.topicSlug,
+      lastSavedAt: post.savedAt,
+      posts: [post],
+    })
+  }
+
+  return [...groups.values()]
+})
 
 const hasActiveFilters = computed(
   () => !!normalizedSearchQuery.value || selectedKind.value !== 'all'
@@ -98,7 +144,7 @@ const closeClearDialog = () => {
 const canFetchNextPage = computed(() => hasNextPage.value && !isFetchingNextPage.value)
 
 useInfiniteScroll(
-  savedRoot,
+  savedRootRef,
   async () => {
     await fetchNextPage()
   },
@@ -111,7 +157,7 @@ useInfiniteScroll(
 
 <template>
   <section
-    ref="savedRoot"
+    ref="savedRootRef"
     class="saved"
   >
     <header class="header">
@@ -145,13 +191,22 @@ useInfiniteScroll(
             @interact-outside="closeClearDialog"
           >
             <div class="clear-dialog-header">
-              <div class="clear-dialog-kicker">// підтвердження</div>
-              <AlertDialogTitle class="clear-dialog-title">
-                Видалити всі {{ savedPosts.length }} збережених постів?
-              </AlertDialogTitle>
-              <AlertDialogDescription class="clear-dialog-description">
-                Це не можна відмінити.
-              </AlertDialogDescription>
+              <div class="clear-dialog-icon-wrap">
+                <Icon
+                  name="lucide:trash-2"
+                  class="clear-dialog-icon"
+                />
+              </div>
+              <div class="clear-dialog-copy">
+                <div class="clear-dialog-kicker">// confirmation</div>
+                <AlertDialogTitle class="clear-dialog-title">
+                  Clear all saved posts?
+                </AlertDialogTitle>
+                <AlertDialogDescription class="clear-dialog-description">
+                  This removes {{ savedPosts.length }} saved posts from your library. This cannot be
+                  undone.
+                </AlertDialogDescription>
+              </div>
             </div>
 
             <div class="clear-dialog-footer">
@@ -159,7 +214,7 @@ useInfiniteScroll(
                 class="clear-cancel"
                 :disabled="isClearing"
               >
-                Скасувати
+                Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 class="clear-action"
@@ -171,7 +226,12 @@ useInfiniteScroll(
                   name="lucide:loader"
                   class="clear-spinner"
                 />
-                {{ isClearing ? 'видалення...' : '✕ видалити' }}
+                <Icon
+                  v-else
+                  name="lucide:trash-2"
+                  class="clear-action-icon"
+                />
+                {{ isClearing ? 'Clearing...' : 'Clear saved' }}
               </AlertDialogAction>
             </div>
           </AlertDialogContent>
@@ -243,6 +303,27 @@ useInfiniteScroll(
             </DropdownMenuContent>
           </DropdownMenuPortal>
         </DropdownMenuRoot>
+
+        <div
+          class="view-switcher"
+          aria-label="Режим відображення збережених постів"
+        >
+          <button
+            v-for="option in viewOptions"
+            :key="option.value"
+            type="button"
+            class="view-switcher-button"
+            :class="{ 'is-active': selectedView === option.value }"
+            :aria-label="option.label"
+            :aria-pressed="selectedView === option.value"
+            @click="selectedView = option.value"
+          >
+            <Icon
+              :name="option.icon"
+              class="view-switcher-icon"
+            />
+          </button>
+        </div>
       </div>
 
       <div
@@ -290,7 +371,7 @@ useInfiniteScroll(
       </button>
     </div>
     <div
-      v-else
+      v-else-if="selectedView === 'grid'"
       class="grid"
     >
       <LayoutGroup>
@@ -312,10 +393,64 @@ useInfiniteScroll(
             <SavedCard
               :post="post"
               :search-query="normalizedSearchQuery"
+              view="grid"
             />
           </motion.div>
         </AnimatePresence>
       </LayoutGroup>
+    </div>
+    <div
+      v-else
+      class="grouped"
+    >
+      <section
+        v-for="group in groupedSavedPosts"
+        :key="group.topicSlug"
+        class="topic-group"
+      >
+        <header class="topic-group-header">
+          <div class="topic-group-copy">
+            <div class="topic-group-title">{{ group.topicTitle }}</div>
+            <div class="topic-group-meta">// {{ group.topicSlug }}</div>
+          </div>
+          <div class="topic-group-stats">
+            <span class="topic-group-count">{{ group.posts.length }} posts</span>
+            <span
+              v-if="formatSavedDate(group.lastSavedAt)"
+              class="topic-group-last"
+            >
+              last saved {{ formatSavedDate(group.lastSavedAt) }}
+            </span>
+          </div>
+        </header>
+
+        <div class="topic-group-grid">
+          <LayoutGroup>
+            <AnimatePresence mode="popLayout">
+              <motion.div
+                v-for="post in group.posts"
+                :key="post.postId"
+                :layout="true"
+                :initial="{ opacity: 0, y: 8, scale: 0.985 }"
+                :animate="{ opacity: 1, y: 0, scale: 1 }"
+                :exit="{ opacity: 0, y: -6, scale: 0.985 }"
+                :transition="{
+                  opacity: { duration: 0.14 },
+                  y: { duration: 0.18 },
+                  scale: { duration: 0.18 },
+                  layout: { duration: 0.22 },
+                }"
+              >
+                <SavedCard
+                  :post="post"
+                  :search-query="normalizedSearchQuery"
+                  view="grouped"
+                />
+              </motion.div>
+            </AnimatePresence>
+          </LayoutGroup>
+        </div>
+      </section>
     </div>
 
     <div
@@ -338,6 +473,7 @@ useInfiniteScroll(
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   padding: 20px 24px;
 }
 .header {
@@ -408,17 +544,17 @@ useInfiniteScroll(
   z-index: 51;
   display: grid;
   width: calc(100vw - 32px);
-  max-width: 390px;
-  gap: 16px;
-  padding: 18px;
+  max-width: 460px;
+  gap: 20px;
+  padding: 20px;
   transform: translate(-50%, -50%);
-  border: 1px solid #1a1a1a;
-  border-radius: 5px;
-  background: #0d0d0d;
+  border: 1px solid #1c1c1c;
+  border-radius: 6px;
+  background: #0b0b0b;
   color: #999;
   box-shadow:
     0 18px 48px rgba(0, 0, 0, 0.58),
-    0 0 0 1px rgba(255, 255, 255, 0.012) inset;
+    0 0 0 1px rgba(255, 255, 255, 0.018) inset;
   transform-origin: center;
   will-change: opacity, transform;
 }
@@ -435,74 +571,99 @@ useInfiniteScroll(
   animation: clearDialogContentIn 0.28s 0.035s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .clear-dialog-header {
-  display: grid;
-  gap: 7px;
+  display: flex;
+  gap: 14px;
   text-align: left;
+}
+.clear-dialog-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border: 1px solid rgba(216, 136, 136, 0.2);
+  border-radius: 5px;
+  background: rgba(216, 136, 136, 0.065);
+  color: #d88;
+}
+.clear-dialog-icon {
+  width: 16px;
+  height: 16px;
+}
+.clear-dialog-copy {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
 }
 .clear-dialog-kicker {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 10px;
   line-height: 1.2;
-  color: #553333;
+  color: #6f756d;
   letter-spacing: 0.06em;
 }
 .clear-dialog-title {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  line-height: 1.45;
-  color: #8d7777;
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 1.3;
+  color: #d2d2c8;
   font-weight: 400;
 }
 .clear-dialog-description {
   font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 1.4;
-  color: #442222;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #6f756d;
 }
 .clear-dialog-footer {
   display: flex;
   gap: 10px;
-  padding-top: 3px;
+  padding-top: 2px;
 }
 .clear-cancel {
   flex: 1;
-  height: 34px;
-  border: 1px solid #1a1a1a;
-  border-color: #1a1a1a;
-  border-radius: 3px;
+  height: 40px;
+  border: 1px solid #222;
+  border-radius: 4px;
   background: transparent;
-  color: #444;
+  color: #777;
   cursor: pointer;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 12px;
 }
 .clear-cancel:hover {
+  border-color: #262626;
   background: #111;
-  color: #777;
+  color: #aaa;
 }
 .clear-action {
   flex: 1;
-  height: 34px;
+  height: 40px;
   gap: 7px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-width: 0;
-  border: 1px solid #cc333333;
-  border-radius: 3px;
-  background: #1a0606;
-  color: #cc3333;
+  border: 1px solid rgba(224, 122, 122, 0.28);
+  border-radius: 4px;
+  background: #2a0b0b;
+  color: #e07a7a;
   cursor: pointer;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 12px;
 }
 .clear-action:hover {
-  background: #230808;
-  color: #e04a4a;
+  border-color: rgba(224, 122, 122, 0.4);
+  background: #331010;
+  color: #ef9a9a;
+}
+.clear-spinner,
+.clear-action-icon {
+  width: 15px;
+  height: 15px;
 }
 .clear-spinner {
-  width: 14px;
-  height: 14px;
   animation: spin 0.8s linear infinite;
 }
 .controls {
@@ -516,11 +677,13 @@ useInfiniteScroll(
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 .search-box {
   display: flex;
   align-items: center;
   flex: 1;
+  min-width: 220px;
   gap: 10px;
   height: 38px;
   padding: 0 12px;
@@ -630,6 +793,45 @@ useInfiniteScroll(
   height: 11px;
   flex-shrink: 0;
 }
+.view-switcher {
+  display: inline-flex;
+  align-items: center;
+  height: 38px;
+  padding: 3px;
+  border: 1px solid #141414;
+  border-radius: 5px;
+  background: #080808;
+  flex-shrink: 0;
+}
+.view-switcher-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  color: #3d3d3d;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    color 0.15s,
+    background 0.15s;
+}
+.view-switcher-button:hover {
+  color: #777;
+  background: #101010;
+}
+.view-switcher-button.is-active {
+  border-color: rgba(126, 183, 124, 0.28);
+  background: rgba(126, 183, 124, 0.08);
+  color: #93bd8f;
+}
+.view-switcher-icon {
+  width: 13px;
+  height: 13px;
+}
 .filters {
   display: flex;
   align-items: center;
@@ -665,6 +867,84 @@ useInfiniteScroll(
   display: grid;
   grid-template-columns: repeat(4, minmax(220px, 1fr));
   gap: 12px;
+}
+.grouped {
+  display: grid;
+  gap: 22px;
+}
+.topic-group {
+  display: grid;
+  gap: 10px;
+  padding-top: 2px;
+}
+.topic-group + .topic-group {
+  padding-top: 18px;
+  border-top: 1px solid #191919;
+}
+.topic-group-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+  padding: 0 1px;
+}
+.topic-group-copy {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+.topic-group-title {
+  overflow: hidden;
+  color: #d2d2c8;
+  font-family: var(--font-display);
+  font-size: 15px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.topic-group-meta {
+  overflow: hidden;
+  color: var(--dt-text-quaternary);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.topic-group-stats {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 7px;
+  padding-top: 1px;
+}
+.topic-group-count,
+.topic-group-last {
+  color: var(--dt-text-quaternary);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.topic-group-count {
+  padding: 3px 7px;
+  border: 1px solid #1d241f;
+  border-radius: 999px;
+  background: rgba(126, 183, 124, 0.05);
+  color: #7fa17b;
+}
+.topic-group-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(220px, 1fr));
+  gap: 10px;
+}
+.topic-group-grid :deep(.card) {
+  min-height: 112px;
+}
+.topic-group-grid :deep(.title) {
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 .load-more {
   display: flex;
@@ -763,6 +1043,46 @@ useInfiniteScroll(
   .clear-dialog-header,
   .clear-dialog-footer {
     animation: none !important;
+  }
+}
+@media (max-width: 1180px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(210px, 1fr));
+  }
+  .topic-group-grid {
+    grid-template-columns: repeat(2, minmax(210px, 1fr));
+  }
+}
+@media (max-width: 760px) {
+  .saved {
+    padding: 16px;
+  }
+  .grid,
+  .topic-group-grid {
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+  }
+}
+@media (max-width: 520px) {
+  .search-box,
+  .sort-trigger,
+  .view-switcher {
+    width: 100%;
+    max-width: none;
+  }
+  .sort-trigger {
+    justify-content: space-between;
+  }
+  .view-switcher-button {
+    flex: 1;
+  }
+  .grid,
+  .topic-group-grid {
+    grid-template-columns: 1fr;
+  }
+  .topic-group-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
   }
 }
 </style>
