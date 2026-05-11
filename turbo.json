@@ -2,8 +2,15 @@
     "$schema": "https://turborepo.dev/schema.json",
     "tasks": {
         "build": {
+            "env": [
+                "OPENAPI_SPEC_URL",
+                "NUXT_API_BASE_URL",
+                "NUXT_PUBLIC_API_BASE_URL"
+            ],
             "outputs": [
-                "dist/**"
+                "dist/**",
+                ".output/**",
+                ".vercel/output/**"
             ]
         },
         "check-types": {

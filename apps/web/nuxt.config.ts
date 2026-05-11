@@ -51,7 +51,7 @@ export default defineNuxtConfig({
   },
 
   nitro: {
-    preset: 'bun',
+    preset: process.env.VERCEL ? 'vercel' : 'bun',
   },
 
   runtimeConfig: {
