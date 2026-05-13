@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import LangSwitcher from '~/components/lang/LangSwitcher.vue'
-import { useLang } from '~/composables/useLang'
 import { useTopicPosts } from '~/composables/useTopicPosts'
 
-const route = useRoute()
-const slug = computed(() => route.params.slug!.join('/'))
-
-const { lang } = useLang()
+const route = useRoute('topic-slug')
+const slug = computed(() => route.params.slug?.join('/') ?? '')
 
 const { posts } = useTopicPosts(slug)
 const topicTitle = computed(() => posts.value[0]?.topicTitle ?? slug.value)

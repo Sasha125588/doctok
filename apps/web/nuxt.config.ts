@@ -1,9 +1,29 @@
 import tailwindcss from '@tailwindcss/vite'
 import path from 'node:path'
 
-const resolve = (filePath: string) => path.resolve(__dirname, filePath)
+import type { NuxtPage } from 'nuxt/schema'
+
 const apiBaseUrl = process.env.NUXT_API_BASE_URL ?? 'http://localhost:5005'
 const publicApiBaseUrl = process.env.NUXT_PUBLIC_API_BASE_URL
+
+const resolve = (filePath: string) => path.resolve(__dirname, filePath)
+
+const removePagesMatching = (pattern: RegExp, pages: NuxtPage[] = []) => {
+  const pagesToRemove: NuxtPage[] = []
+
+  for (const page of pages) {
+    if (page.file && pattern.test(page.file)) {
+      pagesToRemove.push(page)
+      continue
+    }
+
+    removePagesMatching(pattern, page.children)
+  }
+
+  for (const page of pagesToRemove) {
+    pages.splice(pages.indexOf(page), 1)
+  }
+}
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -22,6 +42,7 @@ export default defineNuxtConfig({
         'date-fns',
         '@vue/devtools-core',
         '@vue/devtools-kit',
+        'reka-ui',
       ],
     },
     plugins: [tailwindcss()],
@@ -85,6 +106,15 @@ export default defineNuxtConfig({
 
   vueSonner: {
     css: true, // true by default to include css file
+  },
+
+  hooks: {
+    'pages:extend'(pages) {
+      removePagesMatching(/\/-components\//, pages)
+      removePagesMatching(/\/-composables\//, pages)
+      removePagesMatching(/\/-types\//, pages)
+      removePagesMatching(/\/-constants\//, pages)
+    },
   },
 
   icon: {

@@ -1,4 +1,4 @@
-import type { SavedKindFilter, SavedSortMode, SavedViewMode } from '../_types'
+import type { SavedKindFilter, SavedSortMode, SavedViewMode } from '../-types'
 
 export const kindFilters: Array<{ value: SavedKindFilter; label: string }> = [
   { value: 'all', label: 'all' },

@@ -5,7 +5,7 @@ import {
   type SavedSortMode,
   type SavedViewMode,
   savedViewModeValues,
-} from '../_types'
+} from '../-types'
 
 const isSavedViewMode = (value: unknown): value is SavedViewMode =>
   savedViewModeValues.includes(value as SavedViewMode)

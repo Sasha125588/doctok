@@ -18,11 +18,11 @@ import {
 } from 'reka-ui'
 import { toast } from 'vue-sonner'
 
-import SavedCard from './_components/SavedCard.vue'
-import { useSavedRouteState } from './_composables/useSavedRouteState'
-import { kindFilters, sortOptions, viewOptions } from './_constants'
+import SavedCard from './-components/SavedCard.vue'
+import { useSavedRouteState } from './-composables/useSavedRouteState'
+import { kindFilters, sortOptions, viewOptions } from './-constants'
 
-import type { SavedTopicGroup } from './_types'
+import type { SavedTopicGroup } from './-types'
 
 const {
   savedPosts,

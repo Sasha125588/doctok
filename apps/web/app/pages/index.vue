@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import FeedPage from '~/components/desktop/FeedPage.vue'
+import HomePage from './index/-components/HomePage.vue'
 
 definePageMeta({
-  name: 'feed',
+  name: 'home',
 })
 </script>
 
 <template>
-  <FeedPage />
+  <HomePage />
 </template>

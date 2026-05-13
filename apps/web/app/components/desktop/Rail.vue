@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import type { RouteNamedMap } from 'vue-router/auto-routes'
+
 const route = useRoute()
 
-type RouteName = typeof route.name
+type RouteName = keyof RouteNamedMap
 
 interface NavItem {
   icon: string
@@ -10,7 +12,8 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { icon: 'lucide:layout-grid', title: 'Стрічка', path: 'feed' },
+  { icon: 'lucide:house', title: 'Головна', path: 'home' },
+  { icon: 'lucide:shuffle', title: 'Стрічка', path: 'feed' },
   { icon: 'lucide:search', title: 'Каталог', path: 'search' },
   {
     icon: 'lucide:book-open',
