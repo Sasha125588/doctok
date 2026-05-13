@@ -4,11 +4,11 @@ import { useInfiniteQuery } from '@tanstack/vue-query'
 const feedPageSize = 3
 
 export const useFeed = () => {
-  const { lang } = useLang()
+  const { postsContentLang } = useLang()
 
   const queryOptions = computed(() => ({
     query: {
-      lang: lang.value,
+      lang: postsContentLang.value,
       limit: feedPageSize,
     },
   }))

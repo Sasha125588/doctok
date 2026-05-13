@@ -3,13 +3,13 @@ import { useFeedRouteState } from '~/composables/useFeedRouteState'
 import { useLang } from '~/composables/useLang'
 import { useTopicLinks } from '~/composables/useTopicLinks'
 
-const { lang } = useLang()
+const { postsContentLang } = useLang()
 const { topicSlug, openTopic } = useFeedRouteState()
 
 const queryOptions = computed(() => ({
   query: {
     slug: topicSlug.value ?? '',
-    lang: lang.value,
+    lang: postsContentLang.value,
   },
 }))
 const enabled = computed(() => !!topicSlug.value)

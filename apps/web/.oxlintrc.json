@@ -1,7 +1,11 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "ignorePatterns": ["generated/*"],
+  "ignorePatterns": ["generated/*", "app/components/ui/*"],
   "plugins": ["node", "jsdoc", "import", "unicorn", "vue", "promise", "typescript"],
+  "options": {
+    "typeAware": true,
+    "typeCheck": true
+  },
   "categories": {
     "correctness": "off"
   },

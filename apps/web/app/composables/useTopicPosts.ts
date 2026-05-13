@@ -21,16 +21,16 @@ export interface TopicEvent {
 const topicEvents = ['topic-ready', 'topic-failed', 'topic-timeout'] as const
 
 export const useTopicPosts = (topicSlug: Ref<string | null>) => {
-  const { lang } = useLang()
+  const { postsContentLang } = useLang()
 
   const queryOptions = computed(() => ({
     query: {
       slug: topicSlug.value ?? '',
-      lang: lang.value,
+      lang: postsContentLang.value,
     },
   }))
 
-  const canFetch = computed(() => Boolean(topicSlug.value?.trim()) && Boolean(lang.value?.trim()))
+  const canFetch = computed(() => !!topicSlug.value?.trim() && !!postsContentLang.value?.trim())
 
   const variant = usePostContentVariant()
 
@@ -90,7 +90,7 @@ export const useTopicPosts = (topicSlug: Ref<string | null>) => {
   const topicStreamUrl = computed(() => {
     const params = new URLSearchParams({
       slug: topicSlug.value ?? '',
-      lang: lang.value,
+      lang: postsContentLang.value,
     })
     return `/api/topics/stream?${params.toString()}`
   })
@@ -117,7 +117,7 @@ export const useTopicPosts = (topicSlug: Ref<string | null>) => {
     ...resolveMdnOptions({
       query: {
         externalRef: topicSlug.value?.replace(/^mdn\//, '') ?? '',
-        lang: lang.value,
+        lang: postsContentLang.value,
       },
     }),
   }))

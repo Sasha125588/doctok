@@ -1,20 +1,23 @@
 <script setup lang="ts">
+import { motion } from 'motion-v'
 import { storeToRefs } from 'pinia'
 
 import BrowseMode from './BrowseMode.vue'
 import FocusMode from './FocusMode.vue'
 import Sidebar from './Sidebar.vue'
+import VariantSelector from '~/components/desktop/VariantSelector.vue'
 import { useFeed } from '~/composables/useFeed'
-import { useFeedRouteState } from '~/composables/useFeedRouteState'
+import { type FeedMode, useFeedRouteState } from '~/composables/useFeedRouteState'
 import { useFeedViewStore } from '~/stores/feedView'
 
 const hasMountedCommentsPanel = ref(false)
 const hasMountedNotesPanel = ref(false)
+const modes: FeedMode[] = ['focus', 'browse']
 
 const feedView = useFeedViewStore()
 const { activePanel } = storeToRefs(feedView)
 
-const { topicSlug, postId, mode, clearPostId, openTopic, openPost } = useFeedRouteState()
+const { topicSlug, postId, mode, setMode, clearPostId, openTopic, openPost } = useFeedRouteState()
 
 const { topics, fetchNextPage, hasNextPage, isFetchingNextPage } = useFeed()
 
@@ -132,20 +135,44 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   <div class="feed-page">
     <Sidebar :topics />
     <div class="stack">
-      <FocusMode
-        v-if="mode === 'focus'"
-        class="pane"
-        :active-post="activePost"
-        :current-index="activePostIndex"
-        :is-loading="isLoading"
-        :total-posts="totalPosts"
-      />
-      <BrowseMode
-        v-else-if="mode === 'browse'"
-        class="pane"
-        :active-post-id="postId"
-        :posts
-      />
+      <div class="feed-toolbar">
+        <div class="toggle">
+          <button
+            v-for="m in modes"
+            :key="m"
+            class="toggle-btn"
+            :class="{ 'is-active': mode === m }"
+            @click="setMode(m)"
+          >
+            <motion.span
+              v-if="mode === m"
+              layoutId="dt-feed-mode-active"
+              class="active-pill"
+              :transition="{ type: 'spring', stiffness: 500, damping: 35 }"
+            />
+            <span class="label">{{ m }}</span>
+          </button>
+        </div>
+
+        <VariantSelector />
+      </div>
+
+      <div class="pane-frame">
+        <FocusMode
+          v-if="mode === 'focus'"
+          class="pane"
+          :active-post="activePost"
+          :current-index="activePostIndex"
+          :is-loading="isLoading"
+          :total-posts="totalPosts"
+        />
+        <BrowseMode
+          v-else-if="mode === 'browse'"
+          class="pane"
+          :active-post-id="postId"
+          :posts
+        />
+      </div>
     </div>
     <LazyDesktopCommentsPanel
       v-if="activePost && shouldMountCommentsPanel"
@@ -169,10 +196,59 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 }
 .stack {
   flex: 1;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   overflow: hidden;
   min-width: 0;
+}
+.feed-toolbar {
+  height: 42px;
+  border-bottom: 1px solid #111;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 14px;
+  flex-shrink: 0;
+}
+.toggle {
+  display: flex;
+  border: 1px solid #161616;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.toggle-btn {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  padding: 4px 11px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  color: var(--dt-text-tertiary);
+  position: relative;
+  transition: color 0.15s;
+}
+.toggle-btn:hover:not(.is-active) {
+  color: #555;
+}
+.toggle-btn.is-active {
+  color: var(--kind-example);
+}
+.active-pill {
+  position: absolute;
+  inset: 0;
+  background: var(--dt-rail-active-bg);
+  z-index: 0;
+}
+.label {
+  position: relative;
+  z-index: 1;
+}
+.pane-frame {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
   position: relative;
 }
 .pane {

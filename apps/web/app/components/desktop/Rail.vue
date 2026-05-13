@@ -24,11 +24,18 @@ const navItems: NavItem[] = [
   { icon: 'lucide:waypoints', title: 'Карта знань', path: 'map' },
 ]
 
-const footerItem: NavItem = {
-  icon: 'lucide:user',
-  title: 'Профіль',
-  path: 'profile',
-}
+const footerItems: NavItem[] = [
+  {
+    icon: 'lucide:settings',
+    title: 'Налаштування',
+    path: 'settings',
+  },
+  {
+    icon: 'lucide:user',
+    title: 'Профіль',
+    path: 'profile',
+  },
+]
 
 const isActive = (item: NavItem) => route.name === item.path
 
@@ -58,13 +65,15 @@ const go = (item: NavItem) => {
     </button>
     <div class="spacer" />
     <button
+      v-for="item in footerItems"
+      :key="item.path"
       class="rail-btn"
-      :class="{ 'is-active': isActive(footerItem) }"
-      :title="footerItem.title"
-      @click="go(footerItem)"
+      :class="{ 'is-active': isActive(item) }"
+      :title="item.title"
+      @click="go(item)"
     >
       <Icon
-        :name="footerItem.icon"
+        :name="item.icon"
         class="icon"
       />
     </button>

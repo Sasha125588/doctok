@@ -59,7 +59,7 @@ const savedPostsListQueryKey = () =>
 
 const useServerSavedPostsImpl = () => {
   const session = useSession()
-  const { lang } = useLang()
+  const { postsContentLang } = useLang()
 
   const enabled = computed(() => session.isSuccess.value && Boolean(session.data.value?.userId))
 
@@ -87,7 +87,7 @@ const useServerSavedPostsImpl = () => {
       const savedPost = variables.meta?.savedPost as SavedPostView
 
       const topicPostsQueryKey = topicsGetPostsQueryKey({
-        query: { slug: topicSlug, lang: lang.value },
+        query: { slug: topicSlug, lang: postsContentLang.value },
       })
       const savedPostsQueryKey = savedPostsListQueryKey()
 
@@ -151,7 +151,7 @@ const useServerSavedPostsImpl = () => {
       const topicSlug = variables.meta?.topicSlug as string
 
       const topicPostsQueryKey = topicsGetPostsQueryKey({
-        query: { slug: topicSlug, lang: lang.value },
+        query: { slug: topicSlug, lang: postsContentLang.value },
       })
       const savedPostsQueryKey = savedPostsListQueryKey()
 

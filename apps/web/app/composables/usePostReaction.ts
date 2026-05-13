@@ -16,10 +16,10 @@ export interface PostReactionMutationContext {
 }
 
 export const usePostReaction = (topicSlug: string) => {
-  const { lang } = useLang()
+  const { postsContentLang } = useLang()
 
   const queryKey = topicsGetPostsQueryKey({
-    query: { slug: topicSlug, lang: lang.value },
+    query: { slug: topicSlug, lang: postsContentLang.value },
   })
 
   const postReactionMutation = useMutation<

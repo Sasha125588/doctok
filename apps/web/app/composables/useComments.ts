@@ -39,13 +39,13 @@ export interface UseCommentCreateContext {
 }
 
 export const useComments = (postId: Ref<number>, topicSlug: Ref<string>, enabled: Ref<boolean>) => {
-  const { lang } = useLang()
+  const { postsContentLang } = useLang()
   const getCommentsQueryKey = () => postsCommentsListQueryKey({ path: { postId: postId.value } })
   const getTopicPostsQueryKey = () =>
     topicsGetPostsQueryKey({
       query: {
         slug: topicSlug.value,
-        lang: lang.value,
+        lang: postsContentLang.value,
       },
     })
 
